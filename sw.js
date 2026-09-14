@@ -1,4 +1,4 @@
-const C='ascend-v2';
+const C='ascend-v3';
 const ASSETS=['./','./index.html','./manifest.json','./favicon.png','./apple-touch-icon.png','./icon-192x192.png','./icon-512x512.png','./icon-maskable-192.png','./icon-maskable-512.png'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(C).then(c=>c.addAll(ASSETS)).then(()=>self.skipWaiting()));});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==C).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));});

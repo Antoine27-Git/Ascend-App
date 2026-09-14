@@ -72,6 +72,9 @@ h1{font-size:26px;margin:6px 0 2px;letter-spacing:-.03em;font-weight:800}
 .line{background:var(--card);border-radius:18px;padding:16px 18px;margin:10px 0;display:flex;justify-content:space-between;align-items:center;font-size:15px;font-weight:600;box-shadow:0 1px 2px rgba(16,32,26,.04)}
 .line .v{color:var(--mut);font-weight:600}
 .line .v::after{content:' ›';color:#b6c1ba}
+.acct-line{background:var(--card);border-radius:18px;padding:14px 18px;margin:10px 0;box-shadow:0 1px 2px rgba(16,32,26,.04)}
+.acct-lab{font-size:12px;font-weight:700;color:var(--mut);text-transform:uppercase;letter-spacing:.04em}
+.acct-val{font-size:15px;font-weight:600;margin-top:3px;word-break:break-all}
 /* tabs */
 nav{position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));z-index:20;background:rgba(255,255,255,.95);backdrop-filter:blur(14px);border-radius:24px;display:flex;padding:8px;box-shadow:0 12px 32px rgba(16,32,26,.14)}
 nav button{flex:1;border:0;background:none;font:inherit;font-size:11px;font-weight:700;color:var(--mut);display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 0 6px;border-radius:18px}
@@ -1428,11 +1431,11 @@ function vSyncCard(){
     +'<div class="mini" style="margin-top:0">Tes données restent sur ce téléphone tant que tu n\'es pas connecté. Une fois connecté, elles sont sauvegardées sur le serveur et retrouvées sur n\'importe quel appareil, même après un nettoyage du navigateur.</div>'
     +'<label class="f">Email</label><input type="email" autocomplete="username" value="'+esc(authForm.email)+'" onchange="app.setAuthF(\'email\',this.value)">'
     +'<label class="f">Mot de passe</label><div class="row" style="gap:8px"><input id="authpw" style="flex:1" type="password" autocomplete="current-password" value="'+esc(authForm.password)+'" onchange="app.setAuthF(\'password\',this.value)"><button type="button" class="pw-eye" aria-label="Afficher le mot de passe" onclick="app.togglePw(\'authpw\',this)">'+mi('eye')+'</button></div>'
-    +'<div class="row" style="gap:10px;margin-top:14px"><button class="btn dark" style="flex:1" onclick="app.signIn()">Se connecter</button><button class="btn" style="flex:1" onclick="app.signUp()">Créer le compte</button></div>'
+    +'<div class="row" style="gap:10px;margin-top:14px"><button class="btn dark" style="flex:1" onclick="app.signIn()">Se connecter</button><button class="btn ghost" style="flex:1" onclick="app.signUp()">Créer le compte</button></div>'
     +'<div class="mini" style="margin-top:10px"><a href="#" onclick="event.preventDefault();app.forgotPw()">Mot de passe oublié ?</a></div>'
     +syncLineHTML()+'</div>';
   return '<div class="lab">Sauvegarde en ligne</div><div class="card">'
-    +'<div class="line"><span>Compte</span><span class="v">'+esc(auth.email||'')+'</span></div>'
+    +'<div class="acct-line"><div class="acct-lab">Compte</div><div class="acct-val">'+esc(auth.email||'')+'</div></div>'
     +syncLineHTML()
     +'<div class="row" style="gap:10px;margin-top:14px"><button class="btn dark" style="flex:1" onclick="app.syncNow()">Synchroniser</button><button class="btn" onclick="app.resync(this)">Tout retélécharger</button></div>'
     +'<button class="btn full" onclick="app.signOut(this)">Se déconnecter</button>'
