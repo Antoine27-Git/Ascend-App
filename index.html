@@ -62,7 +62,7 @@ h1{font-size:26px;margin:6px 0 2px;letter-spacing:-.03em;font-weight:800}
 .steps .hr{display:block;font-size:12px;color:var(--mut);margin-top:2px}
 /* buttons */
 .btn{border:0;font:inherit;font-size:15px;font-weight:700;padding:14px 18px;border-radius:16px;background:#eef1ee;color:var(--ink);cursor:pointer}
-.btn.dark{background:var(--deep);color:#fff}
+.btn.dark{background:var(--accent);color:var(--accentInk)}
 .btn.full{width:100%}
 .btn.ghost{background:#fff;border:1px solid var(--line)}
 /* settings */
@@ -83,10 +83,10 @@ nav svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.9;st
 .lab{font-size:12px;color:var(--mut);margin:18px 0 2px;font-weight:700;letter-spacing:.02em;text-transform:uppercase}
 .scale{display:grid;grid-template-columns:repeat(11,1fr);gap:4px;margin-top:8px}
 .scale b{background:#eef1ee;border-radius:9px;text-align:center;padding:9px 0;font-size:13px;font-weight:600}
-.scale b.on{background:var(--mint);color:#07180f}
+.scale b.on{background:#e7f3ec;color:var(--mintT);box-shadow:inset 0 0 0 1.5px var(--mintT)}
 
 
-:root{--bg:#f6f7f4;--card:#fff;--ink:#0f1c16;--mut:#6c7a72;--line:#eef2ee;--mint:#25c37e;--mintT:#0b8f56;--deep:#10251c;--ember:#ff7a3d;--sun:#f5a623;--coral:#f0544c;--sky:#3f8fe0;--violet:#8b6cf0;--r:24px}
+:root{--bg:#f6f7f4;--card:#fff;--ink:#0f1c16;--mut:#6c7a72;--line:#eef2ee;--mint:#25c37e;--mintT:#0b8f56;--accent:#ecd08f;--accentInk:#4a3610;--deep:#10251c;--ember:#ff7a3d;--sun:#f5a623;--coral:#f0544c;--sky:#3f8fe0;--violet:#8b6cf0;--r:24px}
 .halo{position:fixed;inset:0 0 auto;height:300px;overflow:hidden;pointer-events:none;z-index:0}
 .halo i{position:absolute;display:block;border-radius:50%;filter:blur(52px);opacity:.5}
 .halo .a{width:260px;height:200px;background:#b9f5d6;left:-50px;top:-70px}
@@ -150,9 +150,9 @@ nav svg.mi{width:22px;height:22px}
 .q .lbl small{display:block;font-size:11.5px;color:var(--mut);font-weight:500}
 .q .opts{display:flex;gap:5px}
 .q .opts button{width:34px;height:34px;border:0;border-radius:11px;background:#f1f4f1;font:inherit;font-size:14px;font-weight:700;color:var(--mut);cursor:pointer}
-.q .opts button.on{background:var(--mint);color:#07180f}
+.q .opts button.on{background:#e7f3ec;color:var(--mintT);box-shadow:inset 0 0 0 1.5px var(--mintT)}
 .scale button{border:0;border-radius:10px;background:#f1f4f1;font:inherit;font-size:13px;font-weight:700;padding:11px 0;color:var(--mut);cursor:pointer}
-.scale button.on{background:var(--mint);color:#07180f}
+.scale button.on{background:#e7f3ec;color:var(--mintT);box-shadow:inset 0 0 0 1.5px var(--mintT)}
 .g3{display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:10px;align-items:end}
 input.n{width:100%;border:0;background:#f1f4f1;border-radius:14px;padding:12px 10px;font:inherit;font-size:16px;text-align:center}
 span.f{display:block;font-size:12px;color:var(--mut);margin:0 0 6px;font-weight:600}
@@ -161,7 +161,7 @@ span.f{display:block;font-size:12px;color:var(--mut);margin:0 0 6px;font-weight:
 /* ---- app-specific ---- */
 .chips{display:flex;gap:6px;flex-wrap:wrap}
 .chip{flex:1;min-width:44px;height:46px;border:0;border-radius:13px;background:#eef1ee;color:var(--ink);font:inherit;font-size:15px;font-weight:700;cursor:pointer;padding:0 8px}
-.chip.on{background:var(--mint);color:#07180f}
+.chip.on{background:#e7f3ec;color:var(--mintT);box-shadow:inset 0 0 0 1.5px var(--mintT);font-weight:700}
 .chips.txt .chip{flex:0 1 auto;padding:0 14px;font-size:14px}
 .chips.row4{flex-wrap:nowrap}.chips.row4 .chip{flex:1 1 0;min-width:0;padding:0 4px;font-size:13.5px;white-space:nowrap}
 .scale{display:grid;grid-template-columns:repeat(11,1fr);gap:4px}
@@ -654,17 +654,17 @@ function vEditCF(e){
   const wodRows=(e.wod||[]).map((l,i)=>'<div class="row" style="margin-bottom:6px"><input style="flex:.6" type="number" inputmode="numeric" placeholder="reps" value="'+esc(l.reps)+'" onchange="app.setWod('+i+',\'reps\',this.value)"><div style="flex:1.6">'+acField(l.move,'Mouvement','moves',"app.setWod("+i+",'move',this.value)")+'</div><input style="flex:1" placeholder="40 kg, 20 cal…" value="'+esc(l.load)+'" onchange="app.setWod('+i+',\'load\',this.value)"><button class="btn x d" onclick="app.delWod('+i+')" aria-label="supprimer">×</button></div>').join('');
   const sc=e.scoreType||'none';
   const quick='<div class="lbl"><span>Origine</span></div>'
-   +chips(Object.keys(STSRC),e.stSrc||'externe',v=>'app.setE(\'stSrc\',\''+v+'\')','stsrc',Object.keys(STSRC).map(k=>STSRC[k]),null,'txt')
+   +chips(Object.keys(STSRC),e.stSrc||'externe',v=>'app.setE(\'stSrc\',\''+v+'\')','stSrc',Object.keys(STSRC).map(k=>STSRC[k]),null,'txt')
    +'<div class="lbl"><span>Qualité travaillée</span></div>'
-   +chips(Object.keys(STQUAL),e.stQual,v=>'app.setE(\'stQual\',\''+v+'\')','stqual',Object.keys(STQUAL).map(k=>STQUAL[k]),null,'txt')
+   +chips(Object.keys(STQUAL),e.stQual,v=>'app.setE(\'stQual\',\''+v+'\')','stQual',Object.keys(STQUAL).map(k=>STQUAL[k]),null,'txt')
    +'<div class="lbl"><span>Dominante</span></div>'
-   +chips(Object.keys(STDOM),e.stDom,v=>'app.setE(\'stDom\',\''+v+'\')','stdom',Object.keys(STDOM).map(k=>STDOM[k]),null,'txt')
+   +chips(Object.keys(STDOM),e.stDom,v=>'app.setE(\'stDom\',\''+v+'\')','stDom',Object.keys(STDOM).map(k=>STDOM[k]),null,'txt')
    +'<div class="lbl"><span>Densité excentrique / impacts</span><small>sauts, box jumps, descentes</small></div>'
-   +chips(Object.keys(STECC),e.stEcc,v=>'app.setE(\'stEcc\',\''+v+'\')','stecc',Object.keys(STECC).map(k=>STECC[k]),null,'txt')
+   +chips(Object.keys(STECC),e.stEcc,v=>'app.setE(\'stEcc\',\''+v+'\')','stEcc',Object.keys(STECC).map(k=>STECC[k]),null,'txt')
    +stConflictHTML(e);
   return quick+'<div class="lbl" style="margin-top:16px"><span>Détail de la séance</span><small>facultatif</small></div>'+'<label class="f">Nom du WOD</label>'+acField(e.wodName,'Ventoline, Fran…','wodnames',"app.setE('wodName',this.value)")
   +wodHistHTML(e)
-  +'<div class="g2" style="margin-top:10px"><div><label class="f">Durée du WOD (min)</label><input type="number" inputmode="numeric" placeholder="12" value="'+esc(e.wodDur)+'" onchange="app.setE(\'wodDur\',this.value)"></div><div><label class="f">Format</label><select onchange="app.setE(\'scoreType\',this.value)">'+Object.keys(SCORES).map(k=>'<option value="'+k+'"'+(sc===k?' selected':'')+'>'+SCORES[k].l+'</option>').join('')+'</select></div></div>'
+  +'<div class="g2" style="margin-top:10px"><div><label class="f">Durée du WOD (min)</label><input type="number" inputmode="numeric" value="'+esc(e.wodDur)+'" onchange="app.setE(\'wodDur\',this.value)"></div><div><label class="f">Format</label><select onchange="app.setE(\'scoreType\',this.value)">'+Object.keys(SCORES).map(k=>'<option value="'+k+'"'+(sc===k?' selected':'')+'>'+SCORES[k].l+'</option>').join('')+'</select></div></div>'
   +(sc!=='none'?'<div class="g2"><div><label class="f">Score, '+SCORES[sc].u+'</label><input type="number" inputmode="decimal" step="'+(sc==='time'?'0.1':'1')+'" placeholder="'+SCORES[sc].hint+'" value="'+esc(e.score)+'" onchange="app.setE(\'score\',this.value)"></div>'+(sc==='amrap'?'<div><label class="f">+ reps</label><input type="number" inputmode="numeric" value="'+esc(e.scoreReps)+'" onchange="app.setE(\'scoreReps\',this.value)"></div>':'<div></div>')+'</div>':'')
   +'<div class="lbl"><span>Version</span></div>'+chips(['rx','scaled'],e.rx,v=>'app.setE(\'rx\',\''+v+'\')','rx',['RX','Scalé'],null,'txt')
   +'<div class="lbl" style="margin-bottom:4px"><span>Mouvements du WOD</span><small>optionnel</small></div>'+wodRows+'<button class="btn s" onclick="app.addWod()">+ ligne</button>'
@@ -734,7 +734,7 @@ function vEdit(){
       const cands=S.plan.filter(x=>Math.abs(daysTo(x.date)-daysTo(e.date))<=3&&!S.sessions.some(s=>s.plannedId===x.id&&s.id!==e.id));
       return cands.length?'<label class="f">Rattacher à une séance prévue</label><select onchange="app.linkPlan(this.value)"><option value="">–</option>'+cands.map(x=>'<option value="'+x.id+'">'+planCode(x)+' · '+planTitle(x)+' · '+fmtS(x.date)+'</option>').join('')+'</select>':'';})()
   +'<label class="f">Date</label><input type="date" value="'+e.date+'" onchange="app.setE(\'date\',this.value)">'
-  +'<div class="lbl"><span>Type</span></div>'+chips(Object.keys(TYPES),e.type,v=>'app.setE(\'type\',\''+v+'\')','type',Object.keys(TYPES).map(k=>TYPES[k].l),null,'txt')
+  +'<details class="tsel"><summary>Type : '+((TYPES[e.type]||TYPES.autre).l)+'</summary>'+chips(Object.keys(TYPES),e.type,v=>'app.setE(\'type\',\''+v+'\')','type',Object.keys(TYPES).map(k=>TYPES[k].l),null,'txt')+'</details>'
   +'<div class="g2">'+inp('dur',cf?'Durée totale (min)':'Durée (min)','90')+(run?inp('dist','Distance (km)','12','0.1'):'')+'</div>'
   +(cf&&modOn('strength')?vEditCF(e):'')
   +(run?'<div class="g2">'+inp('dplus','D+ (m)')+inp('dminus','D− (m)')+'</div><div class="g2">'+inp('hrAvg','FC moyenne')+inp('hrMax','FC max')+'</div>':'')
@@ -748,7 +748,7 @@ function vEdit(){
   +'<div class="mini" id="calc">'+calcLine(e)+'</div>'
   +'<div class="row" style="margin-top:14px"><button class="btn p" style="flex:1" onclick="app.saveE()">Enregistrer</button>'+(e.id?'<button class="btn d" onclick="app.delE(this)">Supprimer</button>':'')+'</div>';
 }
-function openSheet(){const p=document.querySelector('.sheet .in'),st=p?p.scrollTop:0;$('#sheet').innerHTML='<div class="sheet" onclick="if(event.target===this)app.close()"><div class="in"><div class="pad">'+vEdit()+'</div></div></div>';const c=document.querySelector('.sheet .in');if(c)c.scrollTop=st;}
+function openSheet(toTop){const p=document.querySelector('.sheet .in'),st=toTop?0:(p?p.scrollTop:0);$('#sheet').innerHTML='<div class="sheet" onclick="if(event.target===this)app.close()"><div class="in"><div class="pad">'+vEdit()+'</div></div></div>';const c=document.querySelector('.sheet .in');if(c)c.scrollTop=st;}
 function vSuivi(){
   const mon0=curMon,V=verdict(mon0),w=V.w,inProg=mon0===monday(todayISO());
   return '<header><h1>Suivi</h1><div class="sub">Semaine du '+fmtS(mon0)+'</div></header><main>'
@@ -877,7 +877,7 @@ function vStatsBody(){
 }
 function vData(){
   return '<div class="card"><h2>Données</h2>'
-  +'<div class="row wrap"><button class="btn s" onclick="app.exportJSON()">Sauvegarde JSON</button><button class="btn s" onclick="app.exportCSV(\'sessions\')">CSV séances</button><button class="btn s" onclick="app.exportCSV(\'daily\')">CSV check-ins</button></div>'
+  +'<div class="row" style="gap:8px"><button class="btn s" style="flex:1 1 0;white-space:nowrap" onclick="app.exportJSON()">JSON</button><button class="btn s" style="flex:1 1 0;white-space:nowrap" onclick="app.exportCSV(\'sessions\')">CSV séances</button><button class="btn s" style="flex:1 1 0;white-space:nowrap" onclick="app.exportCSV(\'daily\')">CSV check-ins</button></div>'
   +(exportText?'<label class="f">'+esc(exportText.name)+'</label><textarea id="exp" style="font-size:12px;min-height:90px">'+esc(exportText.text)+'</textarea><button class="btn w" onclick="app.copy(\'#exp\')">Copier</button>':'')
   +'<details'+(preview?' open':'')+'><summary>Importer un CSV Garmin Connect</summary><div class="mini">Garmin Connect (ordinateur) → Activités → Exporter CSV, puis colle ici. Les séances arrivent sans RPE.</div><textarea id="gcsv" placeholder="Type d\'activité,Date,…">'+esc(gtext)+'</textarea><button class="btn w" onclick="app.previewGarmin()">Analyser</button>'
   +(preview?(preview.length?'<div style="margin-top:8px">'+preview.map(p=>'<div class="sess" style="cursor:default"><div><b>'+TYPES[p.type].l+'</b> <span class="note">'+fmtS(p.date)+'</span>'+(p.dup?'<span class="tag">déjà là</span>':'')+'<div class="m">'+p.dur+' min'+(p.dist?' · '+r1(p.dist)+' km':'')+(p.dplus?' · '+r0(p.dplus)+' D+':'')+(p.hrAvg?' · FC '+r0(p.hrAvg):'')+'</div></div></div>').join('')+'<button class="btn p w" onclick="app.importGarmin()">Importer '+preview.filter(p=>!p.dup).length+' séance(s)</button></div>':'<div class="mini" style="color:var(--coralT)">Rien de lisible : la première ligne doit contenir les en-têtes (Date, Durée…).</div>'):'')+'</details>'
@@ -1088,7 +1088,7 @@ function sessCard(ps,withBtn){
    +'<div class="facts">'+sessFacts(ps,st.k==='done'?r:null).map(f=>'<div><b>'+f[0]+'</b><span>'+f[1]+'</span></div>').join('')+'</div>'
    +(adj&&adj.note?'<div class="mini" style="color:#9a6207;margin-top:10px">→ '+(adj.dur!=null&&adj.dur!==ps.dur?adj.dur+' min · ':'')+adj.note+'</div>':'')
    +(ps.note?'<div class="mini" style="margin-top:8px">'+esc(ps.note)+'</div>':'')
-   +(withBtn||st.k==='today'?'<button class="btn dark full" style="margin-top:14px" onclick="event.stopPropagation();app.openSess(\''+ps.id+'\')">'+(st.k==='today'?'Saisir ma séance':'Voir la séance')+'</button>':'')
+   +(withBtn||st.k==='today'?'<button class="btn dark full" style="margin-top:14px" onclick="event.stopPropagation();app.'+(st.k==='today'?'newSession':'openSess')+'(\''+ps.id+'\')">'+(st.k==='today'?'Saisir ma séance':'Voir la séance')+'</button>':'')
    +'</div>';
 }
 function vSeances(){
@@ -1140,7 +1140,7 @@ function vSessDetail(){
    +'<div class="row" style="gap:10px;margin-top:14px"><button class="btn dark" style="flex:1" onclick="app.savePE()">Enregistrer</button><button class="btn d" onclick="app.delPE(this)">Supprimer</button></div></details>'
   +'</main>';
 }
-function openPlanSheet(){const p=document.querySelector('.sheet .in'),st=p?p.scrollTop:0;
+function openPlanSheet(toTop){const p=document.querySelector('.sheet .in'),st=toTop?0:(p?p.scrollTop:0);
   $('#sheet').innerHTML='<div class="sheet" onclick="if(event.target===this)app.close()"><div class="in" style="background:var(--bg);padding-bottom:calc(28px + env(safe-area-inset-bottom))">'+vSessDetail()+'</div></div>';
   const c=document.querySelector('.sheet .in');if(c)c.scrollTop=st;}
 function vProfil(){
@@ -1163,10 +1163,15 @@ function vProfil(){
      +(inj.note?'<div class="mini" style="margin-top:10px">'+inj.note+'</div>':'')
      +(inj.stop?'<div class="mini" style="color:#cf2f28;margin-top:8px">Aucune séance de course n\'est proposée tant que ce type est actif.</div>':'')
      +'<div class="mini" style="margin-top:10px">L\'app suit une blessure, elle ne la diagnostique pas. Le choix d\'un type ne remplace pas un avis médical.</div>')
+  +(modOn('strength')?'<div class="lab">Renforcement</div>'
+   +'<div class="card"><div class="lbl"><span>Jours</span><small>plusieurs jours possibles</small></div>'
+   +chips([0,1,2,3,4,5,6],null,v=>'app.toggleCf('+v+')','cf',DOWS.map((d,i)=>((D.cf||[]).includes(i)?'✓ ':'')+d),null,'txt')
+   +'<div class="lbl"><span>Contexte</span><small>filtre les exercices proposés</small></div>'
+   +chips(Object.keys(STCTX),P.stContext||'box',v=>'app.setP(\'stContext\',\''+v+'\')','stContext',Object.keys(STCTX).map(k=>STCTX[k]),null,'txt')
+   +'</div>':'')
   +'<div class="lab">Ta semaine type</div>'
   +'<div class="card"><label class="f">Sortie longue</label><select onchange="app.setDay(\'long\',this.value)">'+DOWN.map((d,i)=>'<option value="'+i+'"'+(+D.long===i?' selected':'')+'>'+d+'</option>').join('')+'</select>'
    +'<label class="f">Endurance</label><select onchange="app.setDay(\'ef\',this.value)">'+DOWN.map((d,i)=>'<option value="'+i+'"'+(+D.ef===i?' selected':'')+'>'+d+'</option>').join('')+'</select>'
-   +(modOn('strength')?'<div class="lbl"><span>Renforcement</span><small>plusieurs jours possibles</small></div>'+chips([0,1,2,3,4,5,6],null,v=>'app.toggleCf('+v+')','cf',DOWS.map((d,i)=>((D.cf||[]).includes(i)?'✓ ':'')+d),null,'txt')+'<div class="lbl"><span>Contexte</span><small>filtre les exercices proposés</small></div>'+chips(Object.keys(STCTX),P.stContext||'box',v=>'app.setP(\'stContext\',\''+v+'\')','stctx',Object.keys(STCTX).map(k=>STCTX[k]),null,'txt'):'')
    +(conf.length?'<div class="mini" style="color:#8a5a0a;margin-top:12px"><b>Attention :</b> '+conf.join('. ')+'. Un espacement de 48 h est préférable avant la sortie longue.</div>':'<div class="mini" style="margin-top:12px">Espacement correct entre les séances.</div>')
    +'<div class="mini">Après un changement, régénère le bloc depuis l\'onglet Séances pour replacer les séances à venir.</div></div>'
   +'<div class="lab">Ton profil</div>'
@@ -1461,8 +1466,9 @@ function vSyncCard(){
   return '<div class="lab">Sauvegarde en ligne</div><div class="card">'
     +'<div class="acct-line"><div class="acct-lab">Compte</div><div class="acct-val">'+esc(auth.email||'')+'</div></div>'
     +syncLineHTML()
-    +'<div class="row" style="gap:10px;margin-top:14px;flex-direction:column"><button class="btn dark full" onclick="app.syncNow()">Synchroniser</button><button class="btn ghost full" onclick="app.resync(this)">Tout retélécharger</button></div>'
-    +'<button class="btn full" onclick="app.signOut(this)">Se déconnecter</button>'
+    +'<button class="btn dark full" style="margin-top:14px" onclick="app.syncNow()">Synchroniser</button>'
+    +'<button class="btn full" style="margin-top:10px" onclick="app.signOut(this)">Se déconnecter</button>'
+    +'<details style="margin-top:10px"><summary>Dépannage</summary><button class="btn ghost full" style="margin-top:10px" onclick="app.resync(this)">Tout retélécharger</button><div class="mini">Reprend l\'intégralité des données depuis le serveur, en ignorant le repère de dernière synchro. Utile seulement si cet appareil semble incomplet.</div></details>'
     +'<div class="mini">Se déconnecter n\'efface rien sur le serveur. Les données de ce téléphone restent en local.</div></div>';
 }
 
@@ -1543,11 +1549,11 @@ const app=window.app={
     save();if(k==='status'){render();return;}mark($('#view'),k,d[k]);
     if(k==='pain'){const pm=$('#painmini');if(pm)pm.outerHTML=painMiniHTML(curDate);}
     if(k==='rhr'||k==='weight'){const nm=$('#numsmini');if(nm)nm.innerHTML=numsMini(curDate);}},
-  newSession(pid){const ps=pid?S.plan.find(x=>x.id===pid):null;E={id:null,date:ps?ps.date:curDate,type:ps?ps.type:'ef',dur:ps?ps.dur:null,dist:null,dplus:ps?ps.dplus:null,dminus:null,hrAvg:null,hrMax:null,rpe:null,legs:null,heelPost:null,shoe:'',carbs:null,fluids:null,gi:null,dip:null,note:'',track:null,plannedId:ps?ps.id:null,wodName:'',wodDur:null,scoreType:'none',score:null,scoreReps:null,rx:null,wod:[],lifts:[],impacts:[],stSrc:'externe',stQual:null,stDom:null,stEcc:null};openSheet();},
+  newSession(pid){const ps=pid?S.plan.find(x=>x.id===pid):null;E={id:null,date:ps?ps.date:curDate,type:ps?ps.type:'ef',dur:ps?ps.dur:null,dist:null,dplus:ps?ps.dplus:null,dminus:null,hrAvg:null,hrMax:null,rpe:null,legs:null,heelPost:null,shoe:'',carbs:null,fluids:null,gi:null,dip:null,note:'',track:null,plannedId:ps?ps.id:null,wodName:'',wodDur:null,scoreType:'none',score:null,scoreReps:null,rx:null,wod:[],lifts:[],impacts:[],stSrc:'externe',stQual:null,stDom:null,stEcc:null};openSheet(true);},
   edit(id){const s=S.sessions.find(x=>x.id===id);if(!s)return;E=JSON.parse(JSON.stringify(s));openSheet();},
   close(){E=null;$('#sheet').innerHTML='';},
   setE(k,v){if(v===''||v==null)E[k]=null;else if(['date','note','shoe','type','wodName','rx','scoreType','stSrc','stQual','stDom','stEcc'].includes(k))E[k]=v;else E[k]=+v;
-    if(k==='type'||k==='track'||k==='scoreType'){openSheet();return;}
+    if(k==='type'||k==='track'||k==='scoreType'){openSheet(k==='type');return;}
     if(k==='wodName'){const wh=$('#wodhist');if(wh)wh.outerHTML=wodHistHTML(E);}
     mark($('#sheet'),k,E[k]);const h=$('#rpeh');if(h&&k==='rpe')h.textContent=E.rpe!=null?RPEL[E.rpe]:'';const c=$('#calc');if(c)c.innerHTML=calcLine(E);},
   attachTrack(input){const f=input.files&&input.files[0];if(!f)return;const rd=new FileReader();
@@ -1579,7 +1585,7 @@ const app=window.app={
   planFit(id){const ps=S.plan.find(x=>x.id===id);if(!ps)return;const st=sessionSteps(ps);const bytes=planToFit({title:planCode(ps)+' '+planTitle(ps),steps:st.steps});
     const n=planCode(ps)+'.fit';if(!download(n,bytes,'application/octet-stream'))flash('Téléchargement bloqué ici');else flash(n+' : à copier dans Garmin/NewFiles');},
   planCopy(id){const ps=S.plan.find(x=>x.id===id);if(!ps)return;const t=$('#plantxt');if(!t){flash('Ouvre l\'onglet Plan');return;}t.value=planText(ps);app.copy('#plantxt');},
-  openSess(id){const ps=S.plan.find(x=>x.id===id);if(!ps)return;PE=JSON.parse(JSON.stringify(ps));openPlanSheet();},
+  openSess(id){const ps=S.plan.find(x=>x.id===id);if(!ps)return;PE=JSON.parse(JSON.stringify(ps));openPlanSheet(true);},
   toggleMod(k){const M=S.profile.modules||(S.profile.modules={});M[k]=!M[k];save();render();},
   setInjury(k,v){const I=S.profile.injury||(S.profile.injury={});I[k]=v;if(k==='type'){const b=INJURIES[v]||INJURIES.autre;I.metric=b.metric;I.avoid=b.avoid.slice();}save();render();},
   toggleAvoid(a){const I=S.profile.injury;I.avoid=I.avoid||[];const i=I.avoid.indexOf(a);if(i<0)I.avoid.push(a);else I.avoid.splice(i,1);save();render();},
