@@ -285,7 +285,12 @@ const byDate=(a,b)=>a.date<b.date?-1:a.date>b.date?1:0;
 const HEEL=['Rien','Raideur','Douleur','Boiterie'];
 const HEELC=['#2f8a5b','#8faa3a','#c9891e','#b8412e'];
 const RPEL=['Repos','Très facile','Facile','Modéré','Assez dur','Dur','Dur +','Très dur','Très dur +','Extrême','Maximal'];
-const TYPES={ef:{l:'Endurance',run:1},long:{l:'Sortie longue',run:1},desc:{l:'Descentes',run:1},test:{l:'Test mensuel',run:1},cf:{l:'CrossFit',run:0},autre:{l:'Autre',run:0}};
+const TYPES={ef:{l:'Endurance',run:1},long:{l:'Sortie longue',run:1},desc:{l:'Descentes',run:1},test:{l:'Test mensuel',run:1},cf:{l:'Renforcement',run:0},autre:{l:'Autre',run:0}};
+const STQUAL={force:'Force max',plio:'Pliométrie',ecc:'Excentrique',mixte:'Mixte'};
+const STDOM={jambes:'Jambes',haut:'Haut du corps',mixte:'Mixte'};
+const STECC={faible:'Faible',moyenne:'Moyenne',forte:'Forte'};
+const STCTX={salle:'Salle',box:'Box / CrossFit',maison:'Maison',ext:'Extérieur',mixte:'Mixte'};
+const STSRC={plan:'Suivie du plan',externe:'Imposée / libre'};
 const INJURIES={
  fascia:{l:'Fascia plantaire',metric:'wake',mLabel:'Douleur au premier pas',avoid:['cotes','volume'],note:'La douleur au réveil est le marqueur de référence ; elle s\'estompe en général après quelques pas.'},
  achille:{l:'Tendon d\'Achille',metric:'wake',mLabel:'Raideur au réveil',avoid:['cotes','vitesse'],note:'La douleur diminue souvent en courant : c\'est la raideur du matin qui compte, pas le ressenti pendant la séance.'},
@@ -298,7 +303,7 @@ const INJURIES={
 };
 const AVOIDL={descentes:'descentes',cotes:'côtes',volume:'volume',vitesse:'vitesse',impacts:'impacts et sauts'};
 const METRICS={wake:{l:'au réveil',unit:'/10',max:10},after:{l:'pendant ou après',unit:'/10',max:10},onset:{l:'délai d\'apparition',unit:'min',max:null}};
-const DEFAULT={profile:{name:'Antoine',weight:null,hrMax:206,hrRest:50,efLow:140,efHigh:155,ceiling:160,goalName:'Ultra 80 km',goalDate:'',theme:'light',modules:{nutrition:true,strength:true,injury:true},injury:{type:'fascia',label:'',since:'',metric:'wake',avoid:['cotes','volume']},days:{cf:[2,5],ef:3,long:0},carbTarget:40,fluidTarget:500,product:{name:'Compote Andros Sport',carbs:25},injuries:'Fascia plantaire talon gauche (gate principal). Dos fragile.',blocks:[{id:'b1',name:'Bloc 1, reconstruction',start:'2026-09-14',weeks:8}],shoes:[]},daily:{},sessions:[],plan:[]};
+const DEFAULT={profile:{name:'Antoine',weight:null,hrMax:206,hrRest:50,efLow:140,efHigh:155,ceiling:160,goalName:'Ultra 80 km',goalDate:'',theme:'light',modules:{nutrition:true,strength:true,injury:true},injury:{type:'fascia',label:'',since:'',metric:'wake',avoid:['cotes','volume']},days:{cf:[2,5],ef:3,long:0},stContext:'box',carbTarget:40,fluidTarget:500,product:{name:'Compote Andros Sport',carbs:25},injuries:'Fascia plantaire talon gauche (gate principal). Dos fragile.',blocks:[{id:'b1',name:'Bloc 1, reconstruction',start:'2026-09-14',weeks:8}],shoes:[]},daily:{},sessions:[],plan:[]};
 
 let S=JSON.parse(JSON.stringify(DEFAULT));
 let view='home',curDate=todayISO(),curMon=monday(curDate),seancesMon=monday(todayISO()),curBlock=0,E=null,PE=null,recalProposal=null,saveT=null,storageOK=true,storageBackend=null,storageWarned=false,preview=null,gtext='',exportText=null,toastT=null;
@@ -632,13 +637,32 @@ function weekImpacts(days){
   let n=0;days.forEach(d=>{S.sessions.filter(s=>s.date===d).forEach(s=>{if((s.impacts||[]).length)n++;});});
   return n;
 }
+function stConflictHTML(e){
+  if(e.stDom!=='jambes'&&e.stDom!=='mixte')return '';
+  if(e.stQual!=='force'&&e.stEcc!=='forte')return '';
+  for(let i=1;i<=1;i++){
+    const d=addDays(e.date,i);
+    const p=S.plan.find(x=>x.date===d&&(x.type==='long'||x.type==='desc'));
+    if(p)return '<div class="mini" style="color:var(--sunT)">'+(TYPES[p.type]||TYPES.autre).l+' prévue demain. Jambes chargées à moins de 24 h : l\'interférence aiguë est maximale sur cette fenêtre, décale l\'une des deux si tu peux.</div>';
+  }
+  return '';
+}
 function vEditCF(e){
   const pool=movePool(),hist=benchHistory(e.wodName,e.id);
   const liftRows=(e.lifts||[]).map((l,i)=>'<div style="margin-bottom:10px"><div class="row">'+acField(l.move,'Mouvement','moves',"app.setLift("+i+",'move',this.value)")+'<button class="btn x d" onclick="app.delLift('+i+')" aria-label="supprimer">×</button></div><div class="row" style="margin-top:6px"><input type="number" inputmode="numeric" placeholder="kg" value="'+esc(l.kg)+'" onchange="app.setLift('+i+',\'kg\',this.value)"><input type="number" inputmode="numeric" placeholder="séries" value="'+esc(l.sets)+'" onchange="app.setLift('+i+',\'sets\',this.value)"><input type="number" inputmode="numeric" placeholder="reps" value="'+esc(l.reps)+'" onchange="app.setLift('+i+',\'reps\',this.value)"></div></div>'
     +liftHistHTML(l,e.date,i)).join('');
   const wodRows=(e.wod||[]).map((l,i)=>'<div class="row" style="margin-bottom:6px"><input style="flex:.6" type="number" inputmode="numeric" placeholder="reps" value="'+esc(l.reps)+'" onchange="app.setWod('+i+',\'reps\',this.value)"><div style="flex:1.6">'+acField(l.move,'Mouvement','moves',"app.setWod("+i+",'move',this.value)")+'</div><input style="flex:1" placeholder="40 kg, 20 cal…" value="'+esc(l.load)+'" onchange="app.setWod('+i+',\'load\',this.value)"><button class="btn x d" onclick="app.delWod('+i+')" aria-label="supprimer">×</button></div>').join('');
   const sc=e.scoreType||'none';
-  return '<label class="f">Nom du WOD</label>'+acField(e.wodName,'Ventoline, Fran…','wodnames',"app.setE('wodName',this.value)")
+  const quick='<div class="lbl"><span>Origine</span></div>'
+   +chips(Object.keys(STSRC),e.stSrc||'externe',v=>'app.setE(\'stSrc\',\''+v+'\')','stsrc',Object.keys(STSRC).map(k=>STSRC[k]),null,'txt')
+   +'<div class="lbl"><span>Qualité travaillée</span></div>'
+   +chips(Object.keys(STQUAL),e.stQual,v=>'app.setE(\'stQual\',\''+v+'\')','stqual',Object.keys(STQUAL).map(k=>STQUAL[k]),null,'txt')
+   +'<div class="lbl"><span>Dominante</span></div>'
+   +chips(Object.keys(STDOM),e.stDom,v=>'app.setE(\'stDom\',\''+v+'\')','stdom',Object.keys(STDOM).map(k=>STDOM[k]),null,'txt')
+   +'<div class="lbl"><span>Densité excentrique / impacts</span><small>sauts, box jumps, descentes</small></div>'
+   +chips(Object.keys(STECC),e.stEcc,v=>'app.setE(\'stEcc\',\''+v+'\')','stecc',Object.keys(STECC).map(k=>STECC[k]),null,'txt')
+   +stConflictHTML(e);
+  return quick+'<div class="lbl" style="margin-top:16px"><span>Détail de la séance</span><small>facultatif</small></div>'+'<label class="f">Nom du WOD</label>'+acField(e.wodName,'Ventoline, Fran…','wodnames',"app.setE('wodName',this.value)")
   +wodHistHTML(e)
   +'<div class="g2" style="margin-top:10px"><div><label class="f">Durée du WOD (min)</label><input type="number" inputmode="numeric" placeholder="12" value="'+esc(e.wodDur)+'" onchange="app.setE(\'wodDur\',this.value)"></div><div><label class="f">Format</label><select onchange="app.setE(\'scoreType\',this.value)">'+Object.keys(SCORES).map(k=>'<option value="'+k+'"'+(sc===k?' selected':'')+'>'+SCORES[k].l+'</option>').join('')+'</select></div></div>'
   +(sc!=='none'?'<div class="g2"><div><label class="f">Score, '+SCORES[sc].u+'</label><input type="number" inputmode="decimal" step="'+(sc==='time'?'0.1':'1')+'" placeholder="'+SCORES[sc].hint+'" value="'+esc(e.score)+'" onchange="app.setE(\'score\',this.value)"></div>'+(sc==='amrap'?'<div><label class="f">+ reps</label><input type="number" inputmode="numeric" value="'+esc(e.scoreReps)+'" onchange="app.setE(\'scoreReps\',this.value)"></div>':'<div></div>')+'</div>':'')
@@ -1142,7 +1166,7 @@ function vProfil(){
   +'<div class="lab">Ta semaine type</div>'
   +'<div class="card"><label class="f">Sortie longue</label><select onchange="app.setDay(\'long\',this.value)">'+DOWN.map((d,i)=>'<option value="'+i+'"'+(+D.long===i?' selected':'')+'>'+d+'</option>').join('')+'</select>'
    +'<label class="f">Endurance</label><select onchange="app.setDay(\'ef\',this.value)">'+DOWN.map((d,i)=>'<option value="'+i+'"'+(+D.ef===i?' selected':'')+'>'+d+'</option>').join('')+'</select>'
-   +(modOn('strength')?'<div class="lbl"><span>Renforcement</span><small>plusieurs jours possibles</small></div>'+chips([0,1,2,3,4,5,6],null,v=>'app.toggleCf('+v+')','cf',DOWS.map((d,i)=>((D.cf||[]).includes(i)?'✓ ':'')+d),null,'txt'):'')
+   +(modOn('strength')?'<div class="lbl"><span>Renforcement</span><small>plusieurs jours possibles</small></div>'+chips([0,1,2,3,4,5,6],null,v=>'app.toggleCf('+v+')','cf',DOWS.map((d,i)=>((D.cf||[]).includes(i)?'✓ ':'')+d),null,'txt')+'<div class="lbl"><span>Contexte</span><small>filtre les exercices proposés</small></div>'+chips(Object.keys(STCTX),P.stContext||'box',v=>'app.setP(\'stContext\',\''+v+'\')','stctx',Object.keys(STCTX).map(k=>STCTX[k]),null,'txt'):'')
    +(conf.length?'<div class="mini" style="color:#8a5a0a;margin-top:12px"><b>Attention :</b> '+conf.join('. ')+'. Un espacement de 48 h est préférable avant la sortie longue.</div>':'<div class="mini" style="margin-top:12px">Espacement correct entre les séances.</div>')
    +'<div class="mini">Après un changement, régénère le bloc depuis l\'onglet Séances pour replacer les séances à venir.</div></div>'
   +'<div class="lab">Ton profil</div>'
@@ -1240,8 +1264,8 @@ function csvOut(kind){
   const q=v=>{v=(v==null)?'':String(v);return /[",\n;]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;};
   if(kind==='daily'){const rows=['date,statut,douleur,boiterie,sommeil_note,sommeil_min,energie,jambes,envie,poids,fc_repos,note'];
     Object.keys(S.daily).sort().forEach(d=>{const x=S.daily[d];rows.push([d,x.status||'ok',x.pain,x.limp,x.sleep,x.sleepH!=null?Math.round(x.sleepH*60):null,x.energy,x.legs,x.mood,x.weight,x.rhr,x.note].map(q).join(','));});return rows.join('\n');}
-  const rows=['date,type,duree_min,dist_km,dplus,dminus,fc_moy,fc_max,rpe,charge,km_effort,indice_aerobie,min_ef,min_intermediaire,min_au_dessus_plafond,decorrelation_pct,descente_min,descente_fc,jambes,talon_seance,chaussure,glucides_g,liquide_ml,confort_gi,coup_de_mou_min,wod_nom,wod_duree_min,format,score,score_reps,rx,force,impacts,note'];
-  S.sessions.slice().sort(byDate).forEach(s=>{const a=ia(s),t=s.track||{};rows.push([s.date,s.type,s.dur,s.dist,s.dplus,s.dminus,s.hrAvg,s.hrMax,s.rpe,load(s)||'',isRun(s)?Math.round(kmEff(s)*10)/10:'',a?Math.round(a*100)/100:'',t.zEf!=null?Math.round(t.zEf):'',t.zBetween!=null?Math.round(t.zBetween):'',t.zAbove!=null?Math.round(t.zAbove):'',t.decoup!=null?Math.round(t.decoup*10)/10:'',t.downMin!=null?Math.round(t.downMin):'',t.downHR,s.legs,s.heelPost,shoeName(s.shoe),s.carbs,s.fluids,s.gi,s.dip,s.wodName,s.wodDur,s.scoreType&&s.scoreType!=='none'?s.scoreType:null,s.score,s.scoreReps,s.rx,(s.lifts||[]).map(l=>l.move+' '+(l.kg||'')+'kg'+(l.sets?' '+l.sets+'x'+(l.reps||''):'')).join(' | '),(s.impacts||[]).join(' | '),s.note].map(q).join(','));});
+  const rows=['date,type,duree_min,dist_km,dplus,dminus,fc_moy,fc_max,rpe,charge,km_effort,indice_aerobie,min_ef,min_intermediaire,min_au_dessus_plafond,decorrelation_pct,descente_min,descente_fc,jambes,talon_seance,chaussure,glucides_g,liquide_ml,confort_gi,coup_de_mou_min,renfo_origine,renfo_qualite,renfo_dominante,renfo_excentrique,wod_nom,wod_duree_min,format,score,score_reps,rx,force,impacts,note'];
+  S.sessions.slice().sort(byDate).forEach(s=>{const a=ia(s),t=s.track||{};rows.push([s.date,s.type,s.dur,s.dist,s.dplus,s.dminus,s.hrAvg,s.hrMax,s.rpe,load(s)||'',isRun(s)?Math.round(kmEff(s)*10)/10:'',a?Math.round(a*100)/100:'',t.zEf!=null?Math.round(t.zEf):'',t.zBetween!=null?Math.round(t.zBetween):'',t.zAbove!=null?Math.round(t.zAbove):'',t.decoup!=null?Math.round(t.decoup*10)/10:'',t.downMin!=null?Math.round(t.downMin):'',t.downHR,s.legs,s.heelPost,shoeName(s.shoe),s.carbs,s.fluids,s.gi,s.dip,s.stSrc,s.stQual,s.stDom,s.stEcc,s.wodName,s.wodDur,s.scoreType&&s.scoreType!=='none'?s.scoreType:null,s.score,s.scoreReps,s.rx,(s.lifts||[]).map(l=>l.move+' '+(l.kg||'')+'kg'+(l.sets?' '+l.sets+'x'+(l.reps||''):'')).join(' | '),(s.impacts||[]).join(' | '),s.note].map(q).join(','));});
   return rows.join('\n');
 }
 function download(name,data,mime){
@@ -1437,7 +1461,7 @@ function vSyncCard(){
   return '<div class="lab">Sauvegarde en ligne</div><div class="card">'
     +'<div class="acct-line"><div class="acct-lab">Compte</div><div class="acct-val">'+esc(auth.email||'')+'</div></div>'
     +syncLineHTML()
-    +'<div class="row" style="gap:10px;margin-top:14px"><button class="btn dark" style="flex:1" onclick="app.syncNow()">Synchroniser</button><button class="btn" onclick="app.resync(this)">Tout retélécharger</button></div>'
+    +'<div class="row" style="gap:10px;margin-top:14px;flex-direction:column"><button class="btn dark full" onclick="app.syncNow()">Synchroniser</button><button class="btn ghost full" onclick="app.resync(this)">Tout retélécharger</button></div>'
     +'<button class="btn full" onclick="app.signOut(this)">Se déconnecter</button>'
     +'<div class="mini">Se déconnecter n\'efface rien sur le serveur. Les données de ce téléphone restent en local.</div></div>';
 }
@@ -1519,10 +1543,10 @@ const app=window.app={
     save();if(k==='status'){render();return;}mark($('#view'),k,d[k]);
     if(k==='pain'){const pm=$('#painmini');if(pm)pm.outerHTML=painMiniHTML(curDate);}
     if(k==='rhr'||k==='weight'){const nm=$('#numsmini');if(nm)nm.innerHTML=numsMini(curDate);}},
-  newSession(pid){const ps=pid?S.plan.find(x=>x.id===pid):null;E={id:null,date:ps?ps.date:curDate,type:ps?ps.type:'ef',dur:ps?ps.dur:null,dist:null,dplus:ps?ps.dplus:null,dminus:null,hrAvg:null,hrMax:null,rpe:null,legs:null,heelPost:null,shoe:'',carbs:null,fluids:null,gi:null,dip:null,note:'',track:null,plannedId:ps?ps.id:null,wodName:'',wodDur:null,scoreType:'none',score:null,scoreReps:null,rx:null,wod:[],lifts:[],impacts:[]};openSheet();},
+  newSession(pid){const ps=pid?S.plan.find(x=>x.id===pid):null;E={id:null,date:ps?ps.date:curDate,type:ps?ps.type:'ef',dur:ps?ps.dur:null,dist:null,dplus:ps?ps.dplus:null,dminus:null,hrAvg:null,hrMax:null,rpe:null,legs:null,heelPost:null,shoe:'',carbs:null,fluids:null,gi:null,dip:null,note:'',track:null,plannedId:ps?ps.id:null,wodName:'',wodDur:null,scoreType:'none',score:null,scoreReps:null,rx:null,wod:[],lifts:[],impacts:[],stSrc:'externe',stQual:null,stDom:null,stEcc:null};openSheet();},
   edit(id){const s=S.sessions.find(x=>x.id===id);if(!s)return;E=JSON.parse(JSON.stringify(s));openSheet();},
   close(){E=null;$('#sheet').innerHTML='';},
-  setE(k,v){if(v===''||v==null)E[k]=null;else if(['date','note','shoe','type','wodName','rx','scoreType'].includes(k))E[k]=v;else E[k]=+v;
+  setE(k,v){if(v===''||v==null)E[k]=null;else if(['date','note','shoe','type','wodName','rx','scoreType','stSrc','stQual','stDom','stEcc'].includes(k))E[k]=v;else E[k]=+v;
     if(k==='type'||k==='track'||k==='scoreType'){openSheet();return;}
     if(k==='wodName'){const wh=$('#wodhist');if(wh)wh.outerHTML=wodHistHTML(E);}
     mark($('#sheet'),k,E[k]);const h=$('#rpeh');if(h&&k==='rpe')h.textContent=E.rpe!=null?RPEL[E.rpe]:'';const c=$('#calc');if(c)c.innerHTML=calcLine(E);},
@@ -1536,7 +1560,7 @@ const app=window.app={
     S.sessions.sort(byDate);save();app.close();render();},
   delE(btn){if(!btn.dataset.armed){btn.dataset.armed='1';btn.textContent='Confirmer la suppression';return;}
     S.sessions=S.sessions.filter(x=>x.id!==E.id);save();app.close();render();},
-  setP(k,v){const P=S.profile;if(['goalName','goalDate','injuries','theme','name'].includes(k))P[k]=v;else P[k]=(v===''?null:+v);save();render();},
+  setP(k,v){const P=S.profile;if(['goalName','goalDate','injuries','theme','name','stContext'].includes(k))P[k]=v;else P[k]=(v===''?null:+v);save();render();},
   setB(i,k,v){S.profile.blocks[i][k]=(k==='weeks')?Math.max(1,+v||1):v;save();render();},
   addB(){S.profile.blocks.push({id:uid(),name:'Bloc '+(S.profile.blocks.length+1),start:monday(todayISO()),weeks:8});save();render();},
   delB(i,btn){if(!btn.dataset.armed){btn.dataset.armed='1';btn.textContent='OK?';btn.style.fontSize='14px';return;}S.profile.blocks.splice(i,1);save();render();},
@@ -1604,7 +1628,11 @@ Object.assign(app,{
     if(!authForm.email||(authForm.password||'').length<8){flash('Mot de passe de 8 caractères minimum');return;}
     try{const d=await sbFetch('/auth/v1/signup',{method:'POST',body:JSON.stringify({email:authForm.email.trim(),password:authForm.password})});
       if(d&&d.access_token){setAuth(d);authForm.password='';flash('Compte créé');render();doSync(true);}
-      else{flash('Confirme le mail reçu, puis connecte-toi');}}
+      else{
+        const idn=d&&(d.identities||(d.user&&d.user.identities));
+        if(idn&&idn.length===0)flash('Un compte existe déjà avec cet email — connecte-toi plutôt');
+        else flash('Confirme le mail reçu, puis connecte-toi');
+      }}
     catch(e){flash('Création impossible : '+(e.message||'').slice(0,60));}
   },
   signOut(btn){if(!btn.dataset.armed){btn.dataset.armed='1';btn.textContent='Confirmer la déconnexion';return;}
