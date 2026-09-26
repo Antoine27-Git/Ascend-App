@@ -765,6 +765,37 @@ rapport à l'existant : l'auto-calcul et l'exigence de protocole sont standards,
 calibration d'une correction de pente personnelle ne l'est pas.
 → contextualise G-CAP-001, D-07 et D-12 dans SPEC.md
 
+
+## Ajouts du 23/09/2026 (D-65)
+
+### S-BLE-005 — Programme de départ des coureurs débutants (essai GRONORUN)
+Buist I., Bredeweg S.W., van Mechelen W., Lemmink K.A.P.M., Pepping G.-J., Diercks R.L.
+*No effect of a graded training program on the number of running-related injuries in
+novice runners: a randomized controlled trial.* American Journal of Sports Medicine,
+36(1):33-39, 2008. DOI 10.1177/0363546507307505. Protocole : Buist et coll., BMC
+Musculoskeletal Disorders 8:24, 2007, DOI 10.1186/1471-2474-8-24. Vérifiées le 23/09/2026.
+
+Essai randomisé, 532 débutants (aucune pratique régulière depuis 12 mois). Les deux
+programmes partent de **3 séances par semaine en marche-course** (1 min courue / 1 min
+marchée × 10), allure de conversation. Un programme gradué de 13 semaines appliquant la
+règle des 10 % n'a **pas réduit** les blessures par rapport au programme standard de 8
+semaines.
+**Niveau : faible** — un seul essai contrôlé, cible de 4 miles, population éloignée de l'ultra.
+→ fonde D-65b
+
+### S-TRA-012 — Course en descente : effets et adaptation
+Bontemps B., Vercruyssen F., Gruet M., Louis J. *Downhill Running: What Are The Effects
+and How Can We Adapt? A Narrative Review.* Sports Medicine, 50(12):2083-2110, 2020.
+DOI 10.1007/s40279-020-01355-z. Vérifiée le 23/09/2026 (déjà citée en complément de
+S-TRA-011).
+
+Quelles que soient les caractéristiques de la descente, les personnes les moins habituées
+subissent le plus de dommages musculaires ; l'exposition préalable à la descente (effet
+de la séance répétée) est la stratégie préventive la mieux appuyée.
+**Niveau : modéré** (revue narrative ; les auteurs signalent l'hétérogénéité des
+protocoles). Aucune valeur de cadence ou de durée d'exposition exploitable.
+→ fonde la règle de progression du D+ de D-65e
+
 ## Trous identifiés
 
 Sujets où l'app décide sans appui solide. À traiter en priorité quand on développera
@@ -772,7 +803,7 @@ le modèle allure-effort.
 
 | Sujet | Catégorie visée | État |
 |-------|-----------------|------|
-| Excentrique et descente en trail | TRA | extrapolation, voir S-REN-003 |
+| Excentrique et descente en trail | TRA | extrapolation, voir S-REN-003 ; **principe d'exposition progressive appuyé par S-TRA-012** (23/09/2026), sans dose chiffrée |
 | Progression de charge d'un bloc à l'autre | CHA | **partiellement comblé le 22/09/2026** : S-BLE-004 (séance isolée), S-CHA-004, S-CHA-005, S-COU-013 (volume selon la phase) ; aucune source sur la progression de la **durée** en trail |
 | Sorties longues consécutives : aucune étude contrôlée | TRA | convention de coachs uniquement (S-TRA-009), D-35 |
 | Seuils d'alerte de charge aiguë / chronique | CHA | valeurs usuelles contestées |

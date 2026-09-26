@@ -168,6 +168,10 @@ span.f{display:block;font-size:12px;color:var(--mut);margin:0 0 6px;font-weight:
 .scale .chip{min-width:0;font-size:14px;border-radius:11px;padding:0;height:44px}
 label.f{display:block;font-size:12px;color:var(--mut);margin:12px 0 6px;font-weight:600}
 input,select,textarea{width:100%;font:inherit;font-size:16px;padding:13px 14px;border:0;border-radius:14px;background:#f1f4f1;color:var(--ink)}
+.sheet input:not([type=file]),.sheet select,.sheet textarea{background:#fff;border:1.5px solid #c9d3cc;padding:12px 13px}
+.sheet input:focus,.sheet select:focus,.sheet textarea:focus{outline:none;border-color:#1f8a5b;box-shadow:0 0 0 3px rgba(31,138,91,.15)}
+.sheet input::placeholder{color:#a9b3ad}
+.sheet .lbl span{font-weight:700}
 input[type=file]{padding:9px;font-size:13px}
 textarea{min-height:64px;resize:vertical}
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:end}
@@ -288,6 +292,7 @@ const STQUAL={force:'Force max',plio:'Pliométrie',ecc:'Excentrique',mixte:'Mixt
 const STDOM={jambes:'Jambes',haut:'Haut du corps',mixte:'Mixte'};
 const STECC={faible:'Faible',moyenne:'Moyenne',forte:'Forte'};
 const STCTX={salle:'Salle',box:'Box / CrossFit',maison:'Maison',ext:'Extérieur',mixte:'Mixte'};
+const EQUIP={halteres:'Haltères',kb:'Kettlebell',barre:'Barre et disques',elastiques:'Élastiques',banc:'Box ou banc',pdc:'Poids du corps uniquement'};
 const RPRIO={A:'A · objectif clé',B:'B · préparatoire',C:'C · entraînement'};
 const STSRC={plan:'Suivie du plan',externe:'Imposée / libre'};
 const INJURIES={
@@ -302,7 +307,7 @@ const INJURIES={
 };
 const AVOIDL={descentes:'descentes',cotes:'côtes',volume:'volume',vitesse:'vitesse',impacts:'impacts et sauts'};
 const METRICS={wake:{l:'au réveil',unit:'/10',max:10},after:{l:'pendant ou après',unit:'/10',max:10},onset:{l:'délai d\'apparition',unit:'min',max:null}};
-const DEFAULT={v:2,profile:{name:'',weight:null,goalName:'',goalDate:'',goalDist:null,goalDplus:null,planStart:'',stMode:'app',theme:'light',modules:{nutrition:true,strength:true,injury:false},injury:{type:'autre',label:'',since:'',metric:'wake',avoid:[]},days:{run:[2,4,6],long:6,cf:[],time:{}},terrain:{dplusMax:null},start:{lastLong:{date:'',dur:null,dist:null,dplus:null},lastGoal:{date:'',dur:null,dist:null,dplus:null},freq4w:null,dur4w:null,freq3m:null},stContext:'box',carbTarget:40,fluidTarget:500,product:{name:'',carbs:25},races:[],shoes:[]},daily:{},sessions:[],plan:[]};
+const DEFAULT={v:2,profile:{name:'',weight:null,goalName:'',goalDate:'',goalDist:null,goalDplus:null,planStart:'',introSeen:false,stMode:null,theme:'light',modules:{nutrition:false,strength:false,injury:false},injury:{type:'autre',label:'',since:'',metric:'wake',avoid:[]},days:{run:[2,4,6],long:6,cf:[],time:{}},equip:[],terrain:{climb:null,mountain:null},start:{lastLong:{date:'',dur:null,dist:null,dplus:null},pastRaces:[],freq4w:null,dur4w:null,pauseSince:null,beforeFreq:null,beforeDur:null},stContext:null,nutriTier:null,fluidTier:null,carbStart:null,fluidTarget:null,races:[],shoes:[]},daily:{},sessions:[],plan:[]};
 /* Profil : complète avec les valeurs par défaut et retire les champs de la première version (FC, blocs). */
 function normProfile(p){
   const D=JSON.parse(JSON.stringify(DEFAULT.profile));p=Object.assign({},D,p||{});
@@ -310,8 +315,13 @@ function normProfile(p){
   const d=p.days||{};
   if(!Array.isArray(d.run)){const run=[];[d.ef,d.long].forEach(x=>{if(x!=null&&!run.includes(+x))run.push(+x);});p.days={run:run.sort(),long:d.long!=null?+d.long:D.days.long,cf:(d.cf||[]).slice(),time:{}};}
   else p.days=Object.assign({},D.days,d);
-  ['terrain','start','modules','injury','product'].forEach(k=>{p[k]=Object.assign({},D[k],p[k]||{});});
-  ['lastLong','lastGoal'].forEach(k=>{p.start[k]=Object.assign({},D.start[k],p.start[k]||{});});
+  ['terrain','start','modules','injury'].forEach(k=>{p[k]=Object.assign({},D[k],p[k]||{});});
+  delete p.product;
+  p.start.lastLong=Object.assign({},D.start.lastLong,p.start.lastLong||{});
+  if(!Array.isArray(p.start.pastRaces))p.start.pastRaces=p.start.lastGoal&&p.start.lastGoal.dur?[p.start.lastGoal]:[];
+  delete p.start.lastGoal;
+  if(!Array.isArray(p.equip))p.equip=[];
+  if(p.terrain&&p.terrain.dplusMax!==undefined&&p.terrain.climb==null)p.terrain={climb:null,mountain:null};
   if(p.onboarded==null&&p.goalDate)p.onboarded=true;
   return p;
 }
@@ -609,7 +619,7 @@ function vEditCF(e){
     +liftHistHTML(l,e.date,i)).join('');
   const wodRows=(e.wod||[]).map((l,i)=>'<div class="row" style="margin-bottom:6px"><input style="flex:.6" type="number" inputmode="numeric" placeholder="reps" value="'+esc(l.reps)+'" onchange="app.setWod('+i+',\'reps\',this.value)"><div style="flex:1.6">'+acField(l.move,'Mouvement','moves',"app.setWod("+i+",'move',this.value)")+'</div><input style="flex:1" placeholder="40 kg, 20 cal…" value="'+esc(l.load)+'" onchange="app.setWod('+i+',\'load\',this.value)"><button class="btn x d" onclick="app.delWod('+i+')" aria-label="supprimer">×</button></div>').join('');
   const sc=e.scoreType||'none';
-  const photo='<label class="f" style="margin-top:0">Photo du WOD (écran, tableau, carnet)</label>'+'<input type="file" accept="image/*" capture="environment" onchange="app.attachWodPhoto(this)">'+(e.aiBusy?'<div class="mini">Lecture de la photo en cours…</div>':'')+(e.aiNote?'<div class="mini" style="margin-top:6px">'+(e.aiConf==='basse'&&e.aiFresh?'<b style="color:var(--sunT)">Lecture peu sûre</b> — vérifie les champs ci-dessous. ':'')+esc(e.aiNote)+' <a href="#" style="color:var(--mut)" onclick="app.setE(\'aiNote\',null);return false">retirer</a></div>':'');
+  const photo='<label class="f" style="margin-top:0">Photo de la séance (écran, tableau, appli, carnet)</label>'+'<input type="file" accept="image/*" capture="environment" onchange="app.attachWodPhoto(this)">'+(e.aiBusy?'<div class="mini">Lecture de la séance en cours…</div>':'')+(e.aiNote?'<div class="mini" style="margin-top:6px">'+(e.aiConf==='basse'&&e.aiFresh?'<b style="color:var(--sunT)">Lecture peu sûre</b> — vérifie les champs ci-dessous. ':'')+esc(e.aiNote)+' <a href="#" style="color:var(--mut)" onclick="app.setE(\'aiNote\',null);return false">retirer</a></div>':'');
   const quick=photo+'<div class="lbl"><span>Origine</span></div>'
    +chips(Object.keys(STSRC),e.stSrc||'externe',v=>'app.setE(\'stSrc\',\''+v+'\')','stSrc',Object.keys(STSRC).map(k=>STSRC[k]),null,'txt')
    +'<div class="lbl"><span>Qualité travaillée</span></div>'
@@ -995,14 +1005,20 @@ function build(inp){
   const N=Math.round((D(raceMon)-D(start))/(7*DAY))+1;
   if(N<6){G(2,'Moins de 6 semaines avant ton objectif : pas de préparation à construire.');return out;}
   /* durée de course et tranche */
-  const St=P.start||{},okG=!St.noGoal&&St.lastGoal&&St.lastGoal.dur&&St.lastGoal.dist,okL=!St.noLong&&St.lastLong&&St.lastLong.dur&&St.lastLong.dist,refC=okG?St.lastGoal:(okL?St.lastLong:null);
+  const St=P.start||{},okL=St.lastLong&&St.lastLong.dur&&St.lastLong.dist;
+  const races=(St.pastRaces||[]).filter(r=>r&&r.dur&&r.dist);
+  let refC=null;
+  if(races.length){const keT=(P.goalDist||0)+(P.goalDplus||0)/100;
+    refC=races.reduce((best,r)=>{const ke=r.dist+(r.dplus||0)/100,d=Math.abs(Math.log(Math.max(ke,0.1)/Math.max(keT,0.1)));
+      return (best==null||d<best.d)?{r,d}:best;},null).r;}
+  else if(okL)refC=St.lastLong;
   const dMain=dureeCourse(P.goalDist,P.goalDplus,refC);
   let trName=dMain?tranche_de(dMain):'8-20h';
   if(trName==='<4h'){trName='4-8h';G(1,'Objectif estimé à moins de 4 h : le gabarit court n\'est pas encore écrit, j\'applique celui des 4–8 h.');}
   if(!dMain)G(1,'Distance de l\'objectif manquante : tranche 8–20 h par défaut.');
   if(!refC)G(1,'Aucune course ou sortie de référence déclarée : la durée de ton objectif est estimée à 7 km-effort par heure.');
   const tr=TRANCHES[trName],c=Calendrier(N,tr);
-  out.info={N,start,trName,dureeMain:dMain,cal:c};
+  out.info={N,start,trName,dureeMain:dMain,cal:c,refUsed:races.length>1?refC:undefined};
   if(N<tr.min)G(1,'Préparation de '+N+' semaines pour la tranche '+trName+' : en dessous du minimum de '+tr.min+' semaines (D-21). Le plan est compressé.');
   if(run.length<3)G(1,'Moins de 3 jours de course par semaine : peu de place pour construire le volume d\'un ultra.');
   const n=run.length,longDow=run.includes(+Dy.long)?+Dy.long:run[run.length-1],offSL=off(longDow);
@@ -1028,10 +1044,13 @@ function build(inp){
   before.forEach(s=>hist.push({j:jourOf(s.date),d:s.dur||0,t:'reel'}));
   let vol0=null;
   if(before.length){const wk=sessions.filter(s=>isRun(s)&&s.date<start&&s.date>=add(start,-28));vol0=wk.reduce((a,s)=>a+(s.dur||0),0)/60/4;}
-  else if(St.freq4w&&St.dur4w){vol0=St.freq4w*St.dur4w/60;
+  else if(St.freq4w){vol0=St.freq4w*(St.dur4w||0)/60;
     const lr=PART.fond*vol0*60,aut=(vol0*60-lr)/Math.max(1,n-1);
     for(let w=-3;w<=0;w++){autresDows.forEach(d=>hist.push({j:(w-1)*7+off(d),d:aut,t:'declare'}));hist.push({j:(w-1)*7+offSL,d:lr,t:'declare'});}}
-  if(!St.noLong&&St.lastLong&&St.lastLong.date&&St.lastLong.dur&&St.lastLong.date<start)hist.push({j:jourOf(St.lastLong.date),d:+St.lastLong.dur,t:'declare'});
+  else if(!St.freq4w&&St.pauseSince&&St.pauseSince!=='gt6'&&St.beforeFreq){
+    const f=St.pauseSince==='lt2'?0.65:0.50;vol0=St.beforeFreq*(St.beforeDur||0)/60*f;
+    G(1,'Reprise après une interruption : volume de départ réduit à '+Math.round(f*100)+' % de ton volume d\'avant (H-40, extrapolation).');}
+  if(St.lastLong&&St.lastLong.date&&St.lastLong.dur&&St.lastLong.date<start)hist.push({j:jourOf(St.lastLong.date),d:+St.lastLong.dur,t:'declare'});
   vol0=vol0||0;
   let vDep=vol0;if(vol0*60<Math.min(3,n)*PLANCHER-EPS)vDep=Math.min(3,n)*PLANCHER/60;   /* D-65b */
   const m=Modele(vDep,tr.plafond_pic);
@@ -1043,8 +1062,9 @@ function build(inp){
   let dens0=recent.length?recent.reduce((a,s)=>a+s.dplus,0)/(recent.reduce((a,s)=>a+s.dur,0)/60):(!St.noLong&&St.lastLong&&St.lastLong.dplus&&St.lastLong.dur?St.lastLong.dplus/(St.lastLong.dur/60):150);
   const densC=P.goalDplus&&dMain?P.goalDplus/(dMain/60):dens0;
   const dens=w=>w>=c.fond?densC:dens0+(densC-dens0)*w/Math.max(1,c.fond);
-  const dmax=(P.terrain||{}).dplusMax||null;
-  if(dmax&&densC*tr.cible[0]/60>dmax*1.05)G(1,'Ton terrain permet '+dmax+' m de D+ par sortie ; ta sortie clé en demande environ '+Math.round(densC*tr.cible[0]/60/50)*50+' m. Prévois un terrain plus pentu pour le bloc.');
+  const terr=P.terrain||{};
+  if(terr.climb&&['lt1','1-5'].includes(terr.climb)&&terr.mountain==='jamais')
+    G(1,'Tes montées les plus longues sont courtes et tu n\'as pas d\'accès régulier à la montagne : le bloc spécifique s\'appuiera sur des répétitions de côte, et quelques sorties en moyenne montagne pendant le bloc feront une vraie différence.');
   if(tcap(longDow)&&tcap(longDow)<tr.cible[0])G(1,'Temps disponible le '+['dimanche','lundi','mardi','mercredi','jeudi','vendredi','samedi'][longDow]+' : '+tcap(longDow)+' min, pour une sortie clé de '+tr.cible[0]+' min au moins.');
 
   let derniereRel=0,charges=0,clesFaites=0,derniereCle=-99,lrPrec=null,arretC=0,ref=null,ref2=null,volsCharge=[],dernierExec=null,reprise=null,maxAvant=0,maxSec=0;
@@ -1149,7 +1169,7 @@ function build(inp){
     /* D+ */
     const dz=dens(w);
     rx.forEach(x=>{if(x.kind==='race'||x.kind==='goal')return;const f=x.kind==='long'||x.kind==='cle'?1:x.kind==='qual'?0.8:0.5;
-      let dp=Math.round(dz*f*x.dur/60/50)*50;if(dmax)dp=Math.min(dp,dmax);x.dplus=dp>=50?dp:null;});
+      let dp=Math.round(dz*f*x.dur/60/50)*50;x.dplus=dp>=50?dp:null;});
     /* exécution : réel pour le passé, prescrit ensuite */
     const volPrevu=rx.filter(x=>x.kind!=='race'&&x.kind!=='goal').reduce((a,x)=>a+x.dur,0)/60;
     let r=null,saut=0,exec=volPrevu,execH=rx.map(x=>({j:x.jour,d:x.dur,t:x.kind}));
@@ -1215,7 +1235,7 @@ function findPlan(id){return allPlan().find(x=>x.id===id);}
 const SOUS={F1:'Reprise',F2:'Base aérobie',F3:'Endurance musculaire',F4:'Intensité en côte',bloc:'Bloc spécifique',pic:'Pic',affutage:'Affûtage'};
 function weekOf(date){const E=eng();return E.weeks.find(k=>date>=k.mon&&date<addDays(k.mon,7))||null;}
 function weekLabel(date){const E=eng(),k=weekOf(date);if(!k)return '';return 'S'+k.w+'/'+E.info.N+' · '+(SOUS[k.sous||k.phase]||k.phase)+(k.type==='relache'?' · allégée':k.type==='aff_sec'?' · affûtage intermédiaire':k.type==='recup_sec'?' · récupération':k.type==='arret'?' · interruption':'');}
-function gardeHTML(){const G=eng().garde;if(!G.reasons.length)return '';
+function gardeHTML(){const G=eng().garde;if(!G.reasons.length||!S.profile.onboarded)return '';
   return '<div class="card"><div class="vd"><span class="vdot" style="background:'+['var(--mint)','var(--sun)','var(--coral)'][G.level]+'"></span><div><div class="t">'+['Plan réaliste','Plan à surveiller','Plan à revoir'][G.level]+'</div>'+G.reasons.map(r=>'<div class="x" style="margin-top:4px">'+esc(r)+'</div>').join('')+'</div></div></div>';}
 /* ---------- nouvelles vues ---------- */
 const HDCLASS={ef:'ef',long:'sl',qual:'desc',race:'sl',desc:'desc',cf:'cf',autre:'autre'};
@@ -1224,11 +1244,21 @@ function sessHeader(ps,sub){
   const T=TYPES[ps.type]||TYPES.autre;
   return '<div class="hd '+(HDCLASS[ps.type]||'cf')+'"><span class="code">'+planCode(ps)+'</span><div class="k">'+sub+'</div><div class="t">'+(ps.type==='desc'?'Descentes':T.l)+'</div></div>';
 }
+/* Nutrition à l'effort : cible en g/h, progression de 6 g/h par semaine où une sortie longue enregistrée
+   a été bien tolérée (confort digestif ≥ 3/5), gelée sinon. Plafonds : 60 g/h sous 2 h, 90 g/h au-delà
+   (Sports Med 2023, revue gut-training ; repères publiés 30–60 et jusqu'à 90 g/h). */
+function nutriTarget(date){
+  const P=S.profile,base=P.carbStart!=null?P.carbStart:35;
+  const longs=S.sessions.filter(s=>isRun(s)&&s.date<date&&(s.type==='long'||(s.dur||0)>=90)&&s.carbs!=null).sort(byDate);
+  const weeks={};longs.forEach(s=>{const w=monday(s.date);weeks[w]=weeks[w]||[];weeks[w].push(s);});
+  let t=base,held=false;
+  Object.keys(weeks).sort().forEach(w=>{const bad=weeks[w].some(s=>s.gi!=null&&s.gi<=2);if(bad)held=true;else{t+=6;held=false;}});
+  return {t:Math.min(90,t),held};
+}
 function nutriFor(ps){
   if(!modOn('nutrition')||!isRun(ps)||!ps.dur||ps.dur<60)return null;
-  const P=S.profile,h=ps.dur/60,carbs=P.carbTarget||40,fluid=P.fluidTarget||500,pr=P.product||{name:'Compote',carbs:25};
-  const n=pr.none?null:Math.max(1,Math.round(carbs*h/(pr.carbs||25)));
-  return {perH:carbs,total:Math.round(carbs*h),fluid:Math.round(fluid*h),n,pr};
+  const P=S.profile,h=ps.dur/60,nt=nutriTarget(ps.date),carbs=Math.min(nt.t,ps.dur<120?60:90),fluid=P.fluidTarget||600;
+  return {perH:carbs,total:Math.round(carbs*h),fluid:Math.round(fluid*h),held:nt.held};
 }
 function vHome(){
   const P=S.profile,today=todayISO(),mon0=monday(today),w=weekStats(mon0);
@@ -1239,7 +1269,7 @@ function vHome(){
   const pct=goalMin?Math.min(1,doneMin/goalMin):0,C=2*Math.PI*54;
   const next=allPlan().filter(p=>p.date>=today&&planStatus(p).k!=='done'&&planStatus(p).k!=='off').sort(byDate)[0];
   const d=S.daily[today]||{},pain=d.pain,sl=rollAvg('sleepH',today,7);
-  return '<header><div class="brand">Ascend<span>Reach your peak</span></div><h1>Bonjour'+(P.name?' '+esc(P.name.split(' ')[0]):'')+'</h1><div class="sub">'+(weekLabel(today)||'Semaine '+isoWeek(today))+'</div></header><main>'+gardeHTML()
+  return '<header><div class="brand">Ascend<span>Reach your peak</span></div><h1>'+(P.name?'Bienvenue, '+esc(P.name.split(' ')[0]):'Bienvenue')+'</h1><div class="sub">'+(weekLabel(today)||'Semaine '+isoWeek(today))+'</div></header><main>'+gardeHTML()
   +'<div class="card"><div class="ring">'
    +'<div class="side"><b>'+doneN+'<span style="color:var(--mut);font-weight:600">/'+planned.length+'</span></b><span>séances</span></div>'
    +'<svg width="132" height="132" viewBox="0 0 132 132"><circle cx="66" cy="66" r="54" fill="none" stroke="#eef1ee" stroke-width="13"/>'
@@ -1318,7 +1348,7 @@ function vSessDetail(){
   +(adj&&adj.note?'<div class="card"><div class="vd"><span class="vdot" style="background:var(--sun)"></span><div><div class="t" style="font-size:17px">Ajustement proposé</div><div class="x">'+(adj.dur!=null&&adj.dur!==ps.dur?'<b>'+ps.dur+' → '+adj.dur+' min</b> · ':'')+adj.note+'</div></div></div></div>':'')
   +(stp?'<div class="card"><h2>Déroulé</h2><ul class="steps">'+stp.steps.map(s=>s.rep?'<li><span class="d">'+s.rep+' ×</span><span class="n">'+s.on.n+' '+s.on.sec+' s<span class="hr">'+esc(s.off.n||'récupération')+', '+s.off.sec+' s</span></span></li>':'<li><span class="d">'+s.min+' min</span><span class="n">'+s.n.replace('Echauffement','Échauffement').replace('Retour calme','Retour au calme')+'<span class="hr">'+(s.lo||s.hi?'FC '+(s.lo?s.lo+' à ':'sous ')+s.hi:'allure libre')+'</span></span></li>').join('')+'</ul></div>':'')
   +(ps.why?'<div class="card"><h2>Pourquoi cette séance</h2><div class="mini" style="font-size:14px;margin-top:6px">'+esc(ps.why)+'</div>'+(ps.note&&ps.gen?'<div class="mini" style="margin-top:6px"><b>'+esc(ps.note)+'</b></div>':'')+'</div>':'')
-  +(nu?'<div class="card"><h2>Nutrition<span>module activé</span></h2><div class="row" style="margin-top:12px"><div class="ic nut">'+mi('nutrition')+'</div><div><b style="font-size:15.5px">'+(nu.n?nu.n+' × '+esc(nu.pr.name):nu.total+' g de glucides')+'</b><div class="mini" style="margin-top:2px">≈ '+nu.total+' g de glucides · '+nu.fluid+' ml d\'eau</div></div></div></div>':'')
+  +(nu?'<div class="card"><h2>Nutrition<span>module activé</span></h2><div class="row" style="margin-top:12px"><div class="ic nut">'+mi('nutrition')+'</div><div><b style="font-size:15.5px">'+nu.perH+' g de glucides par heure</b><div class="mini" style="margin-top:2px">≈ '+nu.total+' g au total · '+nu.fluid+' ml de boisson</div><div class="mini" style="margin-top:6px">'+(nu.held?'Cible maintenue : un trouble digestif a été noté sur ta dernière sortie longue.':'Note tes glucides et ton confort digestif en enregistrant la séance : la cible monte d\'environ 6 g/h par semaine si tout se passe bien.')+'</div></div></div></div>':'')
   +(avoid.length?'<div class="card"><div class="row" style="align-items:flex-start"><div class="ic inj">'+mi('injury')+'</div><div><b style="font-size:15.5px">'+esc(inj.l)+'</b><div class="mini" style="margin-top:2px">Cette séance touche à '+avoid.map(a=>AVOIDL[a]).join(' et ')+'. Réduis plutôt que d\'annuler, et surveille '+painLabel().toLowerCase()+' demain.</div></div></div></div>':'')
   +(stp?'<div class="card" style="background:var(--deep);color:#fff"><h2 style="color:#fff">Le conseil</h2><div style="font-size:14.5px;line-height:1.5;opacity:.88;margin-top:8px">'+stp.notes.map(esc).join('<br><br>')+'</div></div>':'')
   +(ps.gen?'':'<label class="f">Note</label><input value="'+esc(ps.note)+'" onchange="app.setPE(\'note\',this.value)">')
@@ -1334,21 +1364,26 @@ function openPlanSheet(toTop){const p=document.querySelector('.sheet .in'),st=to
   $('#sheet').innerHTML='<div class="sheet" onclick="if(event.target===this)app.close()"><div class="in" style="background:var(--bg);padding-bottom:calc(28px + env(safe-area-inset-bottom))">'+vSessDetail()+'</div></div>';
   const c=document.querySelector('.sheet .in');if(c)c.scrollTop=st;}
 /* ---------- Profil : fenêtres de saisie (brouillon PD, Annuler / Enregistrer) ---------- */
-let PD=null,PSEC=null,PFLOW=null,PSTEP=0,PERR=[],PPREV=null;
+let PD=null,PSEC=null,PFLOW=null,PSTEP=0,PERR=[],PPREV=null,PBACK=null,PDATEPICK=false;
 const PR=()=>PD||S.profile;                              /* profil édité : brouillon si une fenêtre est ouverte */
-function commitP(){if(PD)openProfSheet();else{save();render();}}
+function commitP(rerender){if(PD){if(rerender!==false)openProfSheet();}else{save();render();}}
+
 const STRUCT=['goal','week','start','terrain','strength','injury'];  /* sections qui changent le plan */
 const SECT={
-  ident:{t:'Toi',h:'Ton prénom personnalise l\'app. Ton poids sert à doser la charge des montées lestées et tes besoins en glucides.'},
-  goal:{t:'Ton objectif',h:'Le plan se construit à rebours depuis cette date. Distance et D+ permettent d\'estimer ta durée de course, qui fixe la durée du bloc spécifique et de l\'affûtage. Les courses intermédiaires en priorité A ou B ont un affûtage et une récupération ; en C, ce sont des courses-entraînement.'},
+  ident:{t:'Toi',h:'Ton prénom personnalise l\'app. Ton poids sert à doser la charge des montées lestées.'},
+  goal:{t:'Ton objectif',h:'Le plan se construit à rebours depuis cette date. Distance et D+ permettent d\'estimer ta durée de course, qui fixe la durée du bloc spécifique et de l\'affûtage.'},
   week:{t:'Ta semaine type',h:'Coche tous les jours où tu peux courir, même si tu ne cours pas tous ces jours-là : le plan choisit les séances selon ta phase. La sortie longue tombe sur son jour. Le temps disponible plafonne la séance de ce jour (vide = pas de limite).'},
-  start:{t:'Ton point de départ',h:'Ce que tu déclares ici sert à démarrer le plan : volume de départ, plus longue sortie récente (règle des 30 jours), durée estimée de ta course. Tes séances enregistrées le remplacent au fil des semaines.'},
-  terrain:{t:'Ton terrain',h:'Le D+ que tu peux faire sur une sortie depuis chez toi. Le plan plafonne le D+ de chaque séance à cette valeur et te prévient si ta sortie clé en demande plus.'},
-  modules:{t:'Tes modules',h:'Active ce qui te sert. Tu pourras changer d\'avis à tout moment dans Profil.'},
-  strength:{t:'Renforcement',h:'Choisis tes jours : l\'app ne les déplace jamais. En mode prescrit, elle propose le contenu de la phase ; en mode libre, elle compte simplement ta séance dans ta charge.'},
-  nutrition:{t:'Nutrition à l\'effort',h:'Une cible de glucides et de boisson est ajoutée aux séances de plus d\'une heure, calculée avec ton produit de référence.'},
+  start:{t:'Ton point de départ',h:'Pas besoin d\'être précis : ces réponses servent à caler tes toutes premières semaines. Dès que tu enregistres tes séances, l\'app se base sur elles à la place, en 4 à 6 semaines.'},
+  terrain:{t:'Ton terrain',h:'Il n\'y a pas de plafond de dénivelé : quelques allers-retours sur une petite bosse font autant de D+ qu\'une vraie montagne. Ce qui compte, c\'est la longueur de tes montées, pour savoir comment travailler la spécificité de ta course.'},
+  modules:{t:'Tes modules',h:'Active ce qui te sert. Touche le (i) sous chaque module pour voir ce qu\'il apporte et sur quoi c\'est basé, avant de choisir. Tu pourras changer d\'avis à tout moment dans Profil.'},
+  strength:{t:'Renforcement',h:'Choisis tes jours : l\'app ne les déplace jamais.'},
+  nutrition:{t:'Nutrition à l\'effort',h:'Ce que tu manges pendant l\'effort s\'entraîne comme le reste.'},
   injury:{t:'Blessure en cours',h:'L\'app suit une blessure, elle ne la diagnostique pas. Le suivi quotidien de la douleur n\'apparaît que lorsque ce module est actif.'},
-  recap:{t:'C\'est prêt',h:'Tout est renseigné. Tu peux démarrer ton plan maintenant ; il suivra tes séances à partir d\'aujourd\'hui.'}};
+  recap:{t:'C\'est prêt',h:'Touche une rubrique pour la corriger. Tout est bon ? Choisis quand démarrer.'}};
+const MODINFO={
+  strength:{t:'Pourquoi le renforcement',b:'La force maximale (charges lourdes, peu de répétitions) améliore l\'économie de course : à allure égale, tu dépenses moins d\'énergie. C\'est l\'un des effets les mieux établis du renforcement chez les coureurs d\'endurance. En trail, les jambes tiennent souvent moins longtemps que le cœur et les poumons sur une descente ou une fin d\'ultra : un travail régulier les rend plus résistantes.'},
+  nutrition:{t:'Pourquoi entraîner la digestion',b:'Un intestin qui n\'a jamais reçu de glucides pendant l\'effort tolère mal d\'en recevoir le jour de la course. Des études montrent qu\'exposer régulièrement le système digestif aux glucides à l\'entraînement réduit les troubles digestifs et améliore la tolérance à des apports plus élevés, utile sur les efforts de plusieurs heures.'},
+  injury:{t:'À quoi sert ce module',b:'Il ne remplace pas un avis médical. Il adapte le suivi quotidien (douleur au réveil) et les alertes du plan à ta gêne actuelle, et retire les mouvements à éviter du renforcement.'}};
 function renfoMsg(p){
   const n=((p.days||{}).cf||[]).length,libre=p.stMode==='libre';
   if(n>=2)return libre?'Tu fais '+n+' séances par semaine : l\'app ne propose plus de côtes courtes. Assure-toi que ton renforcement travaille la force des jambes (squat, fentes, step-up, mollets) et le gainage : ils protègent tes descentes et ta posture en fin de course.'
@@ -1363,26 +1398,34 @@ function secMissing(sec,p){
     (p.races||[]).forEach((r,i)=>{if(vide(r.name)||vide(r.date)||vide(r.dist)||vide(r.dplus))m.push('course intermédiaire n°'+(i+1)+' incomplète');});}
   if(sec==='week'){if(!(D.run||[]).length)m.push('au moins un jour de course');else if(!(D.run||[]).includes(+D.long))m.push('un jour de sortie longue parmi tes jours de course');}
   if(sec==='start'){
-    if(vide(St.freq4w))m.push('sorties par semaine sur 4 semaines');else if(+St.freq4w>0&&vide(St.dur4w))m.push('durée habituelle');
-    if(vide(St.freq3m))m.push('sorties par semaine sur 3 mois');
-    if(!St.noLong&&['date','dur','dist','dplus'].some(k=>vide((St.lastLong||{})[k])))m.push('dernière sortie longue (ou « aucune »)');
-    if(!St.noGoal&&['date','dur','dist','dplus'].some(k=>vide((St.lastGoal||{})[k])))m.push('dernière course (ou « aucune »)');}
-  if(sec==='terrain'&&vide((p.terrain||{}).dplusMax))m.push('D+ faisable');
-  if(sec==='nutrition'){if(vide(p.carbTarget))m.push('glucides par heure');if(vide(p.fluidTarget))m.push('boisson par heure');
-    if(!(p.product||{}).none&&(vide((p.product||{}).name)||vide((p.product||{}).carbs)))m.push('produit de référence (ou « aucun »)');}
+    if(vide(St.freq4w))m.push('sorties par semaine ces 4 dernières semaines');
+    if(St.freq4w>0&&vide(St.dur4w))m.push('durée habituelle');
+    if(St.freq4w===0){if(vide(St.pauseSince))m.push('depuis quand tu ne cours plus');
+      else if(St.pauseSince!=='gt6'){if(vide(St.beforeFreq))m.push('sorties par semaine avant l\'arrêt');if(St.beforeFreq>0&&vide(St.beforeDur))m.push('durée habituelle avant l\'arrêt');}}
+    if(!St.noLong&&['date','dur','dist','dplus'].some(k=>vide((St.lastLong||{})[k])))m.push('ta plus longue sortie récente (ou « aucune »)');
+    if(!St.noGoal){if(!(St.pastRaces||[]).length)m.push('au moins une course passée (ou « jamais »)');
+      (St.pastRaces||[]).forEach((r,i)=>{if(vide(r.date)||vide(r.dur)||vide(r.dist)||vide(r.dplus))m.push('course passée n°'+(i+1)+' incomplète');});} }
+  if(sec==='terrain'){if(vide((p.terrain||{}).climb))m.push('longueur de montée');if(vide((p.terrain||{}).mountain))m.push('accès à la montagne');}
+  if(sec==='strength'){if(vide(p.stMode))m.push('mode (prescrit ou libre)');if(vide(p.stContext))m.push('lieu');
+    if(['maison','ext','mixte'].includes(p.stContext)&&!(p.equip||[]).length)m.push('matériel disponible');}
+  if(sec==='nutrition'){if(vide(p.nutriTier))m.push('apport de départ');if(vide(p.fluidTier))m.push('boisson');}
   if(sec==='injury'&&vide((p.injury||{}).since))m.push('date de début');
   return m;
 }
 function flowSteps(p){const M=p.modules||{};return ['ident','goal','week','start','terrain','modules'].concat(M.strength?['strength']:[],M.nutrition?['nutrition']:[],M.injury?['injury']:[],['recap']);}
+const hmField=(label,curMin,onH,onM)=>'<div><label class="f">'+label+'</label><div class="row" style="gap:8px;align-items:center">'
+  +'<input type="number" inputmode="numeric" placeholder="0" style="width:64px;text-align:center" value="'+(curMin!=null&&curMin>0?Math.floor(curMin/60):'')+'" onchange="'+onH+'"><span class="mini">h</span>'
+  +'<input type="number" inputmode="numeric" placeholder="0" style="width:64px;text-align:center" value="'+(curMin!=null&&curMin>0?curMin%60:'')+'" onchange="'+onM+'"><span class="mini">min</span></div></div>';
 function secForm(sec){
   const P=PD,St=P.start||{},D=P.days||{},inj=(function(){const I=P.injury||{};return Object.assign({},INJURIES[I.type]||INJURIES.autre,I,{avoid:I.avoid||[]});})();
-  const inp=(key,label,type,step)=>'<div><label class="f">'+label+'</label><input type="'+(type||'number')+'"'+(!type||type==='number'?' inputmode="decimal"':'')+(step?' step="'+step+'"':'')+' value="'+esc(P[key])+'" onchange="app.setP(\''+key+'\',this.value)"></div>';
-  if(sec==='ident')return '<div class="g2">'+inp('name','Prénom','text')+inp('weight','Poids (kg)','number','0.1')+'</div>';
-  if(sec==='goal')return '<div class="g2">'+inp('goalName','Course','text')+inp('goalDate','Date','date')+'</div><div class="g2">'+inp('goalDist','Distance (km)')+inp('goalDplus','D+ (m)')+'</div>'
+  const inp=(key,label,type,step,ph)=>'<div><label class="f">'+label+'</label><input type="'+(type||'number')+'"'+(!type||type==='number'?' inputmode="decimal"':'')+(step?' step="'+step+'"':'')+(ph?' placeholder="'+ph+'"':'')+' value="'+esc(P[key])+'" onchange="app.setP(\''+key+'\',this.value)"></div>';
+  if(sec==='ident')return '<div class="g2">'+inp('name','Prénom','text')+inp('weight','Poids (kg)','number','0.1','ex. 78')+'</div>';
+  if(sec==='goal')return '<div class="g2">'+inp('goalName','Course','text')+inp('goalDate','Date','date')+'</div><div class="g2">'+inp('goalDist','Distance (km)',null,null,'ex. 80')+inp('goalDplus','D+ (m)',null,null,'ex. 4500')+'</div>'
     +'<div class="lbl"><span>Courses intermédiaires</span><small>facultatif</small></div>'
     +(P.races||[]).map((r,i)=>'<div style="margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid var(--line)"><div class="row" style="gap:8px"><input style="flex:1" placeholder="Nom de la course" value="'+esc(r.name)+'" onchange="app.setR('+i+',\'name\',this.value)"><button class="btn x d" onclick="app.delR('+i+',this)">×</button></div>'
       +'<div class="row" style="margin-top:8px;gap:8px"><div style="flex:1.3"><label class="f" style="margin-top:0">Date</label><input type="date" value="'+(r.date||'')+'" onchange="app.setR('+i+',\'date\',this.value)"></div><div style="flex:.8"><label class="f" style="margin-top:0">Distance (km)</label><input type="number" inputmode="decimal" value="'+(r.dist==null?'':r.dist)+'" onchange="app.setR('+i+',\'dist\',this.value)"></div><div style="flex:.8"><label class="f" style="margin-top:0">D+ (m)</label><input type="number" inputmode="numeric" value="'+(r.dplus==null?'':r.dplus)+'" onchange="app.setR('+i+',\'dplus\',this.value)"></div></div>'
-      +'<div class="lbl"><span>Priorité</span></div>'+chips(Object.keys(RPRIO),r.prio||'B',v=>'app.setR('+i+',\'prio\',\''+v+'\')','rprio'+i,Object.keys(RPRIO).map(k=>RPRIO[k]),null,'txt')+'</div>').join('')
+      +'<div class="lbl"><span>Statut</span></div><div class="mini" style="margin-top:-4px;margin-bottom:6px">'+(r.prio==='C'?'Une course que tu fais pour t\'entraîner : elle remplace ta sortie longue de la semaine concernée, sans affûtage ni récupération.':'Une course que tu veux réussir : l\'app allège les jours d\'avant et te laisse récupérer après.')+'</div>'
+      +chips(['B','C'],r.prio||'B',v=>'app.setR('+i+',\'prio\',\''+v+'\')','rprio'+i,['Objectif intermédiaire','Course d\'entraînement'],null,'txt')+'</div>').join('')
     +'<button class="btn full" onclick="app.addR()">Ajouter une course intermédiaire</button>';
   if(sec==='week'){const conf=dayConflicts(P);
     return '<div class="lbl" style="margin-top:0"><span>Jours où tu peux courir</span></div>'
@@ -1392,22 +1435,54 @@ function secForm(sec){
       +'<div class="g3">'+[1,2,3,4,5,6,0].filter(i=>D.run.includes(i)).map(i=>'<div><label class="f" style="margin-top:0">'+DOWS[i]+'</label><input type="number" inputmode="numeric" value="'+esc((D.time||{})[i])+'" onchange="app.setTime('+i+',this.value)"></div>').join('')+'</div>':'')
     +((D.run||[]).length&&(D.run||[]).length<3?'<div class="mini" style="color:#8a5a0a;margin-top:10px">Moins de 3 jours : peu de place pour construire le volume d\'un ultra.</div>':'')
     +(conf.length?'<div class="mini" style="color:#8a5a0a;margin-top:10px"><b>Attention :</b> '+conf.join('. ')+'.</div>':'');}
-  if(sec==='start'){const f=(g,k,label,type)=>'<div><label class="f">'+label+'</label><input type="'+(type||'number')+'"'+(type?'':' inputmode="decimal"')+' value="'+esc(g?(St[g]||{})[k]:St[k])+'" onchange="app.setStart(\''+(g||'')+'\',\''+k+'\',this.value)"></div>';
-    const grp=(g,flag,t,none)=>'<div class="lbl"><span>'+t+'</span></div>'+chips([0,1],St[flag]?1:0,v=>'app.setStartFlag(\''+flag+'\','+v+')',flag,['Je la renseigne',none],null,'txt')
-      +(St[flag]?'':'<div class="g2">'+f(g,'date','Date','date')+f(g,'dur','Durée (min)')+'</div><div class="g2">'+f(g,'dist','Distance (km)')+f(g,'dplus','D+ (m)')+'</div>');
-    return '<div class="lbl" style="margin-top:0"><span>Régularité récente</span><small>0 si tu ne courais pas</small></div><div class="g2">'+f('','freq4w','Sorties / sem., 4 dernières sem.')+f('','dur4w','Durée habituelle (min)')+'</div><div class="g2">'+f('','freq3m','Sorties / sem., 3 derniers mois')+'<div></div></div>'
-      +grp('lastLong','noLong','Ta plus longue sortie récente','Aucune depuis longtemps')+grp('lastGoal','noGoal','Ta dernière course','Je n\'en ai jamais fait');}
-  if(sec==='terrain')return '<label class="f" style="margin-top:0">D+ faisable sur une sortie depuis chez toi (m)</label><input type="number" inputmode="numeric" value="'+esc((P.terrain||{}).dplusMax)+'" onchange="app.setTerrain(\'dplusMax\',this.value)">';
-  if(sec==='modules'){const M=P.modules||{},row=(k,t,d)=>'<div class="line" style="cursor:pointer" onclick="app.toggleMod(\''+k+'\')"><span><b>'+t+'</b><br><small style="color:var(--mut)">'+d+'</small></span><span class="pill'+(M[k]?'':' grey')+'">'+(M[k]?'Activé':'Désactivé')+'</span></div>';
-    return row('strength','Renforcement','Tes séances de force ou de CrossFit, prescrites ou libres.')+row('nutrition','Nutrition à l\'effort','Glucides et boisson sur les séances longues.')+row('injury','Blessure en cours','Suivi quotidien de la douleur et alertes adaptées.');}
-  if(sec==='strength')return '<div class="lbl" style="margin-top:0"><span>Contenu</span></div>'+chips(['app','libre'],P.stMode||'app',v=>'app.setP(\'stMode\',\''+v+'\')','stmode',['Prescrit par l\'app','Je gère moi-même'],null,'txt')
+  if(sec==='start'){
+    const freqTiers=[0,1,2.5,4],freqLab=['Aucune','1 fois','2 à 3 fois','4 fois ou plus'];
+    const pauseTiers=['lt2','2-6','gt6'],pauseLab=['Moins de 2 mois','2 à 6 mois','Plus de 6 mois'];
+    let out='<div class="lbl" style="margin-top:0"><span>Ces 4 dernières semaines, tu as couru...</span></div>'
+      +chips(freqTiers,St.freq4w,v=>'app.setStartC(\'\',\'freq4w\',\''+v+'\')','freq4w',freqLab,null,'txt row4');
+    if(St.freq4w>0)out+=hmField('Durée habituelle par sortie',St.dur4w,'app.setStartH(\'\',\'dur4w\',\'h\',this.value)','app.setStartH(\'\',\'dur4w\',\'min\',this.value)');
+    if(St.freq4w===0){
+      out+='<div class="lbl"><span>Tu ne cours plus régulièrement depuis...</span></div>'+chips(pauseTiers,St.pauseSince,v=>'app.setPause(\''+v+'\')','pause',pauseLab,null,'txt');
+      if(St.pauseSince&&St.pauseSince!=='gt6'){
+        out+='<div class="lbl"><span>Avant l\'arrêt, tu courais...</span></div>'+chips(freqTiers,St.beforeFreq,v=>'app.setStartC(\'\',\'beforeFreq\',\''+v+'\')','beforeFreq',freqLab,null,'txt row4');
+        if(St.beforeFreq>0)out+=hmField('Durée habituelle par sortie, avant l\'arrêt',St.beforeDur,'app.setStartH(\'\',\'beforeDur\',\'h\',this.value)','app.setStartH(\'\',\'beforeDur\',\'min\',this.value)');
+      }
+    }
+    out+='<div class="lbl"><span>Ta plus longue sortie récente</span></div>'+chips([0,1],St.noLong?1:0,v=>'app.setStartFlag(\'noLong\','+v+')','noLong',['Je la renseigne','Aucune depuis longtemps'],null,'txt');
+    if(!St.noLong)out+='<div class="g2">'+ (function(){const f=(k,l)=>'<div><label class="f">'+l+'</label><input type="'+(k==='date'?'date':'number')+'"'+(k==='date'?'':' inputmode="decimal"')+' value="'+esc((St.lastLong||{})[k])+'" onchange="app.setStart(\'lastLong\',\''+k+'\',this.value)"></div>';return f('date','Date')+f('dist','Distance (km)');})()+'</div>'
+      +'<div class="g2">'+ (function(){const f=(k,l)=>'<div><label class="f">'+l+'</label><input type="number" inputmode="decimal" value="'+esc((St.lastLong||{}).dplus)+'" onchange="app.setStart(\'lastLong\',\'dplus\',this.value)"></div>';return f('dplus','D+ (m)');})()+'<div></div></div>'
+      +hmField('Durée',(St.lastLong||{}).dur,'app.setStartH(\'lastLong\',\'dur\',\'h\',this.value)','app.setStartH(\'lastLong\',\'dur\',\'min\',this.value)');
+    out+='<div class="lbl"><span>Tes courses passées</span><small>la plus proche de ton objectif compte le plus</small></div>'+chips([0,1],St.noGoal?1:0,v=>'app.setStartFlag(\'noGoal\','+v+')','noGoal',['J\'en ai fait','Je n\'en ai jamais fait'],null,'txt');
+    if(!St.noGoal)out+=(St.pastRaces||[]).map((r,i)=>'<div style="margin:10px 0;padding-bottom:12px;border-bottom:1px solid var(--line)"><div class="row sbtw"><b class="mini">Course '+(i+1)+'</b><button class="btn x d" onclick="app.delRace('+i+',this)">×</button></div>'
+      +'<div class="g2"><div><label class="f">Date</label><input type="date" value="'+(r.date||'')+'" onchange="app.setRace('+i+',\'date\',this.value)"></div><div><label class="f">Distance (km)</label><input type="number" inputmode="decimal" value="'+(r.dist==null?'':r.dist)+'" onchange="app.setRace('+i+',\'dist\',this.value)"></div></div>'
+      +'<div class="g2"><div><label class="f">D+ (m)</label><input type="number" inputmode="numeric" value="'+(r.dplus==null?'':r.dplus)+'" onchange="app.setRace('+i+',\'dplus\',this.value)"></div><div></div></div>'
+      +hmField('Durée',r.dur,'app.setRaceH('+i+',\'h\',this.value)','app.setRaceH('+i+',\'min\',this.value)')+'</div>').join('')
+      +'<button class="btn full" onclick="app.addRace()">Ajouter une course passée</button>';
+    return out;
+  }
+  if(sec==='terrain'){const T=P.terrain||{};
+    return '<div class="lbl" style="margin-top:0"><span>Ta plus longue montée continue accessible depuis chez toi</span></div>'
+    +chips(['lt1','1-5','5-15','15-30','gt30'],T.climb,v=>'app.setTerrain(\'climb\',\''+v+'\')','climb',['Moins d\'1 min','1 à 5 min','5 à 15 min','15 à 30 min','Plus de 30 min'],null,'txt')
+    +'<div class="lbl"><span>Ton accès à la montagne</span></div>'
+    +chips(['jamais','occasionnel','reg'],T.mountain,v=>'app.setTerrain(\'mountain\',\''+v+'\')','mountain',['Jamais','Occasionnel','Régulier le week-end'],null,'txt');}
+  if(sec==='modules'){const M=P.modules||{},row=(k,t,d,icon)=>'<div class="mod" style="flex-direction:column"><div style="display:flex;gap:14px;align-items:flex-start;width:100%">'
+      +'<div class="ic '+icon+'">'+mi(icon==='cf'?'fitness':icon==='nut'?'nutrition':'injury')+'</div>'
+      +'<div style="flex:1"><span class="pill'+(M[k]?'':' grey')+'" onclick="app.toggleMod(\''+k+'\')" style="cursor:pointer">'+(M[k]?'Activé':'Désactivé')+'</span><div class="t" style="margin-top:6px">'+t+'</div><div class="x">'+d+'</div>'
+      +'<details style="margin-top:8px"><summary class="mini" style="cursor:pointer;color:var(--acc)">ⓘ Pourquoi ce module ? (touche pour en savoir plus)</summary><div class="mini" style="margin-top:6px">'+MODINFO[k].b+'</div></details></div></div></div>';
+    return row('strength','Renforcement','Force ou CrossFit, prescrit par l\'app ou géré par toi.','cf')
+      +row('nutrition','Nutrition à l\'effort','Une cible de glucides et de boisson, qui progresse avec tes sorties longues.','nut')
+      +row('injury','Blessure en cours','Suivi quotidien de la douleur et alertes adaptées.','inj');}
+  if(sec==='strength')return '<div class="lbl" style="margin-top:0"><span>Contenu</span></div>'
+    +chips(['app','libre'],P.stMode,v=>'app.setP(\'stMode\',\''+v+'\')','stmode',['Prescrit par l\'app','Je gère moi-même'],null,'txt')
+    +'<div class="mini" style="margin-top:6px">'+(P.stMode==='libre'?'Tu choisis toi-même le contenu (tes séances de CrossFit par exemple) ; l\'app compte simplement la séance dans ta charge et te prévient si elle tombe trop près de ta sortie longue.':P.stMode==='app'?'L\'app te propose le contenu adapté à ta phase (force maximale d\'abord, puis entretien, puis pliométrie en fin de préparation) selon ton lieu et ton matériel.':'Choisis un mode pour voir ce que ça change.')+'</div>'
     +'<div class="lbl"><span>Jours</span><small>plusieurs jours possibles</small></div>'+chips([1,2,3,4,5,6,0],null,v=>'app.toggleCf('+v+')','cf',[1,2,3,4,5,6,0].map(i=>((D.cf||[]).includes(i)?'✓ ':'')+DOWS[i]),null,'txt')
-    +'<div class="mini" style="margin-top:10px">'+renfoMsg(P)+'</div>'
-    +'<div class="lbl"><span>Lieu</span><small>filtre les exercices proposés</small></div>'+chips(Object.keys(STCTX),P.stContext||'box',v=>'app.setP(\'stContext\',\''+v+'\')','stContext',Object.keys(STCTX).map(k=>STCTX[k]),null,'txt')
+    +((D.cf||[]).length?'<div class="mini" style="margin-top:10px">'+renfoMsg(P)+'</div>':'')
+    +'<div class="lbl"><span>Lieu</span></div>'+chips(Object.keys(STCTX),P.stContext,v=>'app.setP(\'stContext\',\''+v+'\')','stContext',Object.keys(STCTX).map(k=>STCTX[k]),null,'txt')
+    +(['maison','ext','mixte'].includes(P.stContext)?'<div class="lbl"><span>Matériel disponible</span><small>plusieurs choix possibles</small></div>'+chips(Object.keys(EQUIP),null,v=>'app.toggleEquip(\''+v+'\')','equip',Object.keys(EQUIP).map(k=>((P.equip||[]).includes(k)?'✓ ':'')+EQUIP[k]),null,'txt'):'')
     +(function(){const c=dayConflicts(P).filter(x=>x.startsWith('Renforcement'));return c.length?'<div class="mini" style="color:#8a5a0a;margin-top:10px">'+c.join('. ')+(P.stMode==='libre'?' : évite les jambes lourdes ce jour-là.':' : ce jour-là, le contenu passe au haut du corps et au gainage.')+'</div>':'';})();
-  if(sec==='nutrition')return '<div class="g2"><div><label class="f" style="margin-top:0">Glucides (g/h)</label><input type="number" inputmode="numeric" value="'+esc(P.carbTarget)+'" onchange="app.setP(\'carbTarget\',this.value)"></div><div><label class="f" style="margin-top:0">Boisson (ml/h)</label><input type="number" inputmode="numeric" value="'+esc(P.fluidTarget)+'" onchange="app.setP(\'fluidTarget\',this.value)"></div></div>'
-    +'<div class="lbl"><span>Produit de référence</span></div>'+chips([0,1],(P.product||{}).none?1:0,v=>'app.setProduct(\'none\','+v+')','prodnone',['Je le renseigne','Aucun produit fixe'],null,'txt')
-    +((P.product||{}).none?'':'<div class="g2"><div><label class="f">Nom</label><input value="'+esc((P.product||{}).name)+'" onchange="app.setProduct(\'name\',this.value)"></div><div><label class="f">Glucides / unité (g)</label><input type="number" inputmode="numeric" value="'+esc((P.product||{}).carbs)+'" onchange="app.setProduct(\'carbs\',this.value)"></div></div>');
+  if(sec==='nutrition')return '<div class="mini" style="margin-top:0">Repères publiés : 30 à 60 g de glucides par heure jusqu\'à 2 h d\'effort, jusqu\'à 90 g/h au-delà, à condition d\'y habituer son intestin. L\'app fait progresser ta cible d\'environ 6 g/h chaque semaine sur tes sorties longues enregistrées, et la fige dès que tu notes un trouble digestif.</div>'
+    +'<div class="lbl"><span>Aujourd\'hui, sur une sortie longue, tu manges...</span></div>'+chips(['none','mid','high'],P.nutriTier,v=>'app.setNutriTier(\''+v+'\')','nutritier',['Presque rien','30 à 40 g/h','50 g/h ou plus'],null,'txt')
+    +'<div class="lbl"><span>Ta transpiration</span></div>'+chips(['low','mid','high'],P.fluidTier,v=>'app.setFluidTier(\''+v+'\')','fluidtier',['Plutôt faible','Moyenne','Abondante'],null,'txt');
   if(sec==='injury')return '<label class="f" style="margin-top:0">Type</label><select onchange="app.setInjury(\'type\',this.value)">'+Object.keys(INJURIES).map(k2=>'<option value="'+k2+'"'+(inj.type===k2?' selected':'')+'>'+INJURIES[k2].l+'</option>').join('')+'</select>'
      +(inj.type==='autre'?'<label class="f">Nom</label><input value="'+esc((P.injury||{}).label)+'" onchange="app.setInjury(\'label\',this.value)">'
         +'<label class="f">Indicateur suivi</label><select onchange="app.setInjury(\'metric\',this.value)">'+Object.keys(METRICS).map(m=>'<option value="'+m+'"'+(inj.metric===m?' selected':'')+'>'+METRICS[m].l+'</option>').join('')+'</select>'
@@ -1415,18 +1490,29 @@ function secForm(sec){
      +'<label class="f">Depuis</label><input type="date" value="'+esc((P.injury||{}).since)+'" onchange="app.setInjury(\'since\',this.value)">'
      +(inj.note?'<div class="mini" style="margin-top:10px">'+inj.note+'</div>':'')
      +(inj.stop?'<div class="mini" style="color:#cf2f28;margin-top:8px">Aucune séance de course n\'est proposée tant que ce type est actif.</div>':'');
-  if(sec==='recap')return ['goal','week','start','terrain'].map(k=>'<div class="line"><span>'+SECT[k].t+'</span><span class="v" style="text-align:right;white-space:normal">'+secSummary(k,P)+'</span></div>').join('');
+  if(sec==='recap'){
+    const cards=['ident','goal','week','start','terrain'].concat(P.modules&&P.modules.strength?['strength']:[],P.modules&&P.modules.nutrition?['nutrition']:[],P.modules&&P.modules.injury?['injury']:[]);
+    return cards.map(k=>'<div class="card" style="margin-bottom:10px;cursor:pointer" onclick="app.editSec(\''+k+'\',\'recap\')"><div class="row sbtw" style="align-items:flex-start"><div style="flex:1"><div class="mini" style="text-transform:uppercase;letter-spacing:.03em;color:var(--mut)">'+SECT[k].t+'</div><div style="margin-top:4px;font-size:15px;line-height:1.4">'+secSummary(k,P)+'</div></div><span class="mini" style="color:var(--acc);white-space:nowrap;margin-left:8px">Modifier ›</span></div></div>').join('');
+  }
   return '';
 }
+function pauseInfo(v){return {lt2:'moins de 2 mois',['2-6']:'2 à 6 mois',gt6:'plus de 6 mois'}[v]||'';}
 function secSummary(sec,p){
   const St=p.start||{},D=p.days||{},dj=a=>[1,2,3,4,5,6,0].filter(i=>(a||[]).includes(i)).map(i=>DOWS[i]).join(', ');
+  const fh=m=>m?Math.floor(m/60)+'h'+String(m%60).padStart(2,'0'):'–';
   if(sec==='ident')return (p.name?esc(p.name):'–')+(p.weight?' · '+p.weight+' kg':'');
-  if(sec==='goal')return p.goalDate?esc(p.goalName||'Objectif')+' · '+fmtS(p.goalDate)+' · '+(p.goalDist||'?')+' km, '+(p.goalDplus!=null?p.goalDplus:'?')+' m D+'+((p.races||[]).length?'<br>'+(p.races||[]).map(r=>esc(r.name||'Course')+' ('+(r.prio||'B')+') '+(r.date?fmtS(r.date):'')).join('<br>'):''):'À renseigner';
+  if(sec==='goal')return p.goalDate?esc(p.goalName||'Objectif')+' · '+fmtS(p.goalDate)+' · '+(p.goalDist||'?')+' km, '+(p.goalDplus!=null?p.goalDplus:'?')+' m D+'+((p.races||[]).length?'<br>'+(p.races||[]).map(r=>esc(r.name||'Course')+' ('+(r.prio==='C'?'entraînement':'objectif')+') '+(r.date?fmtS(r.date):'')).join('<br>'):''):'À renseigner';
   if(sec==='week')return (D.run||[]).length?dj(D.run)+'<br>sortie longue le '+DOWN[+D.long].toLowerCase()+(Object.keys(D.time||{}).length?'<br>'+Object.keys(D.time).map(k=>DOWS[k]+' '+D.time[k]+' min').join(', '):''):'À renseigner';
-  if(sec==='start')return St.freq4w==null?'À renseigner':St.freq4w+' sortie(s)/sem. × '+(St.dur4w||0)+' min'+(St.noLong?'':St.lastLong&&St.lastLong.dur?'<br>plus longue : '+St.lastLong.dur+' min, '+(St.lastLong.dplus||0)+' m D+':'')+(St.noGoal?'':St.lastGoal&&St.lastGoal.dur?'<br>dernière course : '+St.lastGoal.dist+' km en '+Math.floor(St.lastGoal.dur/60)+'h'+String(St.lastGoal.dur%60).padStart(2,'0'):'');
-  if(sec==='terrain')return (p.terrain||{}).dplusMax!=null?(p.terrain.dplusMax+' m par sortie'):'À renseigner';
-  if(sec==='strength')return ((D.cf||[]).length?dj(D.cf):'aucun jour')+' · '+(p.stMode==='libre'?'je gère moi-même':'prescrit par l\'app')+' · '+(STCTX[p.stContext]||'');
-  if(sec==='nutrition')return (p.carbTarget||0)+' g/h · '+(p.fluidTarget||0)+' ml/h'+((p.product||{}).none?'':' · '+esc((p.product||{}).name||''));
+  if(sec==='start'){if(St.freq4w==null)return 'À renseigner';
+    const FL={0:'Aucune sortie ces 4 dernières semaines',1:'1 sortie par semaine',2.5:'2 à 3 sorties par semaine',4:'4 sorties ou plus par semaine'};
+    let s=(FL[St.freq4w]||St.freq4w+' sorties par semaine')+(St.freq4w>0?', '+fh(St.dur4w)+' en moyenne':'')+(St.freq4w===0&&St.pauseSince?'<br>arrêt depuis '+pauseInfo(St.pauseSince):'');
+    if(!St.noLong&&St.lastLong&&St.lastLong.dur)s+='<br>plus longue sortie : '+fh(St.lastLong.dur)+', '+(St.lastLong.dplus||0)+' m D+';
+    if(!St.noGoal&&(St.pastRaces||[]).length)s+='<br>'+St.pastRaces.filter(r=>r.dur).map(r=>r.dist+' km en '+fh(r.dur)).join(', ');
+    return s;}
+  if(sec==='terrain'){const T=p.terrain||{};if(!T.climb)return 'À renseigner';
+    return {lt1:'Moins d\'1 min',['1-5']:'1 à 5 min',['5-15']:'5 à 15 min',['15-30']:'15 à 30 min',gt30:'Plus de 30 min'}[T.climb]+' de montée · accès montagne '+({jamais:'jamais',occasionnel:'occasionnel',reg:'régulier'}[T.mountain]||'?');}
+  if(sec==='strength')return p.stMode?((D.cf||[]).length?dj(D.cf):'aucun jour')+' · '+(p.stMode==='libre'?'je gère moi-même':'prescrit par l\'app')+' · '+(STCTX[p.stContext]||''):'À renseigner';
+  if(sec==='nutrition')return p.nutriTier?{none:'Presque rien',mid:'30 à 40 g/h',high:'50 g/h ou plus'}[p.nutriTier]+' au départ · '+{low:'transpiration faible',mid:'moyenne',high:'abondante'}[p.fluidTier]:'À renseigner';
   if(sec==='injury'){const I=p.injury||{};return (INJURIES[I.type]||INJURIES.autre).l+(I.since?' · depuis le '+fmtS(I.since):'');}
   return '';
 }
@@ -1439,20 +1525,42 @@ function planDiff(pA,pB){
   A.forEach(x=>{if(!B.find(z=>key(z)===key(x)))out.push({d:x.date,t:'− '+lab(x)});});
   return out.sort((a,b)=>a.d<b.d?-1:a.d>b.d?1:0).map(o=>o.t);
 }
+const CLOSERS=['Ton pic n\'est pas si loin : à toi de jouer.','La montagne attendra, mais pas la première séance.','Chaque semaine cochée te rapproche de la ligne d\'arrivée.'];
+function todaySuggestion(p){
+  const St=p.start||{};if(St.freq4w==null)return null;
+  const dur=St.freq4w>0?Math.min(45,Math.max(25,Math.round((St.dur4w||30)*0.8))):25;
+  return 'D\'ici là, tu peux courir '+dur+' min en endurance facile aujourd\'hui si l\'envie est là.';
+}
+function vIntroSheet(){
+  return '<div class="pad"><h1 style="font-size:26px;margin-top:0">Bienvenue</h1>'
+  +'<div class="mini" style="font-size:15px;line-height:1.5">Cette app construit ton plan à partir de tes données, pas d\'un programme tout fait. Elle part d\'une doctrine d\'entraînement trail assumée (base aérobie, endurance musculaire en montée, spécificité en fin de préparation, répartition facile/dur), puis l\'ajuste à ton objectif, ton terrain, ton passé de coureur et tes ressentis semaine après semaine.</div>'
+  +'<div class="mini" style="font-size:15px;line-height:1.5;margin-top:12px">Un garde-fou de sécurité borne toujours la progression : jamais une séance plus de 10 % plus longue que ta plus longue des 30 derniers jours, jamais de séance dure la veille ou le lendemain de ta sortie longue. Et quand ta sortie clé n\'est plus atteignable avec le volume que tu tolères, l\'app te le dit plutôt que de te le cacher.</div>'
+  +'<div class="mini" style="font-size:15px;line-height:1.5;margin-top:12px"><b>Le parcours qui suit prend quelques minutes.</b> Plus tes réponses sont justes, plus tes premières semaines seront adaptées à toi — mais rien n\'est figé : tes séances réelles prennent le relais en 4 à 6 semaines.</div>'
+  +'<button class="btn dark full" style="margin-top:20px" onclick="app.beginOnboarding()">Commencer</button></div>';
+}
+function vRecapButtons(){
+  const P=PD,sug=todaySuggestion(P);
+  return '<div class="lab">Quand démarrer ?</div>'
+  +'<button class="btn dark full" onclick="app.secFinish(\'today\')">Démarrer aujourd\'hui</button>'
+  +'<button class="btn full" style="margin-top:8px" onclick="app.toggleDatePick()">Choisir une date</button>'
+  +(PDATEPICK?'<input type="date" style="margin-top:8px" min="'+todayISO()+'" onchange="app.secFinish(this.value)">':'')
+  +'<button class="btn ghost full" style="margin-top:8px" onclick="app.secFinish(null)">Enregistrer sans démarrer</button>'
+  +(sug?'<div class="mini" style="margin-top:12px;text-align:center">'+sug+'</div>':'');
+}
 function openProfSheet(){
   const p=document.querySelector('.sheet .in'),st=p?p.scrollTop:0,sec=PSEC,T=SECT[sec];
-  const n=PFLOW?PFLOW.length:0,last=PFLOW&&PSTEP===n-1;
+  const n=PFLOW?PFLOW.length:0,last=PFLOW&&sec==='recap';
   let body;
-  if(PPREV)body='<h2 style="margin-top:0">Ce que ça change</h2><div class="mini" style="margin-top:4px">Sur les 14 prochains jours :</div>'+PPREV.map(x=>'<div class="mini" style="margin-top:4px">'+esc(x)+'</div>').join('')
+  if(PPREV)body='<h2 style="margin-top:0">Ce que ça change</h2><div class="mini" style="margin-top:4px">Sur les 14 prochains jours :</div>'+(PPREV.length?PPREV.map(x=>'<div class="mini" style="margin-top:4px">'+esc(x)+'</div>').join(''):'<div class="mini" style="margin-top:4px">Rien ne change dans les 14 prochains jours.</div>')
     +'<div class="row" style="gap:10px;margin-top:18px"><button class="btn" style="flex:1" onclick="app.secBack()">Revenir</button><button class="btn dark" style="flex:1" onclick="app.secConfirm()">Confirmer</button></div>';
   else body=(PFLOW?'<div class="mini" style="margin-top:0">Étape '+(PSTEP+1)+' sur '+n+'</div>':'')
     +'<h1 style="font-size:24px;margin:6px 0 4px">'+T.t+'</h1><div class="mini" style="font-size:14px;margin-bottom:14px">'+T.h+'</div>'
     +secForm(sec)
     +(PERR.length?'<div class="mini" style="color:#cf2f28;margin-top:14px">À compléter : '+PERR.join(', ')+'.</div>':'')
-    +'<div class="row" style="gap:10px;margin-top:18px">'
+    +(last?vRecapButtons():'<div class="row" style="gap:10px;margin-top:18px">'
       +(PFLOW?(PSTEP>0?'<button class="btn" style="flex:1" onclick="app.secPrev()">Précédent</button>':'<button class="btn" style="flex:1" onclick="app.secCancel()">Plus tard</button>'):'<button class="btn" style="flex:1" onclick="app.secCancel()">Annuler</button>')
-      +(last?'<button class="btn dark" style="flex:1" onclick="app.secFinish(1)">Démarrer mon plan</button>':'<button class="btn dark" style="flex:1" onclick="app.secSave()">'+(PFLOW?'Suivant':'Enregistrer')+'</button>')
-    +'</div>'+(last?'<button class="btn ghost full" style="margin-top:8px" onclick="app.secFinish(0)">Démarrer plus tard</button>':'');
+      +'<button class="btn dark" style="flex:1" onclick="app.secSave()">'+(PFLOW?'Suivant':'Enregistrer')+'</button>'
+    +'</div>');
   $('#sheet').innerHTML='<div class="sheet"><div class="in"><div class="pad">'+body+'</div></div></div>';
   const c=document.querySelector('.sheet .in');if(c)c.scrollTop=st;
 }
@@ -1460,7 +1568,7 @@ function openProfSheet(){
 function vProfil(){
   const P=S.profile,M=P.modules||{};
   const card=(sec,title,extra)=>'<div class="lab">'+title+'</div><div class="card"><div class="row sbtw" style="align-items:flex-start;gap:12px"><div style="flex:1;min-width:0;font-size:15px;line-height:1.45">'+secSummary(sec,P)+'</div><button class="btn s" onclick="app.editSec(\''+sec+'\')">Modifier</button></div>'+(extra||'')+'</div>';
-  const mod=(k,icon,bg,title,desc)=>'<div class="mod" style="flex-direction:column"><div style="display:flex;gap:14px;align-items:flex-start;width:100%"><div class="ic '+bg+'">'+icon+'</div><div style="flex:1"><span class="pill'+(M[k]?'':' grey')+'" onclick="app.toggleMod(\''+k+'\')" style="cursor:pointer">'+(M[k]?'Activé':'Désactivé')+'</span><div class="t" style="margin-top:6px">'+title+'</div><div class="x">'+desc+'</div></div></div>'
+  const mod=(k,icon,bg,title,desc)=>'<div class="mod" style="flex-direction:column"><div style="display:flex;gap:14px;align-items:flex-start;width:100%"><div class="ic '+bg+'">'+icon+'</div><div style="flex:1"><span class="pill'+(M[k]?'':' grey')+'" onclick="app.toggleMod(\''+k+'\')" style="cursor:pointer">'+(M[k]?'Activé':'Désactivé')+'</span><div class="t" style="margin-top:6px">'+title+'</div><div class="x">'+desc+'</div><details style="margin-top:8px"><summary class="mini" style="cursor:pointer;color:var(--acc)">ⓘ Pourquoi ce module ?</summary><div class="mini" style="margin-top:6px">'+MODINFO[k].b+'</div></details></div></div>'
     +(M[k]?'<div class="row sbtw" style="align-items:flex-start;gap:12px;margin-top:12px;width:100%"><div style="flex:1;min-width:0;font-size:14px;line-height:1.45">'+secSummary(k,P)+(k==='strength'?'<div class="mini" style="margin-top:6px">'+renfoMsg(P)+'</div>':'')+'</div><button class="btn s" onclick="app.editSec(\''+k+'\')">Modifier</button></div>':'')+'</div>';
   const inc=['ident','goal','week','start','terrain'].filter(k=>secMissing(k,P).length);
   return '<header><h1>Profil</h1><div class="sub">Tes réglages construisent ton plan</div></header><main>'
@@ -1587,7 +1695,7 @@ const SUP_KEY='sb_publishable_5qLDw7ejnLhBo5IT5nC5Nw_TWo-7CBn';
 const SYNC_KEY='trail-sync-v1', AUTH_KEY='trail-auth-v1';
 let sync={shadow:{},ts:{},del:{},lastPull:null};
 let auth=null, syncState='off', syncMsg='', syncBusy=false, syncTimer=null, syncAt=null;
-let authForm={email:'',password:''};
+let authForm={email:'',password:'',name:''};
 
 function lsGet(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d;}catch(e){return d;}}
 function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
@@ -1738,21 +1846,30 @@ function syncLineHTML(){
   const col={ok:'#2f8a5b',error:'#b8412e',offline:'#9a6207',auth:'#b8412e'}[syncState]||'';
   return '<div class="mini" id="syncline"'+(col?' style="color:'+col+'"':'')+'>'+esc(syncState==='error'?syncMsg:txt)+(syncState!=='offline'&&n?' · '+n+' en attente':'')+'</div>';
 }
-function vSyncCard(){
-  if(!auth)return '<div class="lab">Sauvegarde en ligne</div><div class="card">'
-    +'<div class="mini" style="margin-top:0">Tes données restent sur ce téléphone tant que tu n\'es pas connecté. Une fois connecté, elles sont sauvegardées sur le serveur et retrouvées sur n\'importe quel appareil, même après un nettoyage du navigateur.</div>'
+function authFormHTML(intro){
+  return (intro?'<div class="mini" style="margin-top:0">'+intro+'</div>':'')
+    +'<label class="f"'+(intro?'':' style="margin-top:0"')+'>Prénom</label><input value="'+esc(authForm.name!=null?authForm.name:(S.profile.name||''))+'" onchange="app.setAuthF(\'name\',this.value)">'
     +'<label class="f">Email</label><input type="email" autocomplete="username" value="'+esc(authForm.email)+'" onchange="app.setAuthF(\'email\',this.value)">'
     +'<label class="f">Mot de passe</label><div class="row" style="gap:8px"><input id="authpw" style="flex:1" type="password" autocomplete="current-password" value="'+esc(authForm.password)+'" onchange="app.setAuthF(\'password\',this.value)"><button type="button" class="pw-eye" aria-label="Afficher le mot de passe" onclick="app.togglePw(\'authpw\',this)">'+mi('eye')+'</button></div>'
-    +'<div class="row" style="gap:10px;margin-top:14px"><button class="btn dark" style="flex:1" onclick="app.signIn()">Se connecter</button><button class="btn ghost" style="flex:1" onclick="app.signUp()">Créer le compte</button></div>'
-    +'<div class="mini" style="margin-top:10px"><a href="#" onclick="event.preventDefault();app.forgotPw()">Mot de passe oublié ?</a></div>'
-    +syncLineHTML()+'</div>';
+    +'<div class="row" style="gap:10px;margin-top:14px"><button class="btn ghost" style="flex:1" onclick="app.signIn()">Se connecter</button><button class="btn dark" style="flex:1" onclick="app.signUp()">Créer le compte</button></div>'
+    +'<div class="mini" style="margin-top:10px"><a href="#" onclick="event.preventDefault();app.forgotPw()">Mot de passe oublié ?</a></div>';
+}
+function vGate(){
+  return '<main style="padding-top:18px"><div class="card">'
+    +'<div class="brand" style="margin-bottom:14px">Ascend<span>Reach your peak</span></div>'
+    +'<h1 style="font-size:22px;margin:0 0 4px">Ton compte</h1>'
+    +authFormHTML('Un compte garde ton plan et tes séances en sécurité, et te permet de les retrouver sur un autre téléphone. Ton prénom personnalise l\'app.')
+    +syncLineHTML()+'</div></main>';
+}
+function vSyncCard(){
+  if(!auth)return '<div class="lab">Compte</div><div class="card">'+authFormHTML(null)+syncLineHTML()+'</div>';
   return '<div class="lab">Sauvegarde en ligne</div><div class="card">'
     +'<div class="acct-line"><div class="acct-lab">Compte</div><div class="acct-val">'+esc(auth.email||'')+'</div></div>'
     +syncLineHTML()
     +'<button class="btn dark full" style="margin-top:14px" onclick="app.syncNow()">Synchroniser</button>'
-    +'<button class="btn full" style="margin-top:10px" onclick="app.signOut(this)">Se déconnecter</button>'
+    +'<button class="btn full" style="margin-top:10px" onclick="app.switchUser(this)">Changer d\'utilisateur</button>'
     +'<details style="margin-top:10px"><summary>Dépannage</summary><button class="btn ghost full" style="margin-top:10px" onclick="app.resync(this)">Tout retélécharger</button><div class="mini">Reprend l\'intégralité des données depuis le serveur, en ignorant le repère de dernière synchro. Utile seulement si cet appareil semble incomplet.</div></details>'
-    +'<div class="mini">Se déconnecter n\'efface rien sur le serveur. Les données de ce téléphone restent en local.</div></div>';
+    +'<div class="mini">« Changer d\'utilisateur » sauvegarde ce compte puis repart de zéro sur ce téléphone pour en connecter un autre.</div></div>';
 }
 
 const SPLASH_T0=Date.now();
@@ -1787,7 +1904,7 @@ async function boot(){
   render();
   hideSplash();
   if(recovery)return;
-  if(!S.profile.onboarded&&!S.profile.goalDate)setTimeout(()=>app.startOnboarding(),400);
+  if(auth&&!S.profile.onboarded&&!S.profile.goalDate)setTimeout(()=>S.profile.introSeen?app.startOnboarding():app.showIntro(),400);
   if(auth){setSync('busy','');doSync(false);}
   window.addEventListener('online',()=>{if(auth)doSync(false);});
   setInterval(()=>{if(auth&&navigator.onLine&&pendingCount())doSync(false);},120000);
@@ -1809,6 +1926,7 @@ function render(){
   ENG=null;
   applyTheme();
   if(recovery){$('#tabs').innerHTML='';$('#view').innerHTML=vRecovery();return;}
+  if(!auth){$('#tabs').innerHTML='';$('#view').innerHTML=vGate();return;}
   const P=S.profile;
   const TABI={home:'home',jour:'calendar',seances:'run',suivi:'monitoring',profil:'person'};
   $('#tabs').innerHTML=[['home','Accueil'],['jour','Jour'],['seances','Séances'],['suivi','Suivi'],['profil','Profil']].map(x=>'<button class="'+(view===x[0]?'on':'')+'" onclick="app.go(\''+x[0]+'\')" aria-label="'+x[1]+'">'+mi(TABI[x[0]])+x[1]+'</button>').join('');
@@ -1873,8 +1991,8 @@ const app=window.app={
     S.sessions.sort(byDate);save();app.close();render();},
   delE(btn){if(!btn.dataset.armed){btn.dataset.armed='1';btn.textContent='Confirmer la suppression';return;}
     S.sessions=S.sessions.filter(x=>x.id!==E.id);save();app.close();render();},
-  setP(k,v){const P=PR();if(['goalName','goalDate','theme','name','stContext','stMode'].includes(k))P[k]=v;else P[k]=(v===''?null:+v);commitP();},
-  setR(i,k,v){const r=PR().races[i];if(k==='dist'||k==='dplus')r[k]=(v===''?null:+v);else r[k]=v;commitP();},
+  setP(k,v){const P=PR();const CH=['stMode','stContext','theme'];if(['goalName','goalDate','theme','name','stContext','stMode'].includes(k))P[k]=v;else P[k]=(v===''?null:+v);commitP(CH.includes(k));},
+  setR(i,k,v){const r=PR().races[i];if(k==='dist'||k==='dplus')r[k]=(v===''?null:+v);else r[k]=v;commitP(k==='prio');},
   addR(){PR().races.push({id:uid(),name:'',date:'',dist:null,dplus:null,prio:'B'});commitP();},
   delR(i,btn){if(!btn.dataset.armed){btn.dataset.armed='1';btn.textContent='OK ?';return;}PR().races.splice(i,1);commitP();},
   addShoe(){S.profile.shoes.push({id:uid(),name:'Nouvelle paire',km0:0});save();render();},
@@ -1893,25 +2011,32 @@ const app=window.app={
     const n=planCode(ps)+'.fit';if(!download(n,bytes,'application/octet-stream'))flash('Téléchargement bloqué ici');else flash(n+' : à copier dans Garmin/NewFiles');},
   planCopy(id){const ps=findPlan(id);if(!ps)return;const t=$('#plantxt');if(!t){flash('Ouvre l\'onglet Plan');return;}t.value=planText(ps);app.copy('#plantxt');},
   openSess(id){const ps=findPlan(id);if(!ps)return;PE=JSON.parse(JSON.stringify(ps));openPlanSheet(true);},
-  toggleMod(k){const p=PR(),M=p.modules||(p.modules={});M[k]=!M[k];if(PD&&PFLOW)PFLOW=flowSteps(PD);if(!PD&&M[k]&&['strength','nutrition','injury'].includes(k)&&secMissing(k,S.profile).length){save();app.editSec(k);return;}commitP();},
-  setInjury(k,v){const p=PR(),I=p.injury||(p.injury={});I[k]=v;if(k==='type'){const b=INJURIES[v]||INJURIES.autre;I.metric=b.metric;I.avoid=b.avoid.slice();}commitP();},
+  toggleMod(k){const p=PR(),M=p.modules||(p.modules={});M[k]=!M[k];if(PD&&PFLOW)PFLOW=flowSteps(PD);if(!PD&&M[k]&&['strength','nutrition','injury'].includes(k)&&secMissing(k,S.profile).length){save();app.editSec(k);return;}commitP(true);},
+  setInjury(k,v){const p=PR(),I=p.injury||(p.injury={});I[k]=v;if(k==='type'){const b=INJURIES[v]||INJURIES.autre;I.metric=b.metric;I.avoid=b.avoid.slice();}commitP(k==='type'||k==='metric');},
   toggleAvoid(a){const I=PR().injury;I.avoid=I.avoid||[];const i=I.avoid.indexOf(a);if(i<0)I.avoid.push(a);else I.avoid.splice(i,1);commitP();},
   _eng(){return eng();},
-  editSec(sec){PD=JSON.parse(JSON.stringify(S.profile));PSEC=sec;PFLOW=null;PSTEP=0;PERR=[];PPREV=null;openProfSheet();},
-  startOnboarding(){PD=JSON.parse(JSON.stringify(S.profile));PFLOW=flowSteps(PD);PSTEP=0;
+  editSec(sec,back){PD=JSON.parse(JSON.stringify(S.profile));PSEC=sec;PFLOW=null;PBACK=back||null;PSTEP=0;PERR=[];PPREV=null;openProfSheet();},
+  startOnboarding(){PD=JSON.parse(JSON.stringify(S.profile));PFLOW=flowSteps(PD);PSTEP=0;PBACK=null;
     const first=PFLOW.findIndex(k=>k!=='modules'&&k!=='recap'&&secMissing(k,PD).length);PSTEP=first<0?0:first;PSEC=PFLOW[PSTEP];PERR=[];PPREV=null;openProfSheet();},
-  secCancel(){PD=null;PSEC=null;PFLOW=null;PERR=[];PPREV=null;$('#sheet').innerHTML='';render();},
+  secCancel(){PD=null;PSEC=null;PFLOW=null;PBACK=null;PERR=[];PPREV=null;$('#sheet').innerHTML='';render();},
   secPrev(){PERR=[];PSTEP=Math.max(0,PSTEP-1);PSEC=PFLOW[PSTEP];openProfSheet();},
   secBack(){PPREV=null;openProfSheet();},
-  secApply(){S.profile=normProfile(PD);save();},
+  secApply(){S.profile=normProfile(JSON.parse(JSON.stringify(PD)));save();},
   secSave(){
     PERR=secMissing(PSEC,PD);if(PERR.length){openProfSheet();return;}
+    if(PBACK==='recap'){app.secApply();PSEC='recap';PBACK=null;openProfSheet();return;}
     if(PFLOW){app.secApply();PFLOW=flowSteps(PD);PSTEP=Math.min(PSTEP+1,PFLOW.length-1);PSEC=PFLOW[PSTEP];openProfSheet();const c=document.querySelector('.sheet .in');if(c)c.scrollTop=0;return;}
     if(STRUCT.includes(PSEC)&&S.profile.planStart&&!PPREV){const d=planDiff(S.profile,PD);if(d.length){PPREV=d;openProfSheet();return;}}
     app.secConfirm();},
-  secConfirm(){app.secApply();PD=null;PSEC=null;PPREV=null;PERR=[];$('#sheet').innerHTML='';flash('Enregistré');render();},
-  secFinish(go){const P=normProfile(PD);P.onboarded=true;if(go&&!P.planStart){P.planStart=monday(todayISO());P.planFrom=todayISO();}
-    S.profile=P;save();PD=null;PFLOW=null;PSEC=null;PERR=[];$('#sheet').innerHTML='';flash(go?'Plan démarré':'Configuration enregistrée');render();},
+  secConfirm(){app.secApply();PD=null;PSEC=null;PPREV=null;PERR=[];PBACK=null;$('#sheet').innerHTML='';flash('Enregistré');render();},
+  secFinish(when){const P=normProfile(JSON.parse(JSON.stringify(PD)));P.onboarded=true;
+    if(when==='today'){P.planStart=monday(todayISO());P.planFrom=todayISO();}
+    else if(when){P.planStart=monday(when);P.planFrom=when;}
+    S.profile=P;save();PD=null;PFLOW=null;PSEC=null;PERR=[];PDATEPICK=false;$('#sheet').innerHTML='';
+    flash(CLOSERS[Math.floor(Math.random()*CLOSERS.length)]);render();},
+  showIntro(){$('#sheet').innerHTML='<div class="sheet"><div class="in">'+vIntroSheet()+'</div></div>';},
+  toggleDatePick(){PDATEPICK=!PDATEPICK;openProfSheet();},
+  beginOnboarding(){S.profile.introSeen=true;save();app.startOnboarding();},
   _E(){return E;},
   _S(){return S;},
   startPlan(){S.profile.planStart=monday(todayISO());S.profile.planFrom=todayISO();save();flash('Plan démarré');render();},
@@ -1919,11 +2044,20 @@ const app=window.app={
   toggleRunDay(d){const D=PR().days;const i=D.run.indexOf(d);if(i<0)D.run.push(d);else{D.run.splice(i,1);delete D.time[d];}D.run.sort();if(!D.run.includes(+D.long)&&D.run.length)D.long=D.run.includes(6)?6:D.run[D.run.length-1];commitP();},
   setLong(v){PR().days.long=+v;commitP();},
   setTime(d,v){const T=PR().days.time;if(v===''||+v<=0)delete T[d];else T[d]=Math.round(+v);commitP();},
-  setTerrain(k,v){PR().terrain[k]=(v===''?null:+v);commitP();},
-  setStart(g,k,v){const St=PR().start,o=g?St[g]:St;o[k]=(k==='date')?v:(v===''?null:+v);commitP();},
+  setTerrain(k,v){PR().terrain[k]=v;commitP();},
+  toggleEquip(v){const P=PR();P.equip=P.equip||[];const i=P.equip.indexOf(v);if(i<0)P.equip.push(v);else P.equip.splice(i,1);commitP();},
+  setStart(g,k,v){const St=PR().start,o=g?St[g]:St;o[k]=(k==='date')?v:(v===''?null:+v);commitP(false);},
+  setStartH(g,k,unit,v){const St=PR().start,o=g?St[g]:St,cur=o[k]||0,h=Math.floor(cur/60),m=cur%60;o[k]=(unit==='h'?(+v||0)*60+m:h*60+(+v||0))||null;commitP(false);},
   setStartFlag(f,v){PR().start[f]=!!v;commitP();},
+  setPause(v){PR().start.pauseSince=v;commitP();},
+  setStartC(g,k,v){const St=PR().start,o=g?St[g]:St;o[k]=(v===''?null:+v);commitP(true);},
+  addRace(){PR().start.pastRaces.push({date:'',dur:null,dist:null,dplus:null});commitP();},
+  setRace(i,k,v){const r=PR().start.pastRaces[i];r[k]=(k==='date')?v:(v===''?null:+v);commitP(false);},
+  setRaceH(i,unit,v){const r=PR().start.pastRaces[i],cur=r.dur||0,h=Math.floor(cur/60),m=cur%60;r.dur=(unit==='h'?(+v||0)*60+m:h*60+(+v||0))||null;commitP(false);},
+  delRace(i,btn){if(!btn.dataset.armed){btn.dataset.armed='1';btn.textContent='OK ?';return;}PR().start.pastRaces.splice(i,1);commitP();},
   toggleCf(d){const p=PR(),D=p.days||(p.days={});D.cf=D.cf||[];const i=D.cf.indexOf(d);if(i<0)D.cf.push(d);else D.cf.splice(i,1);D.cf.sort();commitP();},
-  setProduct(k,v){const p=PR(),P=p.product||(p.product={});P[k]=(k==='carbs'?(v===''?null:+v):k==='none'?!!+v:v);commitP();},
+  setNutriTier(v){PR().nutriTier=v;PR().carbStart={none:15,mid:35,high:55}[v];commitP();},
+  setFluidTier(v){PR().fluidTier=v;PR().fluidTarget={low:400,mid:600,high:800}[v];commitP();},
   addPlan(){PE={id:null,date:curDate>=todayISO()?curDate:todayISO(),type:'long',dur:60,dplus:400,note:''};openPlanSheet();},
   editPlan(id){const p=S.plan.find(x=>x.id===id);if(!p)return;PE=JSON.parse(JSON.stringify(p));openPlanSheet();},
   setPE(k,v){if(v===''||v==null)PE[k]=null;else if(['date','note','type'].includes(k))PE[k]=v;else PE[k]=+v;if(k==='type')openPlanSheet();else mark($('#sheet'),k,PE[k]);},
@@ -1945,20 +2079,26 @@ const app=window.app={
   delWod(i){E.wod.splice(i,1);openSheet();},
   toggleImpact(x){E.impacts=E.impacts||[];const i=E.impacts.indexOf(x);if(i<0)E.impacts.push(x);else E.impacts.splice(i,1);openSheet();},
   reset(btn){if(!btn.dataset.armed){btn.dataset.armed='1';btn.textContent='Confirmer : tout effacer';return;}
-    S=JSON.parse(JSON.stringify(DEFAULT));exportText=null;preview=null;PD=null;PSEC=null;PFLOW=null;save();render();setTimeout(()=>app.startOnboarding(),150);}
+    S=JSON.parse(JSON.stringify(DEFAULT));exportText=null;preview=null;PD=null;PSEC=null;PFLOW=null;save();render();setTimeout(()=>app.showIntro(),150);}
 };
 Object.assign(app,{
   setAuthF(k,v){authForm[k]=v;},
   async signIn(){
     if(!authForm.email||!authForm.password){flash('Email et mot de passe requis');return;}
     try{const d=await sbFetch('/auth/v1/token?grant_type=password',{method:'POST',body:JSON.stringify({email:authForm.email.trim(),password:authForm.password})});
-      setAuth(d);authForm.password='';flash('Connecté');render();doSync(true);}
+      setAuth(d);if(!S.profile.name&&(authForm.name||'').trim())S.profile.name=authForm.name.trim();authForm.password='';flash('Connecté');render();
+      try{await doSync(false);}catch(e){}
+      app.afterAuth();}
     catch(e){flash(/Invalid/.test(e.message)?'Email ou mot de passe incorrect':'Connexion impossible');}
   },
+  afterAuth(){if(!S.profile.onboarded&&!S.profile.goalDate){if(S.profile.introSeen)app.startOnboarding();else app.showIntro();}else render();},
   async signUp(){
+    if(!(authForm.name||'').trim()){flash('Ton prénom est requis');return;}
     if(!authForm.email||(authForm.password||'').length<8){flash('Mot de passe de 8 caractères minimum');return;}
     try{const d=await sbFetch('/auth/v1/signup',{method:'POST',body:JSON.stringify({email:authForm.email.trim(),password:authForm.password})});
-      if(d&&d.access_token){setAuth(d);authForm.password='';flash('Compte créé');render();doSync(true);}
+      if(d&&d.access_token){setAuth(d);if(!S.profile.name)S.profile.name=authForm.name.trim();authForm.password='';flash('Compte créé');render();
+        try{await doSync(false);}catch(e){}
+        app.afterAuth();}
       else{
         const idn=d&&(d.identities||(d.user&&d.user.identities));
         if(idn&&idn.length===0)flash('Un compte existe déjà avec cet email — connecte-toi plutôt');
@@ -1968,6 +2108,17 @@ Object.assign(app,{
   },
   signOut(btn){if(!btn.dataset.armed){btn.dataset.armed='1';btn.textContent='Confirmer la déconnexion';return;}
     auth=null;lsSet(AUTH_KEY,null);setSync('off','');flash('Déconnecté');render();},
+  async switchUser(btn){
+    if(!btn.dataset.armed){
+      if(navigator.onLine){try{await doSync(false);}catch(e){}}
+      const n=pendingCount();
+      btn.dataset.armed='1';btn.textContent=n?'Des modifications ne sont pas sauvegardées — continuer quand même ?':'Confirmer le changement d\'utilisateur';
+      return;
+    }
+    auth=null;lsSet(AUTH_KEY,null);setSync('off','');
+    S=JSON.parse(JSON.stringify(DEFAULT));sync=Object.assign({shadow:{},ts:{},del:{},lastPull:null},{});saveSync();
+    authForm.email='';authForm.password='';authForm.name='';
+    flash('Prêt pour un nouvel utilisateur');render();},
   syncNow(){doSync(true);},
   resync(btn){if(!btn.dataset.armed){btn.dataset.armed='1';btn.textContent='Confirmer';return;}
     sync.lastPull=null;saveSync();doSync(true,true);},
