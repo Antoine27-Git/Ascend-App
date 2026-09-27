@@ -443,16 +443,25 @@ function parseTrack(text){
   }
   return pts.filter(p=>!isNaN(p.t));
 }
+function elevGain(sm,thr){
+  let up=0,down=0,base=null,ext=null;
+  for(let i=0;i<sm.length;i++){const v=sm[i];if(isNaN(v))continue;
+    if(base===null){base=v;ext=v;continue;}
+    if(ext>=base){if(v>ext)ext=v;else if(ext-v>=thr){up+=ext-base;base=ext;ext=v;}}
+    else{if(v<ext)ext=v;else if(v-ext>=thr){down+=base-ext;base=ext;ext=v;}}}
+  if(base!==null){if(ext>=base){if(ext-base>=thr)up+=ext-base;}else{if(base-ext>=thr)down+=base-ext;}}
+  return {up,down};
+}
 function trackMetrics(pts){
   const P=S.profile;if(pts.length<20)return null;
   const alt=pts.map(p=>p.a);const sm=alt.map((v,i)=>{const w=alt.slice(Math.max(0,i-4),i+5).filter(x=>!isNaN(x));return w.length?sum(w)/w.length:NaN;});
-  let up=0,down=0,dT=0,dHR=0,dN=0,dD=0,uT=0,uHR=0,uN=0,hrSum=0,hrN=0,hrMax=0,tot=0;
+  const ud=elevGain(sm,3); /* seuil de bruit altimétrique 3 m — Strava documente 2 m (baromètre) à 10 m (GPS seul), Runalyze 3 m en usage général */
+  let dT=0,dHR=0,dN=0,dD=0,uT=0,uHR=0,uN=0,hrSum=0,hrN=0,hrMax=0,tot=0;
   const C=g=>{g=Math.max(-0.45,Math.min(0.45,g));return (155.4*g*g*g*g*g-30.4*g*g*g*g-43.3*g*g*g+46.3*g*g+19.5*g+3.6)/3.6;};
   const half=(pts[pts.length-1].t-pts[0].t)/2+pts[0].t;const H=[{t:0,eq:0,hr:0,n:0},{t:0,eq:0,hr:0,n:0}];
   for(let i=1;i<pts.length;i++){const dt=Math.min(pts[i].t-pts[i-1].t,30);if(dt<=0)continue;tot+=dt;
     const hr=pts[i].hr,da=(!isNaN(sm[i])&&!isNaN(sm[i-1]))?sm[i]-sm[i-1]:0,dd=(!isNaN(pts[i].d)&&!isNaN(pts[i-1].d))?Math.max(0,pts[i].d-pts[i-1].d):0;
     if(!isNaN(hr)){hrSum+=hr*dt;hrN+=dt;if(hr>hrMax)hrMax=hr;}
-    if(da>0)up+=da;else down-=da;
     const j=Math.max(0,i-6),dw=(!isNaN(pts[i].d)&&!isNaN(pts[j].d))?pts[i].d-pts[j].d:0,g=(dw>10&&!isNaN(sm[i])&&!isNaN(sm[j]))?(sm[i]-sm[j])/dw:0;
     if(g<-0.04){dT+=dt;dD-=da;if(!isNaN(hr)){dHR+=hr*dt;dN+=dt;}}else if(g>0.04){uT+=dt;if(!isNaN(hr)){uHR+=hr*dt;uN+=dt;}}
     const h=H[pts[i].t<half?0:1];h.t+=dt;h.eq+=dd*C(g);if(!isNaN(hr)){h.hr+=hr*dt;h.n+=dt;}}
@@ -460,7 +469,7 @@ function trackMetrics(pts){
   const e1=eff(H[0]),e2=eff(H[1]);
   return {hrAvg:hrN?Math.round(hrSum/hrN):null,hrMax:hrMax||null,
     decoup:(e1&&e2)?(e1-e2)/e1*100:null,downMin:dT/60,downHR:dN?Math.round(dHR/dN):null,downVs:dT?dD/(dT/3600):null,upMin:uT/60,upHR:uN?Math.round(uHR/uN):null,
-    dist:Math.round((pts[pts.length-1].d||0)/100)/10,dplus:Math.round(up),dminus:Math.round(down),dur:Math.round(tot/60),n:pts.length};
+    dist:Math.round((pts[pts.length-1].d||0)/100)/10,dplus:Math.round(ud.up),dminus:Math.round(ud.down),dur:Math.round(tot/60),n:pts.length};
 }
 function trackLine(t){
   if(!t)return '';
