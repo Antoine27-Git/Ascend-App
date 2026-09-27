@@ -679,7 +679,7 @@ function vJour(){
       +(weightCell(curDate,d))
       +'</div>'
       +'<div class="mini" id="numsmini">'+numsMini(curDate)+'</div></div>')
-  +(pl.length?'<div class="card"><h2>Prévu <span>'+pl.map(planCode).join(', ')+'</span></h2>'+pl.map(p=>'<div class="sessrow" onclick="app.openSess(\''+p.id+'\')"><div><b>'+((TYPES[p.type]||TYPES.autre).l)+'</b><div class="m">'+(p.dur?p.dur+' min':'')+(p.dplus?' · '+p.dplus+' m D+':'')+'</div></div><div class="r">'+(planStatus(p).k==='done'?'<span class="pill">Fait</span>':planStatus(p).k==='off'?'<span class="pill grey">Annulée</span>':'<span class="code">'+planCode(p)+'</span>')+'</div></div>').join('')+'</div>':'')
+  +(pl.length?'<div class="card"><h2>Prévu <span>'+pl.map(planCode).join(', ')+'</span></h2>'+pl.map(p=>'<div class="sessrow" onclick="app.openSess(\''+p.id+'\')"><div><b>'+((TYPES[p.type]||TYPES.autre).l)+'</b><div class="m">'+(p.dur?p.dur+' min':'')+(p.dplus?' · '+p.dplus+' m D+':p.dmax&&p.gen?' · ≤ '+p.dmax+' m D+':'')+'</div></div><div class="r">'+(planStatus(p).k==='done'?'<span class="pill">Fait</span>':planStatus(p).k==='off'?'<span class="pill grey">Annulée</span>':'<span class="code">'+planCode(p)+'</span>')+'</div></div>').join('')+'</div>':'')
   +(todo.length?'<div class="card"><h2>À compléter <span>RPE manquant</span></h2>'+todo.map(sLine).join('')+'</div>':'')
   +'<div class="card"><h2>Séances du jour</h2>'+(sess.length?sess.map(sLine).join(''):'<div class="empty" style="margin:8px 0 14px">Rien enregistré aujourd\'hui.</div>')+'<button class="btn dark full" style="margin-top:8px" onclick="app.newSession()">Ajouter une séance</button></div>'
   +'</main>';
@@ -804,16 +804,17 @@ function realizedOf(ps){
   return s||null;
 }
 function plannedOn(date){return allPlan().filter(p=>p.date===date).sort((a,b)=>(a.type==='cf')-(b.type==='cf'));}
+const FC_NOTE='FC : reste dans ta zone facile. Si elle en sort, ralentis ou marche. Le ressenti décide, la FC confirme.';
 function sessionSteps(ps){
   const P=S.profile,d=ps.dur||0;
   if(ps.steps)return {steps:ps.steps,notes:(ps.notes||[]).concat(ps.dplus?['D+ indicatif : environ '+ps.dplus+' m.']:[])};
   if(ps.type==='race')return {steps:[{n:'Course',min:d,lo:null,hi:null,int:3}],notes:['Jour de course.']};
   if(ps.type==='desc'){const reps=ps.reps||6,rest=Math.max(5,Math.round(d-15-reps*2.5));return {steps:[{n:'Endurance',min:15,lo:null,hi:null,int:2},{rep:reps,on:{n:'Descente',sec:30,int:5},off:{n:'Remontee',sec:120,int:1}},{n:'Endurance',min:rest,lo:null,hi:null,int:3}],
     notes:['Descente 8 à 12 %, relâché, foulée courte, sans freiner. Remontée en marche.','Courbatures attendues à J+2, c\'est le but. Talon surveillé 5 jours.']};}
-  if(ps.type==='long'){const h=d/60,carbs=h>=1.5?60:40;return {steps:[{n:'Echauffement',min:15,lo:null,hi:null,int:2},{n:'Endurance',min:Math.max(d-20,20),lo:null,hi:null,int:0},{n:'Retour calme',min:5,lo:null,hi:null,int:3}],
-    notes:[(ps.dplus?'D+ cible '+ps.dplus+' m. ':'')+'Effort facile, tu peux parler. Montées raides marchées.',(h>=1?'Glucides '+carbs+' g/h, soit '+Math.round(carbs*h)+' g. Boisson 500 ml/h, soit '+Math.round(500*h)+' ml.':'Moins d\'une heure : eau seulement.'),'Joins la trace TCX à la séance réalisée : décorrélation et FC en descente.']};}
-  return {steps:[{n:'Echauffement',min:10,lo:null,hi:null,int:2},{n:'Endurance',min:Math.max(d-15,10),lo:null,hi:null,int:0},{n:'Retour calme',min:5,lo:null,hi:null,int:3}],
-    notes:['Effort facile : tu peux tenir une conversation. Si ça monte, marche.',(ps.dmax?'Terrain roulant, moins de '+ps.dmax+' m de D+ : c\'est un plafond, pas un objectif.':'')].filter(Boolean)};
+  if(ps.type==='long'){const h=d/60,carbs=h>=1.5?60:40;return {steps:[{n:'Endurance',min:d,lo:null,hi:null,int:0}],
+    notes:[(ps.dplus?'D+ repère : environ '+ps.dplus+' m, sans le chercher. ':'')+'Effort facile, tu peux parler. Montées raides marchées. Les 10-15 premières minutes plus lentes.',FC_NOTE,(h>=1?'Glucides '+carbs+' g/h, soit '+Math.round(carbs*h)+' g. Boisson 500 ml/h, soit '+Math.round(500*h)+' ml.':'Moins d\'une heure : eau seulement.'),'Joins la trace TCX à la séance réalisée : décorrélation et FC en descente.']};}
+  return {steps:[{n:'Endurance',min:d,lo:null,hi:null,int:0}],
+    notes:['Effort facile : tu peux tenir une conversation. Les 5-10 premières minutes plus lentes. Si ça monte, marche.',FC_NOTE,(ps.dmax?'Terrain roulant, moins de '+ps.dmax+' m de D+ : c\'est un plafond, pas un objectif.':'')].filter(Boolean)};
 }
 function planText(ps){
   const P=S.profile,st=sessionSteps(ps);
@@ -980,7 +981,7 @@ function qualite(kind,idx,slot){
   if(kind==='inter'){const p=pick(PROG.inter,idx),sec=p[1];const work=Math.round(p[0]*sec*2/60);
     return {title:'Intervalles en côte '+p[0]+' × '+(sec/60)+' min',steps:[E('Échauffement',15,{int:2}),{rep:p[0],on:{n:'Montée',sec,int:4},off:{n:'Descente tranquille',sec,int:1}}].concat(fin(work,15)),
       need:work+25,notes:['Montée régulière, ressenti 9/10, même effort sur chaque fraction. Récupération en descendant tranquillement, jamais de fraction en descente.']};}
-  if(kind==='tempo'){const p=pick(PROG.tempo,idx);const work=p[0]*p[1]+(p[0]-1)*3;
+  if(kind==='tempo'){const p=pick(PROG.tempo,idx);const work=p[0]*(p[1]+3);   /* le bloc répété compte aussi la récupération de la dernière fraction */
     return {title:'Tempo en montée '+p[0]+' × '+p[1]+' min',steps:[E('Échauffement',15,{int:2}),{rep:p[0],on:{n:'Tempo en montée',sec:p[1]*60,int:4},off:{n:'Récupération',sec:180,int:1}}].concat(fin(work,15)),
       need:work+25,notes:['Effort soutenu mais contrôlé, ressenti 7 à 8/10, au seuil.']};}
   if(kind==='spe'){const t=pick(PROG.spe,idx);
@@ -1061,6 +1062,8 @@ function build(inp){
   const recent=sessions.filter(s=>isRun(s)&&s.dplus&&s.dur&&s.date>=add(today,-56));
   let dens0=recent.length?recent.reduce((a,s)=>a+s.dplus,0)/(recent.reduce((a,s)=>a+s.dur,0)/60):(!St.noLong&&St.lastLong&&St.lastLong.dplus&&St.lastLong.dur?St.lastLong.dplus/(St.lastLong.dur/60):150);
   const densC=P.goalDplus&&dMain?P.goalDplus/(dMain/60):dens0;
+  /* GABARIT § 5 : le D+ monte pendant le fond. Départ à la moitié au plus de la densité de course (H-40, extrapolation) */
+  dens0=Math.min(dens0,densC*0.5);
   const dens=w=>w>=c.fond?densC:dens0+(densC-dens0)*w/Math.max(1,c.fond);
   const terr=P.terrain||{};
   if(terr.climb&&['lt1','1-5'].includes(terr.climb)&&terr.mountain==='jamais')
@@ -1152,7 +1155,8 @@ function build(inp){
     const efs=rx.filter(x=>x.kind==='ef');
     if(qk&&efs.length){
       const cand=efs.filter(x=>gap(x.dow,longDow)>=2).sort((a,b)=>(cfDays.includes(b.dow)-cfDays.includes(a.dow))||(gap(b.dow,longDow)-gap(a.dow,longDow)));
-      const slot=cand[0];
+      /* la séance de qualité ne va que dans un créneau assez long pour elle (sinon semaine sans qualité) */
+      const q0=qualite(qk,cntDone[qk]||0,999),slot=q0?cand.find(x=>x.dur>=Math.max(35,q0.need)):null;
       if(slot){const q=qualite(qk,cntDone[qk]||0,slot.dur);
         /* la séance garde la durée de son créneau (le volume de la semaine ne bouge pas) : le reste est de l'endurance facile */
         if(q&&slot.dur>=35){slot.kind='qual';slot.q=q;slot.qk=qk;cnt[qk]=(cnt[qk]||0)+1;}}
@@ -1169,7 +1173,10 @@ function build(inp){
     /* D+ */
     const dz=dens(w);
     rx.forEach(x=>{if(x.kind==='race'||x.kind==='goal')return;const f=x.kind==='long'||x.kind==='cle'?1:x.kind==='qual'?0.8:0.5;
-      let dp=Math.round(dz*f*x.dur/60/50)*50;x.dplus=dp>=50?dp:null;});
+      let dp=Math.round(dz*f*x.dur/60/50)*50;
+      /* F1–F2 : l'endurance se fait sur terrain roulant, son D+ est un plafond, pas un objectif */
+      if(x.kind==='ef'&&ph==='fond'&&(sp==='F1'||sp==='F2')){x.dmax=Math.max(50,dp);x.dplus=null;}
+      else x.dplus=dp>=50?dp:null;});
     /* exécution : réel pour le passé, prescrit ensuite */
     const volPrevu=rx.filter(x=>x.kind!=='race'&&x.kind!=='goal').reduce((a,x)=>a+x.dur,0)/60;
     let r=null,saut=0,exec=volPrevu,execH=rx.map(x=>({j:x.jour,d:x.dur,t:x.kind}));
@@ -1206,6 +1213,7 @@ function build(inp){
       if(x.kind==='race'){out.sessions.push({id:'g'+date+'-race',gen:true,date,type:'race',dur:x.dur,title:x.name,note:x.statut==='objectif'?'Objectif intermédiaire':'Course-entraînement',why:x.statut==='objectif'?'Objectif intermédiaire : affûtage avant, récupération après.':'Course-entraînement : elle remplace la sortie longue de la semaine.'});return;}
       if(x.kind==='goal'){out.sessions.push({id:'g'+date+'-goal',gen:true,date,type:'race',dur:x.dur,title:P.goalName||'Objectif',why:'Ta course.'});return;}
       const o={id:'g'+date+'-'+(x.kind==='qual'?'q':x.kind),gen:true,date,type:x.kind==='qual'?'qual':(x.kind==='cle'||x.kind==='long')?'long':'ef',dur:x.dur,dplus:x.dplus,why:why(x)};
+      if(x.dmax)o.dmax=x.dmax;
       if(x.kind==='cle')o.title='Sortie clé';
       if(x.q){o.title=x.q.title;o.steps=x.q.steps;o.notes=x.q.notes;}
       if(x.accel)o.note='+ '+x.accel[0]+' × '+x.accel[1]+' s d\'accélérations en fin de séance';
