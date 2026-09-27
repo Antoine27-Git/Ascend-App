@@ -1959,10 +1959,11 @@ const app=window.app={
     save();if(k==='status'){render();return;}mark($('#view'),k,d[k]);
     if(k==='pain'){const pm=$('#painmini');if(pm)pm.outerHTML=painMiniHTML(curDate);}
     if(k==='rhr'||k==='weight'){const nm=$('#numsmini');if(nm)nm.innerHTML=numsMini(curDate);}},
-  newSession(pid){const ps=pid?findPlan(pid):null;E={id:null,date:ps?ps.date:curDate,type:ps?ps.type:'ef',dur:ps?ps.dur:null,dist:null,dplus:ps?ps.dplus:null,dminus:null,hrAvg:null,hrMax:null,rpe:null,legs:null,heelPost:null,shoe:'',carbs:null,fluids:null,gi:null,dip:null,note:'',track:null,plannedId:ps?ps.id:null,wodName:'',wodDur:null,scoreType:'none',score:null,scoreReps:null,rx:null,wod:[],lifts:[],impacts:[],stSrc:'externe',stQual:null,stDom:null,stEcc:null};openSheet(true);},
+  newSession(pid){const ps=pid?findPlan(pid):null;E={id:null,date:ps?ps.date:curDate,type:ps?ps.type:'ef',dur:ps?ps.dur:null,dist:null,dplus:ps?ps.dplus:null,dminus:null,hrAvg:null,hrMax:null,rpe:null,legs:null,heelPost:null,shoe:'',carbs:null,fluids:null,gi:null,dip:null,note:'',track:null,plannedId:ps?ps.id:null,wodName:'',wodDur:null,scoreType:'none',score:null,scoreReps:null,rx:null,wod:[],lifts:[],impacts:[],stSrc:'externe',stQual:null,stDom:null,stEcc:null,_pf:{}};if(ps&&ps.dur!=null)E._pf.dur=1;if(ps&&ps.dplus!=null)E._pf.dplus=1;openSheet(true);},
   edit(id){const s=S.sessions.find(x=>x.id===id);if(!s)return;E=JSON.parse(JSON.stringify(s));openSheet();},
   close(){E=null;$('#sheet').innerHTML='';},
   setE(k,v){if(v===''||v==null)E[k]=null;else if(['date','note','shoe','type','wodName','rx','scoreType','stSrc','stQual','stDom','stEcc'].includes(k))E[k]=v;else E[k]=+v;
+    if(E._pf&&E._pf[k])delete E._pf[k];
     if(k==='type'||k==='track'||k==='scoreType'){openSheet(k==='type');return;}
     if(k==='wodName'){const wh=$('#wodhist');if(wh)wh.outerHTML=wodHistHTML(E);}
     mark($('#sheet'),k,E[k]);const h=$('#rpeh');if(h&&k==='rpe')h.textContent=E.rpe!=null?RPEL[E.rpe]:'';const c=$('#calc');if(c)c.innerHTML=calcLine(E);},
@@ -1991,10 +1992,14 @@ const app=window.app={
     });},
   attachTrack(input){const f=input.files&&input.files[0];if(!f)return;const rd=new FileReader();
     rd.onload=()=>{try{const pts=parseTrack(rd.result),m=trackMetrics(pts);if(!m){flash('Trace illisible ou trop courte');return;}
-      E.track=m;if(!E.dur)E.dur=m.dur;if(!E.dist&&m.dist)E.dist=m.dist;if(!E.hrAvg&&m.hrAvg)E.hrAvg=m.hrAvg;if(!E.hrMax&&m.hrMax)E.hrMax=m.hrMax;if(!E.dplus&&m.dplus)E.dplus=m.dplus;if(!E.dminus&&m.dminus)E.dminus=m.dminus;
+      E.track=m;const pf=E._pf||{};
+      if((!E.dur||pf.dur)&&m.dur){E.dur=m.dur;delete pf.dur;}
+      if(!E.dist&&m.dist)E.dist=m.dist;if(!E.hrAvg&&m.hrAvg)E.hrAvg=m.hrAvg;if(!E.hrMax&&m.hrMax)E.hrMax=m.hrMax;
+      if((!E.dplus||pf.dplus)&&m.dplus){E.dplus=m.dplus;delete pf.dplus;}
+      if(!E.dminus&&m.dminus)E.dminus=m.dminus;
       openSheet();flash('Trace analysée');}catch(e){flash('Trace illisible');}};
     rd.readAsText(f);},
-  saveE(){if(!E.date){flash('Date manquante');return;}if(!E.dur){flash('Durée manquante');return;}delete E.aiBusy;delete E.aiFresh;
+  saveE(){if(!E.date){flash('Date manquante');return;}if(!E.dur){flash('Durée manquante');return;}delete E.aiBusy;delete E.aiFresh;delete E._pf;
     if(E.id){const i=S.sessions.findIndex(x=>x.id===E.id);S.sessions[i]=E;}else{E.id=uid();S.sessions.push(E);}
     S.sessions.sort(byDate);save();app.close();render();},
   delE(btn){if(!btn.dataset.armed){btn.dataset.armed='1';btn.textContent='Confirmer la suppression';return;}
