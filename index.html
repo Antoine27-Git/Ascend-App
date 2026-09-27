@@ -716,11 +716,11 @@ function vEdit(){
   +(cf&&modOn('strength')?vEditCF(e):'')
   +(run?'<div class="g2">'+inp('dplus','D+ (m)')+inp('dminus','D− (m)')+'</div>'+(e.dplus?'<div class="mini">D+ '+dplusSrc(e)+'</div>':''):'')
   +(run?'<label class="f">Trace Garmin (TCX ou GPX)</label><input type="file" accept=".tcx,.gpx,application/xml,text/xml" onchange="app.attachTrack(this)">'+(e.track?'<div class="mini">Trace analysée, '+e.track.n+' points. <a href="#" style="color:var(--mintT)" onclick="app.setE(\'track\',null);return false">Retirer</a></div>':''):'')
-  +'<div class="lbl"><span>RPE</span><small id="rpeh">'+(e.rpe!=null?RPEL[e.rpe]:(cf?'séance entière, à froid':'à froid, 30 min après'))+'</small></div>'+ch('rpe',[0,1,2,3,4,5,6,7,8,9,10],null,null,'scale')
+  +'<div class="lbl"><span>RPE <small style="font-weight:400;color:var(--mut)">· 0 repos, 10 maximal</small></span><small id="rpeh">'+(e.rpe!=null?RPEL[e.rpe]:(cf?'séance entière, à froid':'à froid, 10 min après'))+'</small></div>'+ch('rpe',[0,1,2,3,4,5,6,7,8,9,10],null,null,'scale')
   +'<div class="lbl"><span>Jambes</span><small>1 lourdes · 5 fraîches</small></div>'+ch('legs',[1,2,3,4,5])
   +(injOn()?'<div class="lbl"><span>Douleur pendant ou après</span></div>'+ch('heelPost',[0,1,2,3],HEEL,HEELC,'txt'):'')
   +(run&&shoes.length?'<label class="f">Chaussures</label><select onchange="app.setE(\'shoe\',this.value)"><option value="">–</option>'+shoes.map(x=>'<option value="'+x.id+'"'+(e.shoe===x.id?' selected':'')+'>'+esc(x.name)+'</option>').join('')+'</select>':'')
-  +(run&&modOn('nutrition')?'<details'+((e.type==='long'||(e.dur||0)>=90)?' open':'')+'><summary>Nutrition</summary><div class="g2">'+inp('carbs','Glucides (g)')+inp('fluids','Liquide (ml)')+'</div><div class="lbl"><span>Confort digestif</span><small>1 mauvais · 5 parfait</small></div>'+ch('gi',[1,2,3,4,5])+inp('dip','Coup de mou à la minute')+'</details>':'')
+  +(run&&modOn('nutrition')?'<details'+((e.type==='long'||(e.dur||0)>=90)?' open':'')+'><summary>Nutrition</summary><div class="lbl"><span>Suivie pendant la séance ?</span></div>'+ch('nutriDone',[1,0],['Oui','Non'])+(e.nutriDone===0?'':'<div class="g2">'+inp('carbs','Glucides (g)')+inp('fluids','Liquide (ml)')+'</div><div class="lbl"><span>Confort digestif</span><small>1 mauvais · 5 parfait</small></div>'+ch('gi',[1,2,3,4,5]))+'</details>':'')
   +'<label class="f">Note</label><textarea onchange="app.setE(\'note\',this.value)">'+esc(e.note)+'</textarea>'
   +'<div class="mini" id="calc">'+calcLine(e)+'</div>'
   +'<div class="row" style="margin-top:14px"><button class="btn p" style="flex:1" onclick="app.saveE()">Enregistrer</button>'+(e.id?'<button class="btn d" onclick="app.delE(this)">Supprimer</button>':'')+'</div>';
@@ -1968,12 +1968,13 @@ const app=window.app={
     save();if(k==='status'){render();return;}mark($('#view'),k,d[k]);
     if(k==='pain'){const pm=$('#painmini');if(pm)pm.outerHTML=painMiniHTML(curDate);}
     if(k==='rhr'||k==='weight'){const nm=$('#numsmini');if(nm)nm.innerHTML=numsMini(curDate);}},
-  newSession(pid){const ps=pid?findPlan(pid):null;E={id:null,date:ps?ps.date:curDate,type:ps?ps.type:'ef',dur:ps?ps.dur:null,dist:null,dplus:ps?ps.dplus:null,dminus:null,hrAvg:null,hrMax:null,rpe:null,legs:null,heelPost:null,shoe:'',carbs:null,fluids:null,gi:null,dip:null,note:'',track:null,plannedId:ps?ps.id:null,wodName:'',wodDur:null,scoreType:'none',score:null,scoreReps:null,rx:null,wod:[],lifts:[],impacts:[],stSrc:'externe',stQual:null,stDom:null,stEcc:null,_pf:{}};if(ps&&ps.dur!=null)E._pf.dur=1;if(ps&&ps.dplus!=null)E._pf.dplus=1;openSheet(true);},
+  newSession(pid){const ps=pid?findPlan(pid):null;E={id:null,date:ps?ps.date:curDate,type:ps?ps.type:'ef',dur:ps?ps.dur:null,dist:null,dplus:ps?ps.dplus:null,dminus:null,hrAvg:null,hrMax:null,rpe:null,legs:null,heelPost:null,shoe:'',carbs:null,fluids:null,gi:null,nutriDone:null,note:'',track:null,plannedId:ps?ps.id:null,wodName:'',wodDur:null,scoreType:'none',score:null,scoreReps:null,rx:null,wod:[],lifts:[],impacts:[],stSrc:'externe',stQual:null,stDom:null,stEcc:null,_pf:{}};if(ps&&ps.dur!=null)E._pf.dur=1;if(ps&&ps.dplus!=null)E._pf.dplus=1;openSheet(true);},
   edit(id){const s=S.sessions.find(x=>x.id===id);if(!s)return;E=JSON.parse(JSON.stringify(s));openSheet();},
   close(){E=null;$('#sheet').innerHTML='';},
   setE(k,v){if(v===''||v==null)E[k]=null;else if(['date','note','shoe','type','wodName','rx','scoreType','stSrc','stQual','stDom','stEcc'].includes(k))E[k]=v;else E[k]=+v;
+    if(k==='nutriDone'&&E[k]===0){E.carbs=null;E.fluids=null;E.gi=null;}
     if(E._pf&&E._pf[k])delete E._pf[k];
-    if(k==='type'||k==='track'||k==='scoreType'){openSheet(k==='type');return;}
+    if(k==='type'||k==='track'||k==='scoreType'||k==='nutriDone'){openSheet(k==='type');return;}
     if(k==='wodName'){const wh=$('#wodhist');if(wh)wh.outerHTML=wodHistHTML(E);}
     mark($('#sheet'),k,E[k]);const h=$('#rpeh');if(h&&k==='rpe')h.textContent=E.rpe!=null?RPEL[E.rpe]:'';const c=$('#calc');if(c)c.innerHTML=calcLine(E);},
   resizeImage(file,maxDim,cb){
