@@ -160,6 +160,7 @@ span.f{display:block;font-size:12px;color:var(--mut);margin:0 0 6px;font-weight:
 
 /* ---- app-specific ---- */
 .chips{display:flex;gap:6px;flex-wrap:wrap}
+.phz{display:flex;flex-direction:column;gap:6px}.phr{padding:10px 12px;border-radius:12px;background:var(--bg2,rgba(127,127,127,.08));border-left:4px solid transparent}.phr.sel{border-left-color:var(--sun,#f5a623);background:rgba(245,166,35,.12)}.phr.past{opacity:.55}
 .chip{flex:1;min-width:44px;height:46px;border:0;border-radius:13px;background:#eef1ee;color:var(--ink);font:inherit;font-size:15px;font-weight:700;cursor:pointer;padding:0 8px}
 .chip.on{background:#e7f3ec;color:var(--mintT);box-shadow:inset 0 0 0 1.5px var(--mintT);font-weight:700}
 .chips.txt .chip{flex:0 1 auto;padding:0 14px;font-size:14px}
@@ -443,25 +444,16 @@ function parseTrack(text){
   }
   return pts.filter(p=>!isNaN(p.t));
 }
-function elevGain(sm,thr){
-  let up=0,down=0,base=null,ext=null;
-  for(let i=0;i<sm.length;i++){const v=sm[i];if(isNaN(v))continue;
-    if(base===null){base=v;ext=v;continue;}
-    if(ext>=base){if(v>ext)ext=v;else if(ext-v>=thr){up+=ext-base;base=ext;ext=v;}}
-    else{if(v<ext)ext=v;else if(v-ext>=thr){down+=base-ext;base=ext;ext=v;}}}
-  if(base!==null){if(ext>=base){if(ext-base>=thr)up+=ext-base;}else{if(base-ext>=thr)down+=base-ext;}}
-  return {up,down};
-}
 function trackMetrics(pts){
   const P=S.profile;if(pts.length<20)return null;
   const alt=pts.map(p=>p.a);const sm=alt.map((v,i)=>{const w=alt.slice(Math.max(0,i-4),i+5).filter(x=>!isNaN(x));return w.length?sum(w)/w.length:NaN;});
-  const ud=elevGain(sm,3); /* seuil de bruit altimétrique 3 m — Strava documente 2 m (baromètre) à 10 m (GPS seul), Runalyze 3 m en usage général */
-  let dT=0,dHR=0,dN=0,dD=0,uT=0,uHR=0,uN=0,hrSum=0,hrN=0,hrMax=0,tot=0;
+  let up=0,down=0,dT=0,dHR=0,dN=0,dD=0,uT=0,uHR=0,uN=0,hrSum=0,hrN=0,hrMax=0,tot=0;
   const C=g=>{g=Math.max(-0.45,Math.min(0.45,g));return (155.4*g*g*g*g*g-30.4*g*g*g*g-43.3*g*g*g+46.3*g*g+19.5*g+3.6)/3.6;};
   const half=(pts[pts.length-1].t-pts[0].t)/2+pts[0].t;const H=[{t:0,eq:0,hr:0,n:0},{t:0,eq:0,hr:0,n:0}];
   for(let i=1;i<pts.length;i++){const dt=Math.min(pts[i].t-pts[i-1].t,30);if(dt<=0)continue;tot+=dt;
     const hr=pts[i].hr,da=(!isNaN(sm[i])&&!isNaN(sm[i-1]))?sm[i]-sm[i-1]:0,dd=(!isNaN(pts[i].d)&&!isNaN(pts[i-1].d))?Math.max(0,pts[i].d-pts[i-1].d):0;
     if(!isNaN(hr)){hrSum+=hr*dt;hrN+=dt;if(hr>hrMax)hrMax=hr;}
+    if(da>0)up+=da;else down-=da;
     const j=Math.max(0,i-6),dw=(!isNaN(pts[i].d)&&!isNaN(pts[j].d))?pts[i].d-pts[j].d:0,g=(dw>10&&!isNaN(sm[i])&&!isNaN(sm[j]))?(sm[i]-sm[j])/dw:0;
     if(g<-0.04){dT+=dt;dD-=da;if(!isNaN(hr)){dHR+=hr*dt;dN+=dt;}}else if(g>0.04){uT+=dt;if(!isNaN(hr)){uHR+=hr*dt;uN+=dt;}}
     const h=H[pts[i].t<half?0:1];h.t+=dt;h.eq+=dd*C(g);if(!isNaN(hr)){h.hr+=hr*dt;h.n+=dt;}}
@@ -469,7 +461,7 @@ function trackMetrics(pts){
   const e1=eff(H[0]),e2=eff(H[1]);
   return {hrAvg:hrN?Math.round(hrSum/hrN):null,hrMax:hrMax||null,
     decoup:(e1&&e2)?(e1-e2)/e1*100:null,downMin:dT/60,downHR:dN?Math.round(dHR/dN):null,downVs:dT?dD/(dT/3600):null,upMin:uT/60,upHR:uN?Math.round(uHR/uN):null,
-    dist:Math.round((pts[pts.length-1].d||0)/100)/10,dplus:Math.round(ud.up),dminus:Math.round(ud.down),dur:Math.round(tot/60),n:pts.length};
+    dist:Math.round((pts[pts.length-1].d||0)/100)/10,dplus:Math.round(up),dminus:Math.round(down),dur:Math.round(tot/60),n:pts.length};
 }
 function trackLine(t){
   if(!t)return '';
@@ -716,11 +708,11 @@ function vEdit(){
   +(cf&&modOn('strength')?vEditCF(e):'')
   +(run?'<div class="g2">'+inp('dplus','D+ (m)')+inp('dminus','D− (m)')+'</div>'+(e.dplus?'<div class="mini">D+ '+dplusSrc(e)+'</div>':''):'')
   +(run?'<label class="f">Trace Garmin (TCX ou GPX)</label><input type="file" accept=".tcx,.gpx,application/xml,text/xml" onchange="app.attachTrack(this)">'+(e.track?'<div class="mini">Trace analysée, '+e.track.n+' points. <a href="#" style="color:var(--mintT)" onclick="app.setE(\'track\',null);return false">Retirer</a></div>':''):'')
-  +'<div class="lbl"><span>RPE <small style="font-weight:400;color:var(--mut)">· 0 repos, 10 maximal</small></span><small id="rpeh">'+(e.rpe!=null?RPEL[e.rpe]:(cf?'séance entière, à froid':'à froid, 10 min après'))+'</small></div>'+ch('rpe',[0,1,2,3,4,5,6,7,8,9,10],null,null,'scale')
+  +'<div class="lbl"><span>RPE</span><small id="rpeh">'+(e.rpe!=null?RPEL[e.rpe]:(cf?'séance entière, à froid':'à froid, 30 min après'))+'</small></div>'+ch('rpe',[0,1,2,3,4,5,6,7,8,9,10],null,null,'scale')
   +'<div class="lbl"><span>Jambes</span><small>1 lourdes · 5 fraîches</small></div>'+ch('legs',[1,2,3,4,5])
   +(injOn()?'<div class="lbl"><span>Douleur pendant ou après</span></div>'+ch('heelPost',[0,1,2,3],HEEL,HEELC,'txt'):'')
   +(run&&shoes.length?'<label class="f">Chaussures</label><select onchange="app.setE(\'shoe\',this.value)"><option value="">–</option>'+shoes.map(x=>'<option value="'+x.id+'"'+(e.shoe===x.id?' selected':'')+'>'+esc(x.name)+'</option>').join('')+'</select>':'')
-  +(run&&modOn('nutrition')?'<details'+((e.type==='long'||(e.dur||0)>=90)?' open':'')+'><summary>Nutrition</summary><div class="lbl"><span>Suivie pendant la séance ?</span></div>'+ch('nutriDone',[1,0],['Oui','Non'])+(e.nutriDone===0?'':'<div class="g2">'+inp('carbs','Glucides (g)')+inp('fluids','Liquide (ml)')+'</div><div class="lbl"><span>Confort digestif</span><small>1 mauvais · 5 parfait</small></div>'+ch('gi',[1,2,3,4,5]))+'</details>':'')
+  +(run&&modOn('nutrition')?'<details'+((e.type==='long'||(e.dur||0)>=90)?' open':'')+'><summary>Nutrition</summary><div class="g2">'+inp('carbs','Glucides (g)')+inp('fluids','Liquide (ml)')+'</div><div class="lbl"><span>Confort digestif</span><small>1 mauvais · 5 parfait</small></div>'+ch('gi',[1,2,3,4,5])+inp('dip','Coup de mou à la minute')+'</details>':'')
   +'<label class="f">Note</label><textarea onchange="app.setE(\'note\',this.value)">'+esc(e.note)+'</textarea>'
   +'<div class="mini" id="calc">'+calcLine(e)+'</div>'
   +'<div class="row" style="margin-top:14px"><button class="btn p" style="flex:1" onclick="app.saveE()">Enregistrer</button>'+(e.id?'<button class="btn d" onclick="app.delE(this)">Supprimer</button>':'')+'</div>';
@@ -820,10 +812,10 @@ function sessionSteps(ps){
   if(ps.type==='race')return {steps:[{n:'Course',min:d,lo:null,hi:null,int:3}],notes:['Jour de course.']};
   if(ps.type==='desc'){const reps=ps.reps||6,rest=Math.max(5,Math.round(d-15-reps*2.5));return {steps:[{n:'Endurance',min:15,lo:null,hi:null,int:2},{rep:reps,on:{n:'Descente',sec:30,int:5},off:{n:'Remontee',sec:120,int:1}},{n:'Endurance',min:rest,lo:null,hi:null,int:3}],
     notes:['Descente 8 à 12 %, relâché, foulée courte, sans freiner. Remontée en marche.','Courbatures attendues à J+2, c\'est le but. Talon surveillé 5 jours.']};}
-  if(ps.type==='long'){const h=d/60,carbs=h>=1.5?60:40;return {steps:[{n:'Endurance',min:d,lo:null,hi:null,int:0}],
-    notes:[(ps.dplus?'D+ repère : environ '+ps.dplus+' m, sans le chercher. ':'')+'Effort facile, tu peux parler. Montées raides marchées. Les 10-15 premières minutes plus lentes.',FC_NOTE,(h>=1?'Glucides '+carbs+' g/h, soit '+Math.round(carbs*h)+' g. Boisson 500 ml/h, soit '+Math.round(500*h)+' ml.':'Moins d\'une heure : eau seulement.'),'Joins la trace TCX à la séance réalisée : décorrélation et FC en descente.']};}
-  return {steps:[{n:'Endurance',min:d,lo:null,hi:null,int:0}],
-    notes:['Effort facile : tu peux tenir une conversation. Les 5-10 premières minutes plus lentes. Si ça monte, marche.',FC_NOTE,(ps.dmax?'Terrain roulant, moins de '+ps.dmax+' m de D+ : c\'est un plafond, pas un objectif.':'')].filter(Boolean)};
+  if(ps.type==='long'){const h=d/60,carbs=h>=1.5?60:40;return {steps:d>=40?[{n:'Echauffement',min:15,lo:null,hi:null,int:2},{n:'Endurance',min:d-20,lo:null,hi:null,int:0},{n:'Retour calme',min:5,lo:null,hi:null,int:3}]:[{n:'Endurance',min:d,lo:null,hi:null,int:0}],
+    notes:[(ps.dplus?'D+ repère : environ '+ps.dplus+' m, sans le chercher. ':'')+'Effort facile, tu peux parler. Montées raides marchées.',FC_NOTE,(h>=1?'Glucides '+carbs+' g/h, soit '+Math.round(carbs*h)+' g. Boisson 500 ml/h, soit '+Math.round(500*h)+' ml.':'Moins d\'une heure : eau seulement.'),'Joins la trace TCX à la séance réalisée : décorrélation et FC en descente.']};}
+  return {steps:d>=25?[{n:'Echauffement',min:10,lo:null,hi:null,int:2},{n:'Endurance',min:d-15,lo:null,hi:null,int:0},{n:'Retour calme',min:5,lo:null,hi:null,int:3}]:[{n:'Endurance',min:d,lo:null,hi:null,int:0}],
+    notes:['Effort facile : tu peux tenir une conversation. Si ça monte, marche.',FC_NOTE,(ps.dmax?'Terrain roulant, moins de '+ps.dmax+' m de D+ : c\'est un plafond, pas un objectif.':'')].filter(Boolean)};
 }
 function planText(ps){
   const P=S.profile,st=sessionSteps(ps);
@@ -835,7 +827,7 @@ function planStatus(ps){
   if(isOff(ps.date))return {k:'off'};
   if(ps.date<today)return {k:'missed'};if(ps.date===today)return {k:'today'};return {k:'next'};
 }
-/* ---------- moteur de plan (v0) ----------
+/* ---------- moteur de plan (v1 : refonte D-67/D-68 ; règles v0 conservées derrière regles:'v1') ----------
    Port de sim8.py (règles v1 : D-63, D-65a/b/d) + GABARIT-TRAIL.md.
    Fonctions pures : entrée = profil + séances réalisées + statuts du jour + date du jour,
    sortie = calendrier, semaines, séances prescrites, garde-fou. Aucun accès à l'écran ni au stockage.
@@ -849,6 +841,15 @@ const TRANCHES={
   '4-8h':{bloc:7,pic:3,affutage:2,n_cles:3,part_cle:0.60,aff:[0.65,0.45],cible:[210,270],plafond_pic:10,recup:2,min:24,confort:32},
   '8-20h':{bloc:9,pic:3,affutage:3,n_cles:3,part_cle:0.65,aff:[0.70,0.55,0.40],cible:[300,360],plafond_pic:11,recup:3,min:36,confort:52}};
 const TR_COURT={aff:[0.65,0.45],recup:2};
+/* D-70 : conventions réglables (H-42, H-44) — une seule table, pour tous les objectifs */
+const CONV={
+  moyenneMax:180,            /* sortie longue d'une semaine « moyenne » : 3 h au plus (seuil de D-22a) */
+  samRatio:2/3,              /* samedi d'un week-end de choc : au plus 2/3 de la sortie longue */
+  samMax:d=>d>=1200?240:180, /* … et au plus 3 h (4 h pour une course de 20 h ou plus) */
+  secPart:0.5,secMax:270,    /* objectif secondaire : sortie longue cible = 50 % de sa durée, 4 h 30 au plus */
+  chocsPrincipal:3,          /* week-ends de choc avant l'objectif principal, sur les semaines de sortie clé */
+  chocsSecondaire:1,         /* avant un objectif secondaire exigeant, 4 à 6 semaines avant */
+  secExigeant:(dur,dist,dplus)=>dur>=240||(dist>0&&dplus/dist>=30)};  /* « beaucoup de dénivelé » : 30 m/km et plus */
 /* ressenti : RPE moyen des séances faciles → échelle du simulateur. 1 point de RPE = dérive 0,12 (H-38, à calibrer). */
 const RPE_REF=3,RPE_K=0.12;
 const DAY=864e5;
@@ -890,7 +891,7 @@ function pasProg(m){
   const f=Math.min(1,marge*2);return Math.max(m.volume*(1+m.cap/2*f),m.volume+m.pas/2*f);
 }
 function ajuste(m,r,saut,relache,execute){
-  m.sympt=false;const manque=r==null;m.saisies.push(!manque);
+  m.sympt=false;m.etat='prog';const manque=r==null;m.saisies.push(!manque);
   if(manque){
     if(m.casse==null&&m.saisies.length>=8&&m.saisies.slice(-8).filter(Boolean).length<=4){m.casse=m.volume;m.muet=true;}
     r=m.base!=null?m.base:1;
@@ -915,7 +916,7 @@ function ajuste(m,r,saut,relache,execute){
     m.sympt=true;m.alerte={r,saut,niv:m.casse,v:execute!=null?execute:m.volume};m.preuves=0;
     if(execute!=null)m.volume=Math.min(m.volume,execute);
     m.casse=m.casse==null?m.volume:Math.min(m.casse,m.volume);m.sdc=0;
-    m.volume*=0.92;m.sdr=m.cadence;m.relDem=true;m.sains=0;
+    m.volume*=0.92;m.sdr=m.cadence;m.relDem=true;m.sains=0;m.etat='sympt';
   }else if(derive<0.05){
     if(m.alerte&&execute!=null&&execute>=0.95*m.alerte.v)m.preuves++;
     m.sdc++;
@@ -923,7 +924,7 @@ function ajuste(m,r,saut,relache,execute){
     m.sains++;
     let nv=Math.min(m.plafond,pasProg(m));if(m.gel!=null)nv=Math.min(nv,Math.max(m.volume,m.gel));
     m.volume=nv;
-  }
+  }else m.etat='maintien';
 }
 
 /* ---- calendrier (D-21, D-63f) + sous-phases du fond (gabarit § 2.2) ---- */
@@ -1025,16 +1026,29 @@ function build(inp){
   const dMain=dureeCourse(P.goalDist,P.goalDplus,refC);
   let trName=dMain?tranche_de(dMain):'8-20h';
   if(trName==='<4h'){trName='4-8h';G(1,'Objectif estimé à moins de 4 h : le gabarit court n\'est pas encore écrit, j\'applique celui des 4–8 h.');}
+  if(inp.regles!=='v1'&&dMain&&dMain>=1200)G(1,'Objectif estimé à 20 h ou plus : le gabarit de cette durée n\'est pas encore écrit, j\'applique celui des 8–20 h (sorties clés de 5 à 6 h). Seul le samedi des week-ends de choc est adapté (4 h au plus).');
   if(!dMain)G(1,'Distance de l\'objectif manquante : tranche 8–20 h par défaut.');
   if(!refC)G(1,'Aucune course ou sortie de référence déclarée : la durée de ton objectif est estimée à 7 km-effort par heure.');
   const tr=TRANCHES[trName],c=Calendrier(N,tr);
   out.info={N,start,trName,dureeMain:dMain,cal:c,refUsed:races.length>1?refC:undefined};
   if(N<tr.min)G(1,'Préparation de '+N+' semaines pour la tranche '+trName+' : en dessous du minimum de '+tr.min+' semaines (D-21). Le plan est compressé.');
-  if(run.length<3)G(1,'Moins de 3 jours de course par semaine : peu de place pour construire le volume d\'un ultra.');
-  const n=run.length,longDow=run.includes(+Dy.long)?+Dy.long:run[run.length-1],offSL=off(longDow);
-  const autresDows=run.filter(d=>d!==longDow).sort((a,b)=>off(a)-off(b));
-  const tcap=dow=>{const t=(Dy.time||{})[dow];return t?+t:null;};
-  const strength=!!(P.modules&&P.modules.strength),cfDays=strength?(Dy.cf||[]).slice():[],renfo2=strength&&cfDays.length>=2;
+  let n=run.length,longDow=run.includes(+Dy.long)?+Dy.long:run[run.length-1],offSL=off(longDow);
+  let autresDows=run.filter(d=>d!==longDow).sort((a,b)=>off(a)-off(b));
+  let DyW=Dy;const tcap=dow=>{const t=(DyW.time||{})[dow];return t?+t:null;};
+  const strength=!!(P.modules&&P.modules.strength);let cfDays=strength?(Dy.cf||[]).slice():[],renfo2=strength&&cfDays.length>=2;
+  /* D-68 : organisation par phase (attachée aux phases, pas aux dates) et versions passées (le passé ne se réécrit jamais) */
+  const V2=inp.regles!=='v1',ORD=['F1','F2','F3','F4','bloc','pic','affutage'];
+  const okOrg=o=>o&&ORD.includes(o.from)&&o.days&&(o.days.run||[]).length;
+  const cfgNow={days:Dy,orgs:V2&&Array.isArray(P.orgs)?P.orgs.filter(okOrg):[]};
+  /* versions passées : {until, days, orgs} ; une semaine antérieure à until garde l'organisation de sa version */
+  const versions=V2&&Array.isArray(P.orgHist)?P.orgHist.filter(v=>v&&v.until&&v.days&&(v.days.run||[]).length).map(v=>({until:v.until,days:v.days,orgs:(v.orgs||[]).filter(okOrg)})).sort((a,b)=>a.until<b.until?-1:1):[];
+  if(run.length<3){const o3=cfgNow.orgs.find(o=>o.days.run.length>=3);
+    G(1,o3?'Moins de 3 jours de course par semaine jusqu\'à ta phase « '+({F1:'Reprise',F2:'Base',F3:'Endurance musculaire',F4:'Intensité en côte',bloc:'Bloc spécifique',pic:'Pic',affutage:'Affûtage'}[o3.from])+' », où tu passes à '+o3.days.run.length+' jours.':'Moins de 3 jours de course par semaine : peu de place pour construire le volume d\'un ultra.');}
+  const orgDe=(monW,ph,sp)=>{const cfg=versions.find(x=>monW<x.until)||cfgNow;
+    const k=ORD.indexOf(ph==='fond'?sp:ph);let d=cfg.days,en=false,pos=-1;
+    cfg.orgs.forEach(o=>{const i=ORD.indexOf(o.from);if(i<=k&&i>=pos){d=o.days;en=!!o.enchaine;pos=i;}});return {d,en};};
+  const appliqueOrg=o=>{DyW=o.d;const r=(o.d.run||[]).slice();n=r.length;longDow=r.includes(+o.d.long)?+o.d.long:r[r.length-1];offSL=off(longDow);
+    autresDows=r.filter(d=>d!==longDow).sort((a,b)=>off(a)-off(b));cfDays=strength?(o.d.cf||[]).slice():[];renfo2=strength&&cfDays.length>=2;};
   const gap=(a,b)=>Math.min((a-b+7)%7,(b-a+7)%7);
   /* courses intermédiaires : A/B = objectif secondaire (affûtage + récupération), C = course-entraînement */
   const secs=[];
@@ -1042,7 +1056,7 @@ function build(inp){
     const dur=dureeCourse(r.dist,r.dplus,refC)||120;let statut=r.prio==='C'?'entrainement':'objectif';
     const t2=TRANCHES[tranche_de(dur)]||TR_COURT;
     if(statut==='objectif'&&(w+t2.recup>c.fond)){statut='entrainement';G(1,(r.name||'Course')+' tombe dans le bloc spécifique : traitée en course-entraînement, sans affûtage ni récupération (D-25).');}
-    secs.push({w,date:r.date,dur,statut,name:r.name||'Course',t2});});
+    secs.push({w,date:r.date,dur,statut,name:r.name||'Course',t2,exigeant:CONV.secExigeant(dur,+r.dist||0,+r.dplus||0)});});
   const secAff={},secRec=new Set();
   secs.filter(s=>s.statut==='objectif').forEach(s=>{s.t2.aff.forEach((f,k)=>{secAff[s.w-s.t2.aff.length+1+k]=f;});for(let k=1;k<=s.t2.recup;k++)secRec.add(s.w+k);});
   const forcees=new Set(Object.keys(secAff).map(Number).concat([...secRec]));
@@ -1079,10 +1093,15 @@ function build(inp){
     G(1,'Tes montées les plus longues sont courtes et tu n\'as pas d\'accès régulier à la montagne : le bloc spécifique s\'appuiera sur des répétitions de côte, et quelques sorties en moyenne montagne pendant le bloc feront une vraie différence.');
   if(tcap(longDow)&&tcap(longDow)<tr.cible[0])G(1,'Temps disponible le '+['dimanche','lundi','mardi','mercredi','jeudi','vendredi','samedi'][longDow]+' : '+tcap(longDow)+' min, pour une sortie clé de '+tr.cible[0]+' min au moins.');
 
+  let niv=null,enW=false,lrGel=0,chocsP=0;const chocsS={};   /* D-67 : niveau de sortie longue atteint */
   let derniereRel=0,charges=0,clesFaites=0,derniereCle=-99,lrPrec=null,arretC=0,ref=null,ref2=null,volsCharge=[],dernierExec=null,reprise=null,maxAvant=0,maxSec=0;
   const cnt={};const cntDone={};
+  /* écart n° 5 : dernière sortie longue déclarée, sortie de la fenêtre des 30 jours depuis moins de 8 semaines → repère de reprise dégressif (même règle qu'une interruption, H-40) */
+  if(V2&&St.lastLong&&St.lastLong.dur&&St.lastLong.date&&St.lastLong.date<start&&!before.some(s=>s.date>=add(start,-FENETRE))){
+    const age=-jourOf(St.lastLong.date);if(age>=FENETRE-7&&age<FENETRE+56){const k=Math.max(0,Math.ceil((age-FENETRE+7)/7));reprise=[0,Math.max(0.65,1-0.07*k)*St.lastLong.dur];}}
   for(let w=1;w<=N;w++){
     const ph=c.phase(w),sp=c.sous(w),monW=add(start,(w-1)*7),past=w<todayW,cur=w===todayW;
+    if(V2){const o=orgDe(monW,ph,sp);appliqueOrg(o);enW=o.en;}
     const reels=runsW[w]||[];
     /* interruption réelle : semaine passée sans aucune course */
     if(past&&!reels.length&&!forcees.has(w)&&ph!=='affutage'){
@@ -1098,10 +1117,10 @@ function build(inp){
     let V,relache;
     if(aff){if(ref==null)ref=volsCharge.length?med(volsCharge.slice(-3)):m.volume;V=ref*tr.aff[Math.min(w-c.T,tr.aff.length-1)];relache=false;}
     else if(sAff){if(ref2==null)ref2=volsCharge.length?med(volsCharge.slice(-3)):m.volume;V=ref2*secAff[w];relache=true;}
-    else if(sRec){ref2=null;V=0.6*m.volume;relache=true;}
+    else if(sRec){ref2=null;V=(V2?[0.35,0.55,0.75][Math.min([...secRec].filter(x=>x<=w).length,3)-1]:0.6)*m.volume;relache=true;}
     else{relache=m.relDem||relachesPrevues(c,w,derniereRel,charges,forcees).has(w);
       m.conso=ph==='bloc'||ph==='pic';
-      if(m.conso&&m.gel==null&&m.casse==null){m.gel=dernierExec?Math.min(m.volume,dernierExec):m.volume;m.volume=m.gel;}
+      if(m.conso&&m.gel==null&&m.casse==null){m.gel=(!V2&&dernierExec)?Math.min(m.volume,dernierExec):m.volume;m.volume=m.gel;}
       V=m.volume*(relache?0.6:1);if(relache)V=Math.max(V,Math.min(m.volume,2*PLANCHER/60));}
     const gele=aff||sAff||sRec,courseSem=w===N&&aff;
     let cle=false;if(!gele&&!relache&&(ph==='bloc'||ph==='pic'))cle=tr.n_cles>clesFaites&&w-derniereCle>=2&&w<=c.T-1;
@@ -1111,11 +1130,11 @@ function build(inp){
       const futRel=relachesPrevues(c,w,derniereRel,charges,forcees),charge=[];for(let x=w;x<c.T;x++)if(!futRel.has(x)&&!forcees.has(x))charge.push(x);
       const clesPrev=[];let dern=derniereCle;for(const x of charge)if((c.phase(x)==='bloc'||c.phase(x)==='pic')&&clesPrev.length<tr.n_cles-clesFaites&&x-dern>=2){clesPrev.push(x);dern=x;}
       const ech=[];if(clesPrev.length)ech.push([clesPrev[clesPrev.length-1],tr.cible[0]/SEUIL]);
-      secs.forEach(s=>{if(s.w>=w){const lim=s.statut==='objectif'?Math.min(s.w,...Object.keys(secAff).map(Number).filter(x=>x<=s.w&&x>s.w-4)):s.w;ech.push([lim,echeance(s.dur)]);}});
+      secs.forEach(s=>{if(V2&&s.statut!=='objectif')return;if(s.w>=w){const lim=s.statut==='objectif'?Math.min(s.w,...Object.keys(secAff).map(Number).filter(x=>x<=s.w&&x>s.w-4)):s.w;ech.push([lim,V2?Math.min(CONV.secPart*s.dur,CONV.secMax)/SEUIL:echeance(s.dur)]);}});
       for(const [sem,besoin] of ech){if(mx>=besoin-EPS)continue;
         const slots=charge.filter(x=>x<sem&&(c.phase(x)==='fond'||clesPrev.includes(x))),futurs=slots.filter(x=>x>w),utiles=futurs.slice(0,Math.max(0,futurs.length-MARGE));
         let trou=null;if(forcees.size&&w<=Math.max(...forcees)){const d0=Math.min(...forcees),d1=Math.max(...forcees);trou=[d0,d1,Math.max(0.65,1-0.07*(d1-d0))];}
-        if(!atteint(mx,besoin,utiles,c,trou))return true;}
+        if(!atteint(mx,besoin,utiles,c,trou))return besoin;}
       return false;};
     const aEntretenir=mx=>{const jour=(w-1)*7+offSL;let last=null;for(const h of hist)if(h.d>=mx-EPS&&h.j>=jour-FENETRE&&h.j<jour)last=last==null?h.j:Math.max(last,h.j);
       const age=jour-(last==null?jour:last);if(age<14)return null;
@@ -1129,27 +1148,53 @@ function build(inp){
       const niv=ph==='fond'?aEntretenir(mx):null;
       if(niv&&niv>part(ph)*V*60&&!(lrPrec!=null&&lrPrec>GRANDE&&niv>GRANDE))return Math.min(niv,tr.part_cle*V*60);
       return Math.min(cap,part(ph)*V*60);};
+    /* D-67 : la sortie longue suit sa propre progression ; le volume de la semaine en est la conséquence */
+    const cibleLr2=mx=>{const cap=Math.max(PLANCHER,SEUIL*mx);if(niv==null)niv=Math.max(PLANCHER,Math.min(mx,cap));
+      if(aff)return Math.min(cap,niv*tr.aff[Math.min(w-c.T,tr.aff.length-1)]);
+      if(sAff)return Math.min(cap,niv*secAff[w]);
+      if(sRec){const k=[...secRec].filter(x=>x<=w&&secRec.has(x)).length;return Math.min(cap,niv*[0.35,0.55,0.75][Math.min(k,3)-1]);}   /* récupération progressive après l'objectif (convention) */
+      if(relache)return Math.min(cap,0.65*niv,CONV.moyenneMax);
+      if(cle)return Math.min(cap,tr.cible[1]);
+      const longueAvant=lrPrec!=null&&lrPrec>GRANDE&&lrPrec>=0.9*niv;   /* au-delà de 3 h : une semaine sur deux (D-22a, convention H-27) */
+      if(ph!=='fond')return Math.min(cap,Math.max(PLANCHER,Math.min(2/3*niv,CONV.moyenneMax)));
+      if(longueAvant&&Math.min(cap,niv)>GRANDE)return Math.min(cap,Math.max(PLANCHER,Math.min(2/3*niv,CONV.moyenneMax)));
+      const dm=lrGel===0?doitMonter(mx):false;if(dm)return Math.min(cap,Math.max(niv,dm*SEUIL));   /* on monte jusqu'à la cible, pas au-delà */   /* un signal de fatigue gèle la progression (D-67) */
+      return Math.min(cap,niv);};
     /* séances de la semaine (durées : port de construit) */
     let jours=autresDows.slice();
-    let lr0=cibleLr(max30(hist,(w-1)*7+offSL,reprise));
-    let slMax=(!gele&&V*60<=1.2*(jours.length+1)*PLANCHER+EPS)?Math.max(PLANCHER,V*60-jours.length*PLANCHER):null,slForce=null;
+    const lrW=(V2&&!secIci&&!courseSem)?(()=>{const mx=max30(hist,(w-1)*7+offSL,reprise),cap=Math.max(PLANCHER,SEUIL*mx);let l=arrondi(cibleLr2(mx),cap,true);const tc=tcap(longDow);if(tc&&l>tc)l=arrondi(tc,tc);return l;})():null;
+    if(V2&&lrW&&lrGel>0&&!relache&&!gele&&!cle)lrGel--;
+    /* week-end enchaîné : la veille de la sortie longue devient une sortie moyenne (≤ 2/3, H-42), hors budget des endurances */
+    /* D-70 : week-end de choc — objectif principal : semaines de sortie clé (3 au plus) ; objectif secondaire exigeant : 1, 4 à 6 semaines avant */
+    let choc=null;
+    if(V2&&enW&&lrW&&!aff&&!sAff&&!sRec&&!relache){
+      if(cle&&chocsP<CONV.chocsPrincipal)choc={dur:dMain||600,p:true};
+      else{const s=secs.find(s=>s.statut==='objectif'&&s.exigeant&&(chocsS[s.w]||0)<CONV.chocsSecondaire&&w>=s.w-6&&w<=s.w-4&&(lrW>=0.9*(niv||0)||w===s.w-4));
+        if(s)choc={dur:s.dur,s:s.w};}}
+    const veille=choc?jours.find(d=>off(d)===offSL-1):null;if(veille==null)choc=null;else{if(choc.p)chocsP++;else chocsS[choc.s]=(chocsS[choc.s]||0)+1;}if(veille!=null)jours=jours.filter(d=>d!==veille);   /* hors choc, la veille reste une endurance normale */
+    const partK=Math.max(PART[aff||sAff?'affutage':ph],1/Math.max(1,n)),budgetEf=V*60*(1-partK);
+    let lr0=V2?(lrW||0):cibleLr(max30(hist,(w-1)*7+offSL,reprise));
+    let slMax=(!V2&&!gele&&V*60<=1.2*(jours.length+1)*PLANCHER+EPS)?Math.max(PLANCHER,V*60-jours.length*PLANCHER):null,slForce=null;
     if(slMax!=null){lr0=Math.min(lr0,slMax);
       if(V*60<(jours.length+1)*PLANCHER-EPS){const ne=Math.max(1,Math.floor(V*60/PLANCHER+1e-9));jours=jours.slice(0,ne-1);
         slForce=Math.min(Math.max(PLANCHER,SEUIL*max30(hist,(w-1)*7+offSL,reprise)),V*60-(ne-1)*PLANCHER);lr0=slForce;}}
     const courseSL=courseSem||(secIci&&sAff)||(secIci&&secIci.statut==='entrainement');
-    let nb=jours.length;const reste=V*60-(courseSem||(secIci&&sAff)?0:lr0);
+    let nb=jours.length;const reste=V2?(courseSem||(secIci&&sAff)?V*60:budgetEf):V*60-(courseSem||(secIci&&sAff)?0:lr0);
     while(nb>1&&reste/nb<PLANCHER-EPS)nb--;
     /* on garde les jours les plus éloignés de la sortie longue */
     jours=jours.slice().sort((a,b)=>gap(b,longDow)-gap(a,longDow)).slice(0,nb).sort((a,b)=>off(a)-off(b));
-    const aut=(courseSem||(secIci&&sAff))?V*60/Math.max(1,nb):Math.max(0,V*60-lr0)/Math.max(1,nb);
+    const aut=V2?reste/Math.max(1,nb):(courseSem||(secIci&&sAff))?V*60/Math.max(1,nb):Math.max(0,V*60-lr0)/Math.max(1,nb);
     const h=hist.slice(),rx=[];
     jours.forEach(d=>{const jour=(w-1)*7+off(d);const cap=Math.max(PLANCHER,max30(h,jour,reprise));
-      let dur=arrondi(Math.min(aut,cap),cap);const tc=tcap(d);if(tc&&dur>tc)dur=arrondi(tc,tc);
+      let dur=arrondi(Math.min(aut,cap,V2?90:1e9),cap);   /* D-29 : endurance ≤ 1 h 30 */const tc=tcap(d);if(tc&&dur>tc)dur=arrondi(tc,tc);
       if(dur>0){rx.push({dow:d,jour,dur,kind:'ef'});h.push({j:jour,d:dur,t:'rx'});}});
     const jourSL=(w-1)*7+offSL;
     if(secIci&&(w===secIci.w)){rx.push({dow:D(secIci.date).getDay(),jour:jourOf(secIci.date),dur:Math.round(secIci.dur),kind:'race',name:secIci.name,statut:secIci.statut});}
     else if(courseSem){rx.push({dow:D(P.goalDate).getDay(),jour:jourOf(P.goalDate),dur:Math.round(dMain||600),kind:'goal'});}
-    if(!(secIci)&&!courseSem){const mx=max30(hist,jourSL,reprise);let lr=cibleLr(mx);if(slMax!=null)lr=slForce!=null?slForce:Math.min(lr,slMax);
+    if(V2&&lrW){if(veille!=null){const jv=(w-1)*7+off(veille),cv=Math.max(PLANCHER,max30(h,jv,reprise));let dv=arrondi(Math.min(CONV.samRatio*lrW,CONV.samMax(choc.dur),cv),cv);const tc=tcap(veille);if(tc&&dv>tc)dv=arrondi(tc,tc);
+        if(dv>0){rx.push({dow:veille,jour:jv,dur:dv,kind:'ef',moyen:true});h.push({j:jv,d:dv,t:'rx'});}}
+      rx.push({dow:longDow,jour:jourSL,dur:lrW,kind:cle?'cle':'long'});}
+    else if(!V2&&!(secIci)&&!courseSem){const mx=max30(hist,jourSL,reprise);let lr=cibleLr(mx);if(slMax!=null)lr=slForce!=null?slForce:Math.min(lr,slMax);
       const cap=Math.max(PLANCHER,SEUIL*mx);lr=arrondi(lr,cap,true);const tc=tcap(longDow);if(tc&&lr>tc)lr=arrondi(tc,tc);
       if(lr>0)rx.push({dow:longDow,jour:jourSL,dur:lr,kind:cle?'cle':'long'});}
     /* jour de course : rien d'autre ce jour-là */
@@ -1190,7 +1235,7 @@ function build(inp){
     const volPrevu=rx.filter(x=>x.kind!=='race'&&x.kind!=='goal').reduce((a,x)=>a+x.dur,0)/60;
     let r=null,saut=0,exec=volPrevu,execH=rx.map(x=>({j:x.jour,d:x.dur,t:x.kind}));
     if(past){
-      const easy=reels.filter(s=>(s.type==='ef'||s.type==='long')&&s.rpe!=null);
+      const easy=reels.filter(s=>(s.type==='ef'||(!V2&&s.type==='long'))&&s.rpe!=null);   /* v2 : endurances seules (le RPE d'une sortie longue dépend de sa durée et de son D+) */
       r=easy.length?1+(easy.reduce((a,s)=>a+s.rpe,0)/easy.length-RPE_REF)*RPE_K:null;
       rx.forEach(x=>{if(x.kind==='race'||x.kind==='goal')return;const dt=add(monW,off(x.dow));if(isOff(dt)||dt<from)return;
         if(!reels.some(s=>s.date===dt))saut++;});
@@ -1200,19 +1245,24 @@ function build(inp){
     }else{rx.forEach(x=>{if(x.kind==='qual')cntDone[x.qk]=(cntDone[x.qk]||0)+1;});r=cur?null:(m.base!=null?m.base:1);if(cur)r=undefined;}
     hist=hist.concat(execH).filter(e=>e.j>=(w-1)*7+6-FENETRE-1);
     if(r!==undefined){   /* la semaine en cours n'ajuste rien : ses séances sont à venir */
-      if(!gele){ajuste(m,r,saut,relache,volPrevu);if(!relache&&volPrevu<V-0.05)m.volume=Math.min(m.volume,Math.max(volPrevu,0.5)*(1+m.cap));}
+      if(!gele){if(V2){const efP=rx.filter(x=>(x.kind==='ef'||x.kind==='qual')&&!x.moyen).reduce((a,x)=>a+x.dur,0),eq=efP/60/(1-partK);
+          ajuste(m,r,saut,relache,eq);if(m.etat==='sympt')lrGel=2;else if(m.etat==='maintien'&&!relache)lrGel=Math.max(lrGel,1);if(!relache&&efP<budgetEf-3)m.volume=Math.min(m.volume,Math.max(eq,0.5)*(1+m.cap));}
+        else{ajuste(m,r,saut,relache,volPrevu);if(!relache&&volPrevu<V-0.05)m.volume=Math.min(m.volume,Math.max(volPrevu,0.5)*(1+m.cap));}}
       else{m.sdr=0;m.relDem=false;}
     }
     if(relache||gele){derniereRel=w;charges=0;}else{charges++;volsCharge.push(V);dernierExec=volPrevu;}
     const lrObj=rx.filter(x=>x.kind==='long'||x.kind==='cle');if(lrObj.length)lrPrec=lrObj[0].dur;
+    if(V2&&!relache&&!gele){const reelL=past?Math.max(0,...reels.filter(s=>s.type==='long').map(s=>s.dur||0)):0;
+      const l=past?reelL:(lrObj.length?lrObj[0].dur:0);if(l>0)niv=Math.max(niv||0,l);if(past&&reelL>0)lrPrec=reelL;}
     if(cle&&lrObj.length){clesFaites++;derniereCle=w;}
     const typ=aff?'affutage':sAff?'aff_sec':sRec?'recup_sec':relache?'relache':'charge';
-    out.weeks.push({w,mon:monW,phase:ph,sous:sp,type:typ,V,volPrevu,cle,sympt:m.sympt&&!gele,dens:dz});
+    out.weeks.push({w,mon:monW,phase:ph,sous:sp,type:typ,V,volPrevu,cle,sympt:m.sympt&&!gele,dens:dz,jours:V2?(DyW.run||[]).slice():undefined,enchaine:V2?enW:undefined,niv:V2?niv:undefined});
     /* séances datées */
     const why=x=>{const b=[];
       if(x.kind==='cle')b.push('Sortie clé du bloc spécifique : elle se rapproche de ta course.');
       else if(x.kind==='long')b.push(ph==='fond'?'Sortie longue : la seule séance qui progresse cette semaine (+10 % au plus sur la plus longue des 30 derniers jours).':'Sortie longue.');
       else if(x.kind==='qual')b.push({F2:'Base aérobie : travail de force en côte, car ton renforcement ne le couvre pas.',F3:'Endurance musculaire : les jambes, pas le souffle, limitent la montée. C\'est la qualité qui manque le plus en ultra de montagne.',F4:'Intensité en côte : elle relève ton plafond aérobie avant le bloc spécifique.',bloc:'Bloc spécifique : effort de course en montée.',pic:'Pic : effort de course en montée.',affutage:'Affûtage : garder le rythme sans fatigue.'}[aff?'affutage':(sp||ph)]||'Séance de qualité.');
+      else if(x.moyen)b.push('Week-end de choc : sortie moyenne la veille de ta sortie longue, pour courir le lendemain sur des jambes déjà fatiguées. Il y en a peu dans la préparation : c\'est l\'un d\'eux.');
       else if(x.kind==='ef')b.push('Endurance facile : elle construit le volume sans fatigue.');
       if(typ==='relache')b.push('Semaine allégée : on assimile.');
       if(typ==='aff_sec'||typ==='recup_sec')b.push('Autour de ton objectif intermédiaire.');
@@ -1222,6 +1272,7 @@ function build(inp){
       if(x.kind==='race'){out.sessions.push({id:'g'+date+'-race',gen:true,date,type:'race',dur:x.dur,title:x.name,note:x.statut==='objectif'?'Objectif intermédiaire':'Course-entraînement',why:x.statut==='objectif'?'Objectif intermédiaire : affûtage avant, récupération après.':'Course-entraînement : elle remplace la sortie longue de la semaine.'});return;}
       if(x.kind==='goal'){out.sessions.push({id:'g'+date+'-goal',gen:true,date,type:'race',dur:x.dur,title:P.goalName||'Objectif',why:'Ta course.'});return;}
       const o={id:'g'+date+'-'+(x.kind==='qual'?'q':x.kind),gen:true,date,type:x.kind==='qual'?'qual':(x.kind==='cle'||x.kind==='long')?'long':'ef',dur:x.dur,dplus:x.dplus,why:why(x)};
+      if(x.moyen)o.title='Week-end de choc';
       if(x.dmax)o.dmax=x.dmax;
       if(x.kind==='cle')o.title='Sortie clé';
       if(x.q){o.title=x.q.title;o.steps=x.q.steps;o.notes=x.q.notes;}
@@ -1381,12 +1432,35 @@ function openPlanSheet(toTop){const p=document.querySelector('.sheet .in'),st=to
   $('#sheet').innerHTML='<div class="sheet" onclick="if(event.target===this)app.close()"><div class="in" style="background:var(--bg);padding-bottom:calc(28px + env(safe-area-inset-bottom))">'+vSessDetail()+'</div></div>';
   const c=document.querySelector('.sheet .in');if(c)c.scrollTop=st;}
 /* ---------- Profil : fenêtres de saisie (brouillon PD, Annuler / Enregistrer) ---------- */
-let PD=null,PSEC=null,PFLOW=null,PSTEP=0,PERR=[],PPREV=null,PBACK=null,PDATEPICK=false;
-const PR=()=>PD||S.profile;                              /* profil édité : brouillon si une fenêtre est ouverte */
+let PORG=null,PD=null,PSEC=null,PFLOW=null,PSTEP=0,PERR=[],PPREV=null,PBACK=null,PDATEPICK=false;
+const PR=()=>PD||S.profile;
+/* jours édités : ceux de la phase ouverte (D-68) ou la semaine type */
+const orgTouch=()=>{if(PSEC==='org'&&PD){const e=PD.orgs.find(o=>o.from===PORG);if(e)delete e._new;}};
+const DAYS=()=>{if(PSEC==='org'&&PD){const e=PD.orgs.find(o=>o.from===PORG);if(e)return e.days;}const p=PR();return p.days||(p.days={});};                              /* profil édité : brouillon si une fenêtre est ouverte */
 function commitP(rerender){if(PD){if(rerender!==false)openProfSheet();}else{save();render();}}
 
-const STRUCT=['goal','week','start','terrain','strength','injury'];  /* sections qui changent le plan */
+const STRUCT=['goal','week','start','terrain','strength','injury','org'];  /* sections qui changent le plan */
+/* D-68 : phases expliquées au moment de la décision (gabarit § 2) */
+const PHASES={
+  F1:{l:'Reprise',t:'Réhabituer le corps : endurance facile, quelques accélérations, force générale légère.'},
+  F2:{l:'Base',t:'Construire le volume facile et la force maximale : c\'est la phase où 2 renforcements lourds par semaine rapportent le plus.'},
+  F3:{l:'Endurance musculaire',t:'Montées lestées, sortie longue qui s\'allonge. Le renforcement passe en entretien : 1 séance lourde par semaine suffit à garder la force.',c:'Si tu cours moins de 3 jours : c\'est le bon moment pour passer au week-end enchaîné, avec 1 seul renforcement lourd.'},
+  F4:{l:'Intensité en côte',t:'Intervalles en côte pour relever ton plafond aérobie, dernière phase du fond.',c:'Même conseil qu\'en endurance musculaire si tu cours moins de 3 jours.'},
+  bloc:{l:'Bloc spécifique',t:'Sorties clés proches de ta course (jusqu\'à 6 h), tempo et montées à l\'effort de course. Le volume ne monte plus : il se consolide.',c:'Le week-end enchaîné prépare directement la fatigue de fin de course.'},
+  pic:{l:'Pic',t:'Les dernières grosses semaines, pliométrie et excentrique pour les descentes.'},
+  affutage:{l:'Affûtage',t:'Le volume baisse, l\'intensité reste : tu arrives frais le jour J.'}};
+const PORDER=['F1','F2','F3','F4','bloc','pic','affutage'];
+/* phases du plan, avec leurs dates (calendrier du moteur) */
+function phasesPlan(){const o=eng();if(!o||!o.ok||!o.info||!o.info.cal)return [];const c=o.info.cal,out=[];
+  for(let w=1;w<=c.N;w++){const ph=c.phase(w),k=ph==='fond'?c.sous(w):ph,mon=addDays(o.info.start,(w-1)*7);
+    const last=out[out.length-1];if(last&&last.k===k)last.to=addDays(mon,6);else out.push({k,from:mon,to:addDays(mon,6)});}
+  return out;}
+/* organisation en vigueur pour une phase (config actuelle) */
+function orgOf(P,k){let d=P.days||{},en=false,pos=-1;(P.orgs||[]).forEach(o=>{const i=PORDER.indexOf(o.from);if(i<=PORDER.indexOf(k)&&i>=pos&&o.days&&(o.days.run||[]).length){d=o.days;en=!!o.enchaine;pos=i;}});return {d,en,own:(P.orgs||[]).some(o=>o.from===k)};}
+const djs=a=>[1,2,3,4,5,6,0].filter(i=>(a||[]).includes(i)).map(i=>DOWS[i]).join(', ');
+function orgResume(P,k){const o=orgOf(P,k),d=o.d,M=P.modules||{};return 'Course : '+(djs(d.run)||'aucun jour')+' · sortie longue '+DOWS[+d.long]+(o.en?' · <b>week-end enchaîné</b>':'')+(M.strength?' · renforcement : '+((d.cf||[]).length?djs(d.cf):'aucun'):'');}
 const SECT={
+  org:{t:'Organisation par phase',h:'Tes jours peuvent changer d\'une phase à l\'autre. Le changement s\'applique le lundi où la phase commence ; les semaines passées ne bougent pas.'},
   ident:{t:'Toi',h:'Ton prénom personnalise l\'app. Ton poids sert à doser la charge des montées lestées.'},
   goal:{t:'Ton objectif',h:'Le plan se construit à rebours depuis cette date. Distance et D+ permettent d\'estimer ta durée de course, qui fixe la durée du bloc spécifique et de l\'affûtage.'},
   week:{t:'Ta semaine type',h:'Coche tous les jours où tu peux courir, même si tu ne cours pas tous ces jours-là : le plan choisit les séances selon ta phase. La sortie longue tombe sur son jour. Le temps disponible plafonne la séance de ce jour (vide = pas de limite).'},
@@ -1413,6 +1487,7 @@ function secMissing(sec,p){
   if(sec==='goal'){if(vide(p.goalName))m.push('nom de la course');if(vide(p.goalDate))m.push('date');else if(p.goalDate<=todayISO())m.push('une date à venir');
     if(vide(p.goalDist))m.push('distance');if(vide(p.goalDplus))m.push('D+ (0 si plat)');
     (p.races||[]).forEach((r,i)=>{if(vide(r.name)||vide(r.date)||vide(r.dist)||vide(r.dplus))m.push('course intermédiaire n°'+(i+1)+' incomplète');});}
+  if(sec==='org'){const e=(p.orgs||[]).find(o=>o.from===PORG),d=e?e.days:{};if(!(d.run||[]).length)m.push('au moins un jour de course');else if(!(d.run||[]).includes(+d.long))m.push('un jour de sortie longue parmi tes jours de course');}
   if(sec==='week'){if(!(D.run||[]).length)m.push('au moins un jour de course');else if(!(D.run||[]).includes(+D.long))m.push('un jour de sortie longue parmi tes jours de course');}
   if(sec==='start'){
     if(vide(St.freq4w))m.push('sorties par semaine ces 4 dernières semaines');
@@ -1433,7 +1508,31 @@ function flowSteps(p){const M=p.modules||{};return ['ident','goal','week','start
 const hmField=(label,curMin,onH,onM)=>'<div><label class="f">'+label+'</label><div class="row" style="gap:8px;align-items:center">'
   +'<input type="number" inputmode="numeric" placeholder="0" style="width:64px;text-align:center" value="'+(curMin!=null&&curMin>0?Math.floor(curMin/60):'')+'" onchange="'+onH+'"><span class="mini">h</span>'
   +'<input type="number" inputmode="numeric" placeholder="0" style="width:64px;text-align:center" value="'+(curMin!=null&&curMin>0?curMin%60:'')+'" onchange="'+onM+'"><span class="mini">min</span></div></div>';
+function vOrgForm(){
+  const P=PD,k=PORG,ph=phasesPlan(),today=todayISO(),e=P.orgs.find(o=>o.from===k),D=e.days,M=P.modules||{};
+  const gap=(a,b)=>Math.min((a-b+7)%7,(b-a+7)%7),veille=(D.run||[]).find(d=>(d+1)%7===+D.long);
+  let s='<div class="lbl" style="margin-top:0"><span>Les phases de ta préparation</span></div><div class="phz">'
+    +ph.map(x=>{const cur=x.from<=today&&today<=x.to,past=x.to<today,sel=x.k===k;
+      return '<div class="phr'+(sel?' sel':'')+(past?' past':'')+'"><div class="row sbtw"><b>'+PHASES[x.k].l+'</b>'+(cur?' <span class="pill">en cours</span>':'')+'<span class="mini" style="margin:0">'+fmtS(x.from)+' → '+fmtS(x.to)+'</span></div>'
+        +(sel?'<div class="mini" style="margin-top:4px">'+PHASES[x.k].t+'</div>'+(PHASES[x.k].c?'<div class="mini" style="margin-top:4px"><b>Conseil :</b> '+PHASES[x.k].c+'</div>':''):'<div class="mini" style="margin-top:2px">'+orgResume(P,x.k)+'</div>')+'</div>';}).join('')+'</div>'
+    +'<div class="lbl"><span>À partir de : '+PHASES[k].l+'</span><small>et pour les phases suivantes, sauf réglage propre</small></div>'
+    +chips([1,2,3,4,5,6,0],null,v=>'app.toggleRunDay('+v+')','run',[1,2,3,4,5,6,0].map(i=>((D.run||[]).includes(i)?'✓ ':'')+DOWS[i]),null,'txt')
+    +((D.run||[]).length?'<label class="f">Sortie longue</label><select onchange="app.setLong(this.value)">'+[1,2,3,4,5,6,0].filter(i=>D.run.includes(i)).map(i=>'<option value="'+i+'"'+(+D.long===i?' selected':'')+'>'+DOWN[i]+'</option>').join('')+'</select>'
+      +'<div class="lbl"><span>Temps disponible</span><small>minutes, vide = pas de limite</small></div>'
+      +'<div class="g3">'+[1,2,3,4,5,6,0].filter(i=>D.run.includes(i)).map(i=>'<div><label class="f" style="margin-top:0">'+DOWS[i]+'</label><input type="number" inputmode="numeric" value="'+esc((D.time||{})[i])+'" onchange="app.setTime('+i+',this.value)"></div>').join('')+'</div>':'')
+    +(veille!=null?'<div class="lbl"><span>Week-end enchaîné</span><small>'+DOWN[veille].toLowerCase()+' + '+DOWN[+D.long].toLowerCase()+'</small></div>'
+      +chips([1,0],e.enchaine?1:0,v=>'app.setEnch('+v+')','ench',['Oui','Non'],null,'txt')
+      +'<div class="mini" style="margin-top:6px">Le '+DOWN[veille].toLowerCase()+' reste une endurance normale, sauf les <b>week-ends de choc</b> : 1 avant un objectif intermédiaire exigeant (4 à 6 semaines avant), jusqu\'à 3 dans le bloc spécifique. Ce week-end-là, il devient une sortie moyenne (2/3 de ta sortie longue, 3 h au plus) pour courir le lendemain sur des jambes déjà fatiguées.</div>'
+      :'<div class="mini" style="margin-top:10px">Pour un week-end enchaîné, coche aussi la veille de ta sortie longue.</div>')
+    +(M.strength?'<div class="lbl"><span>Jours de renforcement</span></div>'+chips([1,2,3,4,5,6,0],null,v=>'app.toggleCf('+v+')','cf',[1,2,3,4,5,6,0].map(i=>((D.cf||[]).includes(i)?'✓ ':'')+DOWS[i]),null,'txt'):'');
+  const conf=dayConflicts(Object.assign({},P,{days:D}));
+  if(e.enchaine&&veille!=null)(D.cf||[]).forEach(c=>{if(gap(c,veille)<1||(c+1)%7===veille)conf.push('Renforcement du '+DOWN[c].toLowerCase()+' la veille ou le jour du '+DOWN[veille].toLowerCase()+' : tu arriveras entamé au week-end');});
+  if(conf.length)s+='<div class="mini" style="color:#8a5a0a;margin-top:10px"><b>Attention :</b> '+conf.join('. ')+'.</div>';
+  s+='<div class="mini" style="margin-top:12px">Ta sortie longue garde sa progression : changer de jours ne la fait ni sauter ni reculer. Un jour ajouté démarre à son niveau, dans la règle des 30 jours.</div>';
+  if(orgOf(S.profile,k).own||P.orgs.some(o=>o.from===k&&o._new!==true))s+='<button class="btn full" style="margin-top:12px" onclick="app.orgReset()">Revenir à l\'organisation de la phase précédente</button>';
+  return s;}
 function secForm(sec){
+  if(sec==='org')return vOrgForm();
   const P=PD,St=P.start||{},D=P.days||{},inj=(function(){const I=P.injury||{};return Object.assign({},INJURIES[I.type]||INJURIES.autre,I,{avoid:I.avoid||[]});})();
   const inp=(key,label,type,step,ph)=>'<div><label class="f">'+label+'</label><input type="'+(type||'number')+'"'+(!type||type==='number'?' inputmode="decimal"':'')+(step?' step="'+step+'"':'')+(ph?' placeholder="'+ph+'"':'')+' value="'+esc(P[key])+'" onchange="app.setP(\''+key+'\',this.value)"></div>';
   if(sec==='ident')return '<div class="g2">'+inp('name','Prénom','text')+inp('weight','Poids (kg)','number','0.1','ex. 78')+'</div>';
@@ -1582,6 +1681,14 @@ function openProfSheet(){
   const c=document.querySelector('.sheet .in');if(c)c.scrollTop=st;
 }
 
+/* D-68 : organisation par phase, visible et modifiable phase par phase */
+function vOrgCard(){const ph=phasesPlan(),P=S.profile,today=todayISO();
+  if(!ph.length)return '';
+  return '<div class="lab">Organisation par phase</div><div class="card"><div class="mini" style="margin-top:0;margin-bottom:10px">Tes jours peuvent changer selon la phase. Par défaut, ta semaine type vaut pour toute la préparation.</div><div class="phz">'
+    +ph.map(x=>{const cur=x.from<=today&&today<=x.to,past=x.to<today,own=orgOf(P,x.k).own;
+      return '<div class="phr'+(cur?' sel':'')+(past?' past':'')+'"><div class="row sbtw" style="gap:10px;align-items:flex-start"><div style="flex:1;min-width:0"><b>'+PHASES[x.k].l+'</b>'+(cur?' <span class="pill">en cours</span>':'')+(own?' <span class="pill">réglage propre</span>':'')
+        +'<div class="mini" style="margin-top:2px">'+fmtS(x.from)+' → '+fmtS(x.to)+'</div><div class="mini" style="margin-top:2px">'+orgResume(P,x.k)+'</div></div>'
+        +(past?'':'<button class="btn s" onclick="app.editOrg(\''+x.k+'\')">Modifier</button>')+'</div></div>';}).join('')+'</div></div>';}
 function vProfil(){
   const P=S.profile,M=P.modules||{};
   const card=(sec,title,extra)=>'<div class="lab">'+title+'</div><div class="card"><div class="row sbtw" style="align-items:flex-start;gap:12px"><div style="flex:1;min-width:0;font-size:15px;line-height:1.45">'+secSummary(sec,P)+'</div><button class="btn s" onclick="app.editSec(\''+sec+'\')">Modifier</button></div>'+(extra||'')+'</div>';
@@ -1592,6 +1699,7 @@ function vProfil(){
   +(inc.length?'<div class="card" style="box-shadow:inset 0 0 0 2px var(--sun),var(--cardShadow)"><h2>Configuration incomplète</h2><div class="mini">'+inc.length+' rubrique'+(inc.length>1?'s':'')+' à compléter pour que le plan soit fiable.</div><button class="btn dark full" style="margin-top:12px" onclick="app.startOnboarding()">Compléter ma configuration</button></div>':'')
   +card('goal','Objectif',P.planStart?'<div class="mini" style="margin-top:10px">Plan démarré la semaine du '+fmtS(P.planStart)+'</div><button class="btn full" style="margin-top:8px" onclick="app.restartPlan(this)">Redémarrer le plan à partir de cette semaine</button>':'')
   +card('week','Semaine type')
+  +vOrgCard()
   +card('start','Point de départ')
   +card('terrain','Terrain')
   +card('ident','Toi')
@@ -1968,13 +2076,11 @@ const app=window.app={
     save();if(k==='status'){render();return;}mark($('#view'),k,d[k]);
     if(k==='pain'){const pm=$('#painmini');if(pm)pm.outerHTML=painMiniHTML(curDate);}
     if(k==='rhr'||k==='weight'){const nm=$('#numsmini');if(nm)nm.innerHTML=numsMini(curDate);}},
-  newSession(pid){const ps=pid?findPlan(pid):null;E={id:null,date:ps?ps.date:curDate,type:ps?ps.type:'ef',dur:ps?ps.dur:null,dist:null,dplus:ps?ps.dplus:null,dminus:null,hrAvg:null,hrMax:null,rpe:null,legs:null,heelPost:null,shoe:'',carbs:null,fluids:null,gi:null,nutriDone:null,note:'',track:null,plannedId:ps?ps.id:null,wodName:'',wodDur:null,scoreType:'none',score:null,scoreReps:null,rx:null,wod:[],lifts:[],impacts:[],stSrc:'externe',stQual:null,stDom:null,stEcc:null,_pf:{}};if(ps&&ps.dur!=null)E._pf.dur=1;if(ps&&ps.dplus!=null)E._pf.dplus=1;openSheet(true);},
+  newSession(pid){const ps=pid?findPlan(pid):null;E={id:null,date:ps?ps.date:curDate,type:ps?ps.type:'ef',dur:ps?ps.dur:null,dist:null,dplus:ps?ps.dplus:null,dminus:null,hrAvg:null,hrMax:null,rpe:null,legs:null,heelPost:null,shoe:'',carbs:null,fluids:null,gi:null,dip:null,note:'',track:null,plannedId:ps?ps.id:null,wodName:'',wodDur:null,scoreType:'none',score:null,scoreReps:null,rx:null,wod:[],lifts:[],impacts:[],stSrc:'externe',stQual:null,stDom:null,stEcc:null};openSheet(true);},
   edit(id){const s=S.sessions.find(x=>x.id===id);if(!s)return;E=JSON.parse(JSON.stringify(s));openSheet();},
   close(){E=null;$('#sheet').innerHTML='';},
   setE(k,v){if(v===''||v==null)E[k]=null;else if(['date','note','shoe','type','wodName','rx','scoreType','stSrc','stQual','stDom','stEcc'].includes(k))E[k]=v;else E[k]=+v;
-    if(k==='nutriDone'&&E[k]===0){E.carbs=null;E.fluids=null;E.gi=null;}
-    if(E._pf&&E._pf[k])delete E._pf[k];
-    if(k==='type'||k==='track'||k==='scoreType'||k==='nutriDone'){openSheet(k==='type');return;}
+    if(k==='type'||k==='track'||k==='scoreType'){openSheet(k==='type');return;}
     if(k==='wodName'){const wh=$('#wodhist');if(wh)wh.outerHTML=wodHistHTML(E);}
     mark($('#sheet'),k,E[k]);const h=$('#rpeh');if(h&&k==='rpe')h.textContent=E.rpe!=null?RPEL[E.rpe]:'';const c=$('#calc');if(c)c.innerHTML=calcLine(E);},
   resizeImage(file,maxDim,cb){
@@ -2002,14 +2108,10 @@ const app=window.app={
     });},
   attachTrack(input){const f=input.files&&input.files[0];if(!f)return;const rd=new FileReader();
     rd.onload=()=>{try{const pts=parseTrack(rd.result),m=trackMetrics(pts);if(!m){flash('Trace illisible ou trop courte');return;}
-      E.track=m;const pf=E._pf||{};
-      if((!E.dur||pf.dur)&&m.dur){E.dur=m.dur;delete pf.dur;}
-      if(!E.dist&&m.dist)E.dist=m.dist;if(!E.hrAvg&&m.hrAvg)E.hrAvg=m.hrAvg;if(!E.hrMax&&m.hrMax)E.hrMax=m.hrMax;
-      if((!E.dplus||pf.dplus)&&m.dplus){E.dplus=m.dplus;delete pf.dplus;}
-      if(!E.dminus&&m.dminus)E.dminus=m.dminus;
+      E.track=m;if(!E.dur)E.dur=m.dur;if(!E.dist&&m.dist)E.dist=m.dist;if(!E.hrAvg&&m.hrAvg)E.hrAvg=m.hrAvg;if(!E.hrMax&&m.hrMax)E.hrMax=m.hrMax;if(!E.dplus&&m.dplus)E.dplus=m.dplus;if(!E.dminus&&m.dminus)E.dminus=m.dminus;
       openSheet();flash('Trace analysée');}catch(e){flash('Trace illisible');}};
     rd.readAsText(f);},
-  saveE(){if(!E.date){flash('Date manquante');return;}if(!E.dur){flash('Durée manquante');return;}delete E.aiBusy;delete E.aiFresh;delete E._pf;
+  saveE(){if(!E.date){flash('Date manquante');return;}if(!E.dur){flash('Durée manquante');return;}delete E.aiBusy;delete E.aiFresh;
     if(E.id){const i=S.sessions.findIndex(x=>x.id===E.id);S.sessions[i]=E;}else{E.id=uid();S.sessions.push(E);}
     S.sessions.sort(byDate);save();app.close();render();},
   delE(btn){if(!btn.dataset.armed){btn.dataset.armed='1';btn.textContent='Confirmer la suppression';return;}
@@ -2044,7 +2146,17 @@ const app=window.app={
   secCancel(){PD=null;PSEC=null;PFLOW=null;PBACK=null;PERR=[];PPREV=null;$('#sheet').innerHTML='';render();},
   secPrev(){PERR=[];PSTEP=Math.max(0,PSTEP-1);PSEC=PFLOW[PSTEP];openProfSheet();},
   secBack(){PPREV=null;openProfSheet();},
-  secApply(){S.profile=normProfile(JSON.parse(JSON.stringify(PD)));save();},
+  secApply(){const old=S.profile,t=monday(todayISO());if(PD.orgs)PD.orgs=PD.orgs.filter(o=>!o._new);
+    /* D-68 règle 2 : le passé ne se réécrit jamais — l'organisation d'avant est gardée pour les semaines déjà commencées */
+    if(old.planStart&&t>old.planStart&&JSON.stringify([old.days,old.orgs||[]])!==JSON.stringify([PD.days,PD.orgs||[]])){
+      const H=(old.orgHist||[]).slice();if(!H.some(v=>v.until===t))H.push({until:t,days:JSON.parse(JSON.stringify(old.days)),orgs:JSON.parse(JSON.stringify(old.orgs||[]))});PD.orgHist=H;}
+    S.profile=normProfile(JSON.parse(JSON.stringify(PD)));save();},
+  editOrg(k){PD=JSON.parse(JSON.stringify(S.profile));PD.orgs=PD.orgs||[];PORG=k;
+    if(!PD.orgs.some(o=>o.from===k)){const o=orgOf(PD,k);PD.orgs.push({from:k,days:JSON.parse(JSON.stringify(o.d)),enchaine:o.en,_new:true});}
+    PSEC='org';PFLOW=null;PBACK=null;PSTEP=0;PERR=[];PPREV=null;openProfSheet();},
+  setEnch(v){const e=PD.orgs.find(o=>o.from===PORG);e.enchaine=!!v;delete e._new;openProfSheet();},
+  orgReset(){PD.orgs=PD.orgs.filter(o=>o.from!==PORG);PERR=[];
+    if(STRUCT.includes('org')&&S.profile.planStart){const d=planDiff(S.profile,PD);PPREV=d;openProfSheet();return;}app.secConfirm();},
   secSave(){
     PERR=secMissing(PSEC,PD);if(PERR.length){openProfSheet();return;}
     if(PBACK==='recap'){app.secApply();PSEC='recap';PBACK=null;openProfSheet();return;}
@@ -2064,9 +2176,9 @@ const app=window.app={
   _S(){return S;},
   startPlan(){S.profile.planStart=monday(todayISO());S.profile.planFrom=todayISO();save();flash('Plan démarré');render();},
   restartPlan(btn){if(!btn.dataset.armed){btn.dataset.armed='1';btn.textContent='Confirmer : repartir de cette semaine';return;}S.profile.planStart=monday(todayISO());S.profile.planFrom=todayISO();save();flash('Plan redémarré');render();},
-  toggleRunDay(d){const D=PR().days;const i=D.run.indexOf(d);if(i<0)D.run.push(d);else{D.run.splice(i,1);delete D.time[d];}D.run.sort();if(!D.run.includes(+D.long)&&D.run.length)D.long=D.run.includes(6)?6:D.run[D.run.length-1];commitP();},
-  setLong(v){PR().days.long=+v;commitP();},
-  setTime(d,v){const T=PR().days.time;if(v===''||+v<=0)delete T[d];else T[d]=Math.round(+v);commitP();},
+  toggleRunDay(d){const D=DAYS();orgTouch();const i=D.run.indexOf(d);if(i<0)D.run.push(d);else{D.run.splice(i,1);delete D.time[d];}D.run.sort();if(!D.run.includes(+D.long)&&D.run.length)D.long=D.run.includes(6)?6:D.run[D.run.length-1];commitP();},
+  setLong(v){orgTouch();DAYS().long=+v;commitP();},
+  setTime(d,v){orgTouch();const D=DAYS();D.time=D.time||{};const T=D.time;if(v===''||+v<=0)delete T[d];else T[d]=Math.round(+v);commitP();},
   setTerrain(k,v){PR().terrain[k]=v;commitP();},
   toggleEquip(v){const P=PR();P.equip=P.equip||[];const i=P.equip.indexOf(v);if(i<0)P.equip.push(v);else P.equip.splice(i,1);commitP();},
   setStart(g,k,v){const St=PR().start,o=g?St[g]:St;o[k]=(k==='date')?v:(v===''?null:+v);commitP(false);},
@@ -2078,7 +2190,7 @@ const app=window.app={
   setRace(i,k,v){const r=PR().start.pastRaces[i];r[k]=(k==='date')?v:(v===''?null:+v);commitP(false);},
   setRaceH(i,unit,v){const r=PR().start.pastRaces[i],cur=r.dur||0,h=Math.floor(cur/60),m=cur%60;r.dur=(unit==='h'?(+v||0)*60+m:h*60+(+v||0))||null;commitP(false);},
   delRace(i,btn){if(!btn.dataset.armed){btn.dataset.armed='1';btn.textContent='OK ?';return;}PR().start.pastRaces.splice(i,1);commitP();},
-  toggleCf(d){const p=PR(),D=p.days||(p.days={});D.cf=D.cf||[];const i=D.cf.indexOf(d);if(i<0)D.cf.push(d);else D.cf.splice(i,1);D.cf.sort();commitP();},
+  toggleCf(d){orgTouch();const D=DAYS();D.cf=D.cf||[];const i=D.cf.indexOf(d);if(i<0)D.cf.push(d);else D.cf.splice(i,1);D.cf.sort();commitP();},
   setNutriTier(v){PR().nutriTier=v;PR().carbStart={none:15,mid:35,high:55}[v];commitP();},
   setFluidTier(v){PR().fluidTier=v;PR().fluidTarget={low:400,mid:600,high:800}[v];commitP();},
   addPlan(){PE={id:null,date:curDate>=todayISO()?curDate:todayISO(),type:'long',dur:60,dplus:400,note:''};openPlanSheet();},
