@@ -1287,7 +1287,14 @@ function build(inp){
   }
   /* garde-fou de la sortie clé (projection) */
   const maxCle=Math.max(0,...out.sessions.filter(s=>s.title==='Sortie clé').map(s=>s.dur));
-  if(maxCle<tr.cible[0])G(1,'En projection, ta sortie clé plafonne à '+maxCle+' min pour '+tr.cible[0]+' visées (D-22). Le plan tient si ta tolérance progresse ; on le reverra avec tes données.');
+  if(!V2&&maxCle<tr.cible[0])G(1,'En projection, ta sortie clé plafonne à '+maxCle+' min pour '+tr.cible[0]+' visées (D-22). Le plan tient si ta tolérance progresse ; on le reverra avec tes données.');
+  /* D-69 : écarts de projection — une cible de sortie longue que le plan n'atteint pas avant son échéance */
+  out.ecarts=[];
+  if(V2){const longs=out.sessions.filter(s=>s.type==='long').concat(sessions.filter(s=>s.type==='long'&&s.dur));
+    secs.filter(s=>s.statut==='objectif').forEach(s=>{const cible=Math.round(Math.min(CONV.secPart*s.dur,CONV.secMax)),lim=add(s.date,-14);
+      const at=Math.max(0,...longs.filter(x=>x.date<lim&&x.date>=from).map(x=>x.dur));
+      if(at<0.9*cible)out.ecarts.push({obj:'secondaire',nom:s.name,date:s.date,cible,atteint:at,limite:lim});});
+    if(dMain&&maxCle<0.9*tr.cible[0])out.ecarts.push({obj:'principal',nom:P.goalName||'Objectif',date:P.goalDate,cible:tr.cible[0],atteint:maxCle,limite:add(P.goalDate,-7*(tr.affutage+1))});}
   if(renfo2)out.info.renfoMsg='Avec 2 séances de renforcement par semaine, l\'app ne te propose plus de côtes courtes : ton renforcement prend le relais. Assure-toi qu\'il travaille la force des jambes (squat, fentes, step-up, mollets) et le gainage : ils protègent tes descentes et ta posture en fin de course.';
   out.ok=true;out.model={volume:m.volume,casse:m.casse,base:m.base};
   return out;
@@ -1306,6 +1313,61 @@ function weekOf(date){const E=eng();return E.weeks.find(k=>date>=k.mon&&date<add
 function weekLabel(date){const E=eng(),k=weekOf(date);if(!k)return '';return 'S'+k.w+'/'+E.info.N+' · '+(SOUS[k.sous||k.phase]||k.phase)+(k.type==='relache'?' · allégée':k.type==='aff_sec'?' · affûtage intermédiaire':k.type==='recup_sec'?' · récupération':k.type==='arret'?' · interruption':'');}
 function gardeHTML(){const G=eng().garde;if(!G.reasons.length||!S.profile.onboarded)return '';
   return '<div class="card"><div class="vd"><span class="vdot" style="background:'+['var(--mint)','var(--sun)','var(--coral)'][G.level]+'"></span><div><div class="t">'+['Plan réaliste','Plan à surveiller','Plan à revoir'][G.level]+'</div>'+G.reasons.map(r=>'<div class="x" style="margin-top:4px">'+esc(r)+'</div>').join('')+'</div></div></div>';}
+/* ---------- D-69 : alerte d'écart et bilan de phase ---------- */
+const fd=d=>fmtS(d).replace(/\.$/,'');
+const hm=m=>{m=Math.round(m||0);const h=Math.floor(m/60),r=m%60;return h?h+' h'+(r?' '+String(r).padStart(2,'0'):''):r+' min';};
+/* semaines de progression nécessaires pour passer de a à b à +10 % par sortie, avec allègements et alternance (≈ 1,5 semaine par palier) */
+const semainesPour=(a,b)=>a>=b?0:Math.ceil(Math.log(b/Math.max(a,30))/Math.log(1.1)*1.5);
+function ecartsHTML(){const o=eng();if(!o.ok||!(o.ecarts||[]).length||!S.profile.onboarded)return '';
+  const P=S.profile,St=P.start||{},sansHist=!(St.lastLong&&St.lastLong.dur)&&!S.sessions.some(s=>s.type==='long'),w0=(o.weeks.find(k=>k.niv)||{}).niv||30;
+  return o.ecarts.map(e=>{const manque=semainesPour(e.atteint,e.cible);
+    return '<div class="card" style="border-left:4px solid var(--sun)"><div class="t" style="font-weight:800">Écart : '+(e.obj==='principal'?'sortie clé':'sortie longue')+' avant '+esc(e.nom)+'</div>'
+      +'<div class="x" style="margin-top:6px">En projection, elle plafonne à <b>'+hm(e.atteint)+'</b> pour <b>'+hm(e.cible)+'</b> visées, à atteindre avant le '+fd(e.limite)+'.</div>'
+      +'<div class="x" style="margin-top:6px"><b>Pourquoi :</b> une sortie ne peut dépasser que de 10 % la plus longue des 30 derniers jours (seule règle de charge démontrée), et ta sortie longue part de '+hm(w0)+'. Changer tes jours n\'y change rien : c\'est une question de temps.</div>'
+      +'<div class="x" style="margin-top:6px"><b>Tes leviers :</b></div><ul class="x" style="margin:4px 0 0 18px;padding:0">'
+      +(sansHist?'<li>Si tu as couru plus long ces 2 derniers mois, renseigne-le (Profil › Point de départ) : le plan repartira de là.</li>':'')
+      +'<li>Enregistre tes vraies sorties : si elles vont plus loin que prévu, le plan suit.</li>'
+      +'<li>Il manque environ <b>'+manque+' semaine'+(manque>1?'s':'')+'</b> de progression : décaler la date, ou viser '+(e.obj==='principal'?'une distance plus courte':'une course intermédiaire plus courte')+'.</li></ul></div>';}).join('');}
+/* phase en cours, phase suivante, et fenêtre du bilan (2 dernières semaines de la phase) */
+function phaseCourante(){const ph=phasesPlan(),t=todayISO(),i=ph.findIndex(x=>x.from<=t&&t<=x.to);return i<0?null:{cur:ph[i],next:ph[i+1]||null};}
+/* recommandation calculée pour ce coureur, testée sur le moteur */
+function recoPhase(k){const P=S.profile,o=orgOf(P,k),d=o.d,run=(d.run||[]).slice(),lng=+d.long,veille=(lng+6)%7,out=[];
+  const specif=['F3','F4','bloc','pic'].includes(k);
+  if(specif&&!o.en){const v=JSON.parse(JSON.stringify(P));v.orgs=(v.orgs||[]).filter(x=>x.from!==k);
+    const nd={run:run.includes(veille)?run:run.concat([veille]).sort(),long:lng,cf:(d.cf||[]).filter(c=>c!==veille&&c!==(veille+6)%7)};
+    v.orgs.push({from:k,enchaine:true,days:nd});
+    let chocs=0;try{const r=ENGINE.build({profile:v,today:todayISO(),sessions:S.sessions,isRun,isOff});chocs=r.sessions.filter(s=>s.title==='Week-end de choc').length;}catch(e){}
+    const jours=nd.run.length+(P.modules&&P.modules.strength?nd.cf.length:0);
+    if(chocs)out.push('Passer au <b>week-end enchaîné</b> ('+DOWN[veille].toLowerCase()+' + '+DOWN[lng].toLowerCase()+')'+(run.includes(veille)?'':', en ajoutant le '+DOWN[veille].toLowerCase())+' : '+chocs+' week-end'+(chocs>1?'s':'')+' de choc prévu'+(chocs>1?'s':'')+' jusqu\'à ton objectif, soit '+jours+' jours de sport par semaine'+(nd.cf.length<(d.cf||[]).length?' (renforcement de la veille retiré)':'')+'.');}
+  if(P.modules&&P.modules.strength){const n=(d.cf||[]).length;
+    if(k==='F2'&&n<2)out.push('Passer à <b>2 renforcements lourds</b> : c\'est en Base que la force maximale se construit.');
+    if(specif&&n>=2)out.push('<b>1 renforcement lourd</b> suffit désormais à garder ta force : le jour libéré peut servir à courir.');}
+  return out;}
+function bilanData(){const pc=phaseCourante();if(!pc||!pc.next)return null;const o=eng(),cur=pc.cur,nx=pc.next,t=todayISO();
+  const prev=o.sessions.filter(s=>s.date>=cur.from&&s.date<t&&isRun(s)),faites=prev.filter(s=>planStatus(s).k==='done').length;
+  const reelL=Math.max(0,...S.sessions.filter(s=>s.type==='long'&&s.date>=cur.from&&s.date<=cur.to).map(s=>s.dur||0));
+  const prevL=Math.max(0,...o.sessions.filter(s=>s.type==='long'&&s.date>=cur.from&&s.date<=cur.to).map(s=>s.dur));
+  const rpe=S.sessions.filter(s=>s.type==='ef'&&s.rpe!=null&&s.date>=cur.from&&s.date<=cur.to).map(s=>+s.rpe);
+  const nS=o.sessions.filter(s=>s.date>=nx.from&&s.date<=nx.to),nL=nS.filter(s=>s.type==='long').map(s=>s.dur);
+  const qual=[...new Set(nS.filter(s=>s.type==='qual').map(s=>(s.title||'').split(' ·')[0]))].filter(Boolean);
+  return {cur,nx,faites,prevues:prev.length,reelL,prevL,rpe:rpe.length?rpe.reduce((a,b)=>a+b,0)/rpe.length:null,lMin:nL.length?Math.min(...nL):0,lMax:nL.length?Math.max(...nL):0,
+    chocs:nS.filter(s=>s.title==='Week-end de choc').length,qual,reco:recoPhase(nx.k),
+    fenetre:t>=addDays(cur.to,-13),vu:((S.profile.phaseAck||{})[nx.k]||null)};}
+function bilanCorps(b){const P=S.profile;
+  return '<div class="x"><b>'+PHASES[b.cur.k].l+'</b> se termine le '+fd(b.cur.to)+'. <b>'+PHASES[b.nx.k].l+'</b> commence le lundi '+fd(b.nx.from)+'.</div>'
+    +'<div class="lbl"><span>Ce que tu as réalisé</span></div><div class="x">'
+      +(b.prevues?b.faites+' sortie'+(b.faites>1?'s':'')+' sur '+b.prevues+' prévues':'Pas encore de sortie prévue dans cette phase')
+      +(b.prevL?' · sortie longue : '+(b.reelL?hm(b.reelL):'aucune enregistrée')+' pour '+hm(b.prevL)+' prévue':'')
+      +(b.rpe!=null?' · ressenti moyen en endurance : '+b.rpe.toFixed(1)+'/10':'')+'</div>'
+    +'<div class="lbl"><span>Ce qui change</span></div><div class="x">'+PHASES[b.nx.k].t+'</div>'
+    +'<div class="x" style="margin-top:6px">Sortie longue : '+(b.lMax?(b.lMin===b.lMax?hm(b.lMax):'de '+hm(b.lMin)+' à '+hm(b.lMax)):'—')
+      +(b.qual.length?' · qualité : '+esc(b.qual.join(', ').toLowerCase()):'')+(b.chocs?' · '+b.chocs+' week-end'+(b.chocs>1?'s':'')+' de choc':'')+'.</div>'
+    +'<div class="lbl"><span>Organisation prévue pour cette phase</span></div><div class="x">'+orgResume(P,b.nx.k)+'</div>'
+    +(b.reco.length?'<div class="lbl"><span>Ma recommandation</span></div><ul class="x" style="margin:4px 0 0 18px;padding:0">'+b.reco.map(r=>'<li>'+r+'</li>').join('')+'</ul>':'<div class="x" style="margin-top:8px">Rien à changer de mon côté.</div>')
+    +'<div class="mini" style="margin-top:8px">C\'est toi qui décides : rien n\'est modifié sans toi.</div>';}
+function bilanHTML(){if(!S.profile.onboarded)return '';const b=bilanData();if(!b||!b.fenetre||b.vu)return '';
+  return '<div class="card" style="border-left:4px solid var(--mint)"><div class="t" style="font-weight:800">Bilan de phase et phase suivante</div>'+bilanCorps(b)
+    +'<div class="row" style="gap:10px;margin-top:12px"><button class="btn dark" style="flex:1" onclick="app.ackPhase(\''+b.nx.k+'\')">C\'est bon pour moi</button><button class="btn" style="flex:1" onclick="app.editOrg(\''+b.nx.k+'\')">Modifier</button></div></div>';}
 /* ---------- nouvelles vues ---------- */
 const HDCLASS={ef:'ef',long:'sl',qual:'desc',race:'sl',desc:'desc',cf:'cf',autre:'autre'};
 const TICON={qual:'terrain',race:'timer',ef:'run',long:'terrain',test:'timer',desc:'down',cf:'fitness',autre:'run'};
@@ -1338,7 +1400,7 @@ function vHome(){
   const pct=goalMin?Math.min(1,doneMin/goalMin):0,C=2*Math.PI*54;
   const next=allPlan().filter(p=>p.date>=today&&planStatus(p).k!=='done'&&planStatus(p).k!=='off').sort(byDate)[0];
   const d=S.daily[today]||{},pain=d.pain,sl=rollAvg('sleepH',today,7);
-  return '<header><div class="brand">Ascend<span>Reach your peak</span></div><h1>'+(P.name?'Bienvenue, '+esc(P.name.split(' ')[0]):'Bienvenue')+'</h1><div class="sub">'+(weekLabel(today)||'Semaine '+isoWeek(today))+'</div></header><main>'+gardeHTML()
+  return '<header><div class="brand">Ascend<span>Reach your peak</span></div><h1>'+(P.name?'Bienvenue, '+esc(P.name.split(' ')[0]):'Bienvenue')+'</h1><div class="sub">'+(weekLabel(today)||'Semaine '+isoWeek(today))+'</div></header><main>'+gardeHTML()+ecartsHTML()+bilanHTML()
   +'<div class="card"><div class="ring">'
    +'<div class="side"><b>'+doneN+'<span style="color:var(--mut);font-weight:600">/'+planned.length+'</span></b><span>séances</span></div>'
    +'<svg width="132" height="132" viewBox="0 0 132 132"><circle cx="66" cy="66" r="54" fill="none" stroke="#eef1ee" stroke-width="13"/>'
@@ -1681,7 +1743,8 @@ function openProfSheet(){
 /* D-68 : organisation par phase, visible et modifiable phase par phase */
 function vOrgCard(){const ph=phasesPlan(),P=S.profile,today=todayISO();
   if(!ph.length)return '';
-  return '<div class="lab">Organisation par phase</div><div class="card"><div class="mini" style="margin-top:0;margin-bottom:10px">Tes jours peuvent changer selon la phase. Par défaut, ta semaine type vaut pour toute la préparation.</div><div class="phz">'
+  const bd=bilanData();
+  return '<div class="lab">Organisation par phase</div><div class="card"><div class="mini" style="margin-top:0;margin-bottom:10px">Tes jours peuvent changer selon la phase. Par défaut, ta semaine type vaut pour toute la préparation.</div>'+(bd?'<button class="btn full" style="margin-bottom:10px" onclick="app.openBilan()">Bilan de la phase en cours et phase suivante</button>':'')+'<div class="phz">'
     +ph.map(x=>{const cur=x.from<=today&&today<=x.to,past=x.to<today,own=orgOf(P,x.k).own;
       return '<div class="phr'+(cur?' sel':'')+(past?' past':'')+'"><div class="row sbtw" style="gap:10px;align-items:flex-start"><div style="flex:1;min-width:0"><b>'+PHASES[x.k].l+'</b>'+(cur?' <span class="pill">en cours</span>':'')+(own?' <span class="pill">réglage propre</span>':'')
         +'<div class="mini" style="margin-top:2px">'+fmtS(x.from)+' → '+fmtS(x.to)+'</div><div class="mini" style="margin-top:2px">'+orgResume(P,x.k)+'</div></div>'
@@ -1983,7 +2046,7 @@ function vGate(){
     +authFormHTML('Un compte garde ton plan et tes séances en sécurité, et te permet de les retrouver sur un autre téléphone. Ton prénom personnalise l\'app.')
     +syncLineHTML()+versionLineHTML()+'</div></main>';
 }
-const APP_VERSION='v16';   /* à garder identique au cache de sw.js (const C='ascend-v16') */
+const APP_VERSION='v17';   /* à garder identique au cache de sw.js (const C='ascend-v17') */
 function versionLineHTML(){return '<div class="mini" id="ver" style="margin-top:12px;text-align:center;opacity:.7">Ascend '+APP_VERSION+' · moteur de plan v2</div>';}
 /* compare la page chargée au cache du service worker : signale un déploiement pas encore actif */
 function checkVersion(){if(!('caches' in window))return;caches.keys().then(ks=>{const c=ks.filter(k=>/^ascend-v\d+$/.test(k)).map(k=>+k.slice(8)).sort((a,b)=>b-a)[0],el=document.getElementById('ver');
@@ -2153,6 +2216,10 @@ const app=window.app={
     if(old.planStart&&t>old.planStart&&JSON.stringify([old.days,old.orgs||[]])!==JSON.stringify([PD.days,PD.orgs||[]])){
       const H=(old.orgHist||[]).slice();if(!H.some(v=>v.until===t))H.push({until:t,days:JSON.parse(JSON.stringify(old.days)),orgs:JSON.parse(JSON.stringify(old.orgs||[]))});PD.orgHist=H;}
     S.profile=normProfile(JSON.parse(JSON.stringify(PD)));save();},
+  ackPhase(k){S.profile.phaseAck=Object.assign({},S.profile.phaseAck,{[k]:todayISO()});save();flash('Noté');render();},
+  openBilan(){const b=bilanData();if(!b)return;$('#sheet').innerHTML='<div class="sheet" onclick="if(event.target===this)app.closeBilan()"><div class="in"><div class="pad"><h2 style="margin:0 0 8px">Bilan de phase</h2>'+bilanCorps(b)
+    +'<div class="row" style="gap:10px;margin-top:14px"><button class="btn dark" style="flex:1" onclick="app.ackPhase(\''+b.nx.k+'\');app.closeBilan()">C\'est bon pour moi</button><button class="btn" style="flex:1" onclick="app.closeBilan();app.editOrg(\''+b.nx.k+'\')">Modifier</button></div></div></div></div>';},
+  closeBilan(){$('#sheet').innerHTML='';},
   editOrg(k){PD=JSON.parse(JSON.stringify(S.profile));PD.orgs=PD.orgs||[];PORG=k;
     if(!PD.orgs.some(o=>o.from===k)){const o=orgOf(PD,k);PD.orgs.push({from:k,days:JSON.parse(JSON.stringify(o.d)),enchaine:o.en,_new:true});}
     PSEC='org';PFLOW=null;PBACK=null;PSTEP=0;PERR=[];PPREV=null;openProfSheet();},
