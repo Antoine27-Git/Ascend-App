@@ -827,6 +827,7 @@ function planStatus(ps){
   if(isOff(ps.date))return {k:'off'};
   if(ps.date<today)return {k:'missed'};if(ps.date===today)return {k:'today'};return {k:'next'};
 }
+/* ENGINE:BEGIN — copie générée depuis tests/engine.js par tools/build.py. Ne pas modifier ici : modifier tests/engine.js puis relancer tools/build.py. */
 /* ---------- moteur de plan (v1 : refonte D-67/D-68 ; règles v0 conservées derrière regles:'v1') ----------
    Port de sim8.py (règles v1 : D-63, D-65a/b/d) + GABARIT-TRAIL.md.
    Fonctions pures : entrée = profil + séances réalisées + statuts du jour + date du jour,
@@ -1086,7 +1087,7 @@ function build(inp){
   const recent=sessions.filter(s=>isRun(s)&&s.dplus&&s.dur&&s.date>=add(today,-56));
   let dens0=recent.length?recent.reduce((a,s)=>a+s.dplus,0)/(recent.reduce((a,s)=>a+s.dur,0)/60):(!St.noLong&&St.lastLong&&St.lastLong.dplus&&St.lastLong.dur?St.lastLong.dplus/(St.lastLong.dur/60):150);
   const densC=P.goalDplus&&dMain?P.goalDplus/(dMain/60):dens0;
-  /* GABARIT § 5 : le D+ monte pendant le fond. Départ à la moitié au plus de la densité de course (H-40, extrapolation) */
+  /* GABARIT § 5 : le D+ monte pendant le fond. Départ à la moitié au plus de la densité de course (H-41, extrapolation) */
   dens0=Math.min(dens0,densC*0.5);
   const dens=w=>w>=c.fond?densC:dens0+(densC-dens0)*w/Math.max(1,c.fond);
   const terr=P.terrain||{};
@@ -1301,6 +1302,7 @@ function build(inp){
 }
 return {build,arrondi,Calendrier,dureeCourse,tranche_de,_t:{Modele,ajuste,atteint,max30,relachesPrevues}};
 })();
+/* ENGINE:END */
 
 /* ---------- plan : moteur branché sur l'app ---------- */
 let ENG=null;
@@ -2046,7 +2048,7 @@ function vGate(){
     +authFormHTML('Un compte garde ton plan et tes séances en sécurité, et te permet de les retrouver sur un autre téléphone. Ton prénom personnalise l\'app.')
     +syncLineHTML()+versionLineHTML()+'</div></main>';
 }
-const APP_VERSION='v17';   /* à garder identique au cache de sw.js (const C='ascend-v17') */
+const APP_VERSION='v18';   /* généré depuis sw.js par tools/build.py */
 function versionLineHTML(){return '<div class="mini" id="ver" style="margin-top:12px;text-align:center;opacity:.7">Ascend '+APP_VERSION+' · moteur de plan v2</div>';}
 /* compare la page chargée au cache du service worker : signale un déploiement pas encore actif */
 function checkVersion(){if(!('caches' in window))return;caches.keys().then(ks=>{const c=ks.filter(k=>/^ascend-v\d+$/.test(k)).map(k=>+k.slice(8)).sort((a,b)=>b-a)[0],el=document.getElementById('ver');
