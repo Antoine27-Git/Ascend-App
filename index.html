@@ -1072,7 +1072,11 @@ function build(inp){
   const todayW=Math.floor((D(today)-D(start))/(7*DAY))+1;
   const runsW={};sessions.forEach(s=>{if(!isRun(s))return;const w=Math.floor((D(s.date)-D(start))/(7*DAY))+1;(runsW[w]=runsW[w]||[]).push(s);});
   /* densité de D+ (m/h) : sorties réelles récentes → déclaration → 150 ; rejoint celle de la course à la fin du fond */
-  const recent=sessions.filter(s=>isRun(s)&&s.dplus&&s.dur&&s.date>=add(today,-56));
+  /* D-75 : en v2, point de départ figé — sorties longues et courses des 8 semaines AVANT le démarrage du plan.
+     Après le démarrage, le D+ réalisé suit ce que le plan prescrit (endurances sur terrain roulant, repère de D+ en sortie longue) :
+     le relire ferait tourner le plan en boucle sur ses propres consignes (A-02). La montée vers la densité de course reste linéaire. */
+  const recent=V2?sessions.filter(s=>isRun(s)&&s.dplus&&s.dur&&(s.type==='long'||s.type==='race')&&s.date>=add(start,-56)&&s.date<start)
+    :sessions.filter(s=>isRun(s)&&s.dplus&&s.dur&&s.date>=add(today,-56));
   let dens0=recent.length?recent.reduce((a,s)=>a+s.dplus,0)/(recent.reduce((a,s)=>a+s.dur,0)/60):(!St.noLong&&St.lastLong&&St.lastLong.dplus&&St.lastLong.dur?St.lastLong.dplus/(St.lastLong.dur/60):150);
   const densC=P.goalDplus&&dMain?P.goalDplus/(dMain/60):dens0;
   /* GABARIT § 5 : le D+ monte pendant le fond. Départ à la moitié au plus de la densité de course (H-41, extrapolation) */
@@ -2069,7 +2073,7 @@ function vGate(){
     +authFormHTML('Un compte garde ton plan et tes séances en sécurité, et te permet de les retrouver sur un autre téléphone. Ton prénom personnalise l\'app.')
     +syncLineHTML()+versionLineHTML()+'</div></main>';
 }
-const APP_VERSION='v19';   /* généré depuis sw.js par tools/build.py */
+const APP_VERSION='v20';   /* généré depuis sw.js par tools/build.py */
 function versionLineHTML(){return '<div class="mini" id="ver" style="margin-top:12px;text-align:center;opacity:.7">Ascend '+APP_VERSION+' · moteur de plan v2</div>';}
 /* compare la page chargée au cache du service worker : signale un déploiement pas encore actif */
 function checkVersion(){if(!('caches' in window))return;caches.keys().then(ks=>{const c=ks.filter(k=>/^ascend-v\d+$/.test(k)).map(k=>+k.slice(8)).sort((a,b)=>b-a)[0],el=document.getElementById('ver');
