@@ -183,6 +183,8 @@ textarea{min-height:64px;resize:vertical}
 .lbl{display:flex;justify-content:space-between;align-items:baseline;font-size:14.5px;font-weight:700;margin:16px 0 8px}
 .lbl small{color:var(--mut);font-size:12px;font-weight:500}
 .sheet{position:fixed;inset:0;background:rgba(8,20,14,.45);display:flex;align-items:flex-end;z-index:30}
+.opt{display:block;width:100%;text-align:left;background:var(--card);color:var(--ink);border:1.5px solid var(--line);border-radius:18px;padding:14px 16px;margin-top:10px;font:inherit;cursor:pointer}
+.opt b{font-size:16px}.opt span{display:block;color:var(--mut);font-size:13.5px;margin-top:3px;line-height:1.4}.opt.on{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
 .sheet .in{background:var(--bg);width:100%;max-height:93vh;overflow:auto;border-radius:26px 26px 0 0;padding:0 0 calc(28px + env(safe-area-inset-bottom))}
 .sheet .pad{padding:18px 16px 0}
 .toast{position:fixed;left:50%;bottom:calc(104px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--deep);color:#fff;padding:11px 18px;border-radius:999px;font-size:13px;font-weight:700;opacity:0;transition:opacity .2s;pointer-events:none;z-index:40;white-space:nowrap}
@@ -1403,19 +1405,26 @@ function reprogHTML(ps){const L=joursLibres(ps);if(!L.length)return '<div class=
   return '<div class="mini" style="margin-top:10px">Choisis un jour sans autre course :</div><div class="row" style="gap:8px;flex-wrap:wrap;margin-top:6px">'
     +L.map(x=>'<button class="btn s" onclick="event.stopPropagation();app.decaler(\''+(ps.decale||ps.date)+'\',\''+x.d+'\')">'+DOWS[parseISO(x.d).getDay()]+' '+parseISO(x.d).getDate()+(x.veille?' · veille de SL':'')+'</button>').join('')+'</div>'
     +(L.some(x=>x.veille)?'<div class="mini" style="margin-top:6px">La veille de ta sortie longue, tu l\'aborderas les jambes un peu entamées.</div>':'');}
-function manqueBtns(ps,full){const k=manqueDe(ps),id=ps.id,o=ps.decale||ps.date;
-  return '<div class="row" style="gap:8px;flex-wrap:wrap;margin-top:10px">'
-    +'<button class="btn s dark" onclick="event.stopPropagation();app.newSession(\''+id+'\')">Je l\'ai faite</button>'
-    +'<button class="btn s'+(k==='autre'?' dark':'')+'" onclick="event.stopPropagation();app.manque(\''+o+'\',\'autre\')">Agenda, autre</button>'
-    +'<button class="btn s'+(k==='fatigue'?' dark':'')+'" onclick="event.stopPropagation();app.manque(\''+o+'\',\'fatigue\')">Fatigue</button>'
-    +(joursLibres(ps).length?'<button class="btn s" onclick="event.stopPropagation();app.reprog(\''+id+'\')">Reprogrammer</button>':'')+'</div>'
-    +(REPROG===id?reprogHTML(ps):'')
-    +(full?'<div class="mini" style="margin-top:8px"><b>Agenda</b> : rien ne change, le plan continue. <b>Fatigue</b> : la semaine suivante est allégée et ta sortie longue ne progresse pas pendant 2 semaines (pris en compte à la fin de la semaine). Sans réponse, l\'app retient « agenda ».</div>':'');}
+/* fenêtre « Séance manquée » : une question, un choix, on ferme */
+let MQS=null;
+function vManque(){const ps=findPlan(MQS.id);if(!ps)return '';const k=manqueDe(ps),L=joursLibres(ps);
+  const opt=(kk,t,d)=>'<button class="opt'+(k===kk?' on':'')+'" onclick="app.manqueChoix(\''+kk+'\')"><b>'+t+'</b><span>'+d+'</span></button>';
+  return '<div class="pad"><div class="row sbtw"><h3>Séance manquée</h3><button class="btn x" onclick="app.close()" aria-label="fermer">×</button></div>'
+    +'<div class="mini" style="margin-top:4px">'+fmtD(ps.date)+' · '+esc(planTitle(ps))+'</div>'
+    +'<div class="lbl" style="margin-top:18px"><span>Pourquoi ?</span></div>'
+    +opt('autre','Agenda, imprévu','Le plan continue normalement.')
+    +opt('fatigue','Fatigue','La semaine suivante est allégée et ta sortie longue ne progresse pas pendant 2 semaines.')
+    +(L.length?'<div class="lbl" style="margin-top:18px"><span>Ou</span></div><button class="opt'+(MQS.dec?' on':'')+'" onclick="app.manqueDec()"><b>La faire un autre jour cette semaine</b><span>Même séance, même durée.</span></button>'
+      +(MQS.dec?'<div class="row" style="gap:8px;flex-wrap:wrap;margin-top:10px">'+L.map(x=>'<button class="btn s" onclick="app.manqueDecaler(\''+x.d+'\')">'+DOWS[parseISO(x.d).getDay()]+' '+parseISO(x.d).getDate()+(x.veille?' · veille de SL':'')+'</button>').join('')+'</div>'+(L.some(x=>x.veille)?'<div class="mini" style="margin-top:6px">La veille de ta sortie longue, tu l\'aborderas les jambes un peu entamées.</div>':''):''):'')
+    +(k?'<button class="btn full" style="margin-top:18px;background:transparent;color:var(--mut);font-weight:600" onclick="app.manqueFaite()">Finalement, je l\'ai faite</button>':'')+'</div>';}
+function openManque(){$('#sheet').innerHTML='<div class="sheet" onclick="if(event.target===this)app.close()"><div class="in">'+vManque()+'</div></div>';}
+/* une ligne de séance passée sans saisie : deux boutons */
+function manqueLigne(ps){return '<div class="row" style="gap:8px;margin-top:10px"><button class="btn s dark" style="flex:1" onclick="event.stopPropagation();app.newSession(\''+ps.id+'\')">Je l\'ai faite</button><button class="btn s" style="flex:1" onclick="event.stopPropagation();app.manqueOuvrir(\''+ps.id+'\')">Manquée</button></div>';}
 function manquesHTML(){if(!S.profile.onboarded||!S.profile.planStart)return '';const t=todayISO(),lim=addDays(monday(t),-7);
   const L=eng().sessions.filter(p=>p.gen&&isRun(p)&&p.type!=='race'&&p.date>=lim&&planStatus(p).k==='missed'&&!manqueDe(p)).sort(byDate);
   if(!L.length)return '';
   return '<div class="card" style="border-left:4px solid var(--sun)"><div class="t" style="font-weight:800">'+(L.length>1?L.length+' séances non saisies':'Séance non saisie')+'</div>'
-    +L.map((p,i)=>'<div style="margin-top:'+(i?14:8)+'px'+(i?';padding-top:12px;border-top:1px solid var(--line)':'')+'"><div class="x"><b>'+fmtD(p.date)+'</b> · '+esc(planTitle(p))+'</div>'+manqueBtns(p,i===L.length-1)+'</div>').join('')+'</div>';}
+    +L.map((p,i)=>'<div style="margin-top:'+(i?14:8)+'px'+(i?';padding-top:12px;border-top:1px solid var(--line)':'')+'"><div class="x"><b>'+fmtD(p.date)+'</b> · '+esc(planTitle(p))+'</div>'+manqueLigne(p)+'</div>').join('')+'<div class="mini" style="margin-top:12px">Sans réponse, l\'app considère un imprévu : le plan continue.</div></div>';}
 function vHome(){
   const P=S.profile,today=todayISO(),mon0=monday(today),w=weekStats(mon0);
   const planned=allPlan().filter(p=>p.date>=mon0&&p.date<addDays(mon0,7)),run=planned.filter(isRun);
@@ -1473,7 +1482,7 @@ function sessCard(ps,withBtn){
    +'<div class="facts">'+sessFacts(ps,st.k==='done'?r:null).map(f=>'<div><b>'+f[0]+'</b><span>'+f[1]+'</span></div>').join('')+'</div>'
    +(adj&&adj.note?'<div class="mini" style="color:#9a6207;margin-top:10px">→ '+(adj.dur!=null&&adj.dur!==ps.dur?adj.dur+' min · ':'')+adj.note+'</div>':'')
    +(ps.note?'<div class="mini" style="margin-top:8px">'+esc(ps.note)+'</div>':'')
-   +(st.k==='today'&&ps.gen&&isRun(ps)&&ps.type!=='race'?'<button class="btn dark full" style="margin-top:14px" onclick="event.stopPropagation();app.newSession(\''+ps.id+'\')">Saisir ma séance</button><button class="btn full" style="margin-top:8px;background:transparent;color:var(--mut);font-weight:600" onclick="event.stopPropagation();app.openSess(\''+ps.id+'\')">Séance manquée ?</button>'
+   +(st.k==='today'&&ps.gen&&isRun(ps)&&ps.type!=='race'?'<button class="btn dark full" style="margin-top:14px" onclick="event.stopPropagation();app.newSession(\''+ps.id+'\')">Saisir ma séance</button><button class="btn full" style="margin-top:8px;background:transparent;color:var(--mut);font-weight:600" onclick="event.stopPropagation();app.manqueOuvrir(\''+ps.id+'\')">Séance manquée ?</button>'
     :withBtn||st.k==='today'?'<button class="btn dark full" style="margin-top:14px" onclick="event.stopPropagation();app.'+(st.k==='today'?'newSession':'openSess')+'(\''+ps.id+'\')">'+(st.k==='today'?'Saisir ma séance':'Voir la séance')+'</button>':'')
    +'</div>';
 }
@@ -1501,7 +1510,9 @@ function vSessDetail(){
   +'<div><h1 style="font-size:26px">'+esc(ps.title||(ps.type==='desc'?'Descentes':(TYPES[ps.type]||TYPES.autre).l))+'</h1><div class="sub">'+fmtD(ps.date)+'</div></div></div></header>'
   +'<main>'
   +'<div class="card"><div class="facts" style="border-top:0;margin-top:0;padding-top:0">'+sessFacts(ps,null).map(f=>'<div><b>'+f[0]+'</b><span>'+f[1]+'</span></div>').join('')+'</div></div>'
-  +(ps.gen&&isRun(ps)&&ps.type!=='race'&&(st.k==='missed'||st.k==='today')?'<div class="card"><h2>'+(st.k==='today'?'Séance manquée ?':'Séance manquée')+'</h2>'+manqueBtns(ps,true)+'</div>'
+  +(ps.gen&&isRun(ps)&&ps.type!=='race'&&(st.k==='missed'||st.k==='today')?(manqueDe(ps)?'<div class="card"><div class="row sbtw"><div><h2 style="margin:0">Séance manquée</h2><div class="mini" style="margin-top:4px">Raison : '+(manqueDe(ps)==='fatigue'?'fatigue':'agenda, imprévu')+'</div></div><button class="btn s" onclick="app.manqueOuvrir(\''+ps.id+'\')">Modifier</button></div></div>'
+      :st.k==='missed'?'<div class="card"><h2>Pas de séance enregistrée</h2>'+manqueLigne(ps)+'</div>'
+      :'<button class="btn full" style="margin:6px 0 4px;background:transparent;color:var(--mut);font-weight:600" onclick="app.manqueOuvrir(\''+ps.id+'\')">Séance manquée ?</button>')
     :ps.gen&&(st.k==='today'||st.k==='next')&&(ps.decale||joursLibres(ps).length)?'<div class="card"><h2>Déplacer cette semaine</h2><div class="mini" style="margin-top:6px">'+(ps.decale?'Décalée du '+DOWN[parseISO(ps.decale).getDay()].toLowerCase()+'. ':'')+'Un empêchement ? Place-la un autre jour de la semaine. On ne la reporte jamais à la semaine suivante : rattraper, c\'est concentrer la charge.</div>'
       +'<div class="row" style="gap:8px;flex-wrap:wrap;margin-top:10px">'+(joursLibres(ps).length?'<button class="btn s" onclick="app.reprog(\''+ps.id+'\')">Choisir un jour</button>':'')+(ps.decale?'<button class="btn s" onclick="app.annulerDecal(\''+ps.decale+'\')">Remettre au '+DOWN[parseISO(ps.decale).getDay()].toLowerCase()+'</button>':'')+'</div>'
       +(REPROG===ps.id?reprogHTML(ps):'')+'</div>':'')
@@ -2074,7 +2085,7 @@ function vGate(){
     +authFormHTML('Un compte garde ton plan et tes séances en sécurité, et te permet de les retrouver sur un autre téléphone. Ton prénom personnalise l\'app.')
     +syncLineHTML()+versionLineHTML()+'</div></main>';
 }
-const APP_VERSION='v22';   /* généré depuis sw.js par tools/build.py */
+const APP_VERSION='v23';   /* généré depuis sw.js par tools/build.py */
 function versionLineHTML(){return '<div class="mini" id="ver" style="margin-top:12px;text-align:center;opacity:.7">Ascend '+APP_VERSION+' · moteur de plan v2</div>';}
 /* compare la page chargée au cache du service worker : signale un déploiement pas encore actif */
 function checkVersion(){if(!('caches' in window))return;caches.keys().then(ks=>{const c=ks.filter(k=>/^ascend-v\d+$/.test(k)).map(k=>+k.slice(8)).sort((a,b)=>b-a)[0],el=document.getElementById('ver');
@@ -2171,7 +2182,7 @@ const app=window.app={
     if(k==='rhr'||k==='weight'){const nm=$('#numsmini');if(nm)nm.innerHTML=numsMini(curDate);}},
   newSession(pid){const ps=pid?findPlan(pid):null;E={id:null,date:ps?ps.date:curDate,type:ps?ps.type:'ef',dur:ps?ps.dur:null,dist:null,dplus:ps?ps.dplus:null,dminus:null,hrAvg:null,hrMax:null,rpe:null,legs:null,heelPost:null,shoe:'',carbs:null,fluids:null,gi:null,dip:null,note:'',track:null,plannedId:ps?ps.id:null,wodName:'',wodDur:null,scoreType:'none',score:null,scoreReps:null,rx:null,wod:[],lifts:[],impacts:[],stSrc:'externe',stQual:null,stDom:null,stEcc:null};openSheet(true);},
   edit(id){const s=S.sessions.find(x=>x.id===id);if(!s)return;E=JSON.parse(JSON.stringify(s));openSheet();},
-  close(){E=null;$('#sheet').innerHTML='';},
+  close(){E=null;MQS=null;$('#sheet').innerHTML='';},
   setE(k,v){if(v===''||v==null)E[k]=null;else if(['date','note','shoe','type','wodName','rx','scoreType','stSrc','stQual','stDom','stEcc','cfJ'].includes(k))E[k]=v;else E[k]=+v;
     if(k==='type'||k==='track'||k==='scoreType'||k==='cfJ'){openSheet(k==='type');return;}
     if(k==='wodName'){const wh=$('#wodhist');if(wh)wh.outerHTML=wodHistHTML(E);}
@@ -2228,6 +2239,13 @@ const app=window.app={
   planFit(id){const ps=findPlan(id);if(!ps)return;const st=sessionSteps(ps);const bytes=planToFit({title:planCode(ps)+' '+planTitle(ps),steps:st.steps});
     const n=planCode(ps)+'.fit';if(!download(n,bytes,'application/octet-stream'))flash('Téléchargement bloqué ici');else flash(n+' : à copier dans Garmin/NewFiles');},
   planCopy(id){const ps=findPlan(id);if(!ps)return;const t=$('#plantxt');if(!t){flash('Ouvre l\'onglet Plan');return;}t.value=planText(ps);app.copy('#plantxt');},
+  manqueOuvrir(id){MQS={id,dec:false};openManque();},
+  manqueDec(){MQS.dec=!MQS.dec;openManque();},
+  manqueChoix(k){const ps=findPlan(MQS.id);if(!ps)return;const P=S.profile,o=ps.decale||ps.date;P.manques=Object.assign({},P.manques,{[o]:k});
+    MQS=null;PE=null;$('#sheet').innerHTML='';save();render();setTimeout(()=>flash(k==='fatigue'?'Noté : fatigue, semaine prochaine allégée':'Noté : le plan continue'),450);},
+  manqueDecaler(t){const ps=findPlan(MQS.id);if(!ps)return;const o=ps.decale||ps.date,P=S.profile;P.decal=Object.assign({},P.decal,{[o]:t});if(P.manques)delete P.manques[o];
+    MQS=null;PE=null;$('#sheet').innerHTML='';save();render();setTimeout(()=>flash('Séance déplacée au '+DOWN[parseISO(t).getDay()].toLowerCase()),450);},
+  manqueFaite(){const ps=findPlan(MQS.id);MQS=null;if(!ps)return;const P=S.profile;if(P.manques&&P.manques[ps.decale||ps.date]){P.manques=Object.assign({},P.manques);delete P.manques[ps.decale||ps.date];save();}app.newSession(ps.id);},
   manque(d,k){const P=S.profile;P.manques=Object.assign({},P.manques);if(P.manques[d]===k)delete P.manques[d];else P.manques[d]=k;REPROG=null;save();
     flash(P.manques[d]==='fatigue'?'Noté : fatigue':P.manques[d]?'Noté : agenda':'Réponse retirée');render();refreshPE();},
   reprog(id){REPROG=REPROG===id?null:id;render();refreshPE();},
