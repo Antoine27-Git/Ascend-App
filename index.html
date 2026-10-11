@@ -697,7 +697,7 @@ function vEdit(){
   +(run&&modOn('nutrition')?'<details'+((e.type==='long'||(e.dur||0)>=90)?' open':'')+'><summary>Nutrition</summary><div class="g2">'+inp('carbs','Glucides (g)')+inp('fluids','Liquide (ml)')+'</div><div class="lbl"><span>Confort digestif</span><small>1 mauvais · 5 parfait</small></div>'+ch('gi',[1,2,3,4,5])+inp('dip','Coup de mou à la minute')+'</details>':'')
   +'<label class="f">Note</label><textarea onchange="app.setE(\'note\',this.value)">'+esc(e.note)+'</textarea>'
   +'<div class="mini" id="calc">'+calcLine(e)+'</div>'
-  +'<div class="row" style="margin-top:14px"><button class="btn p" style="flex:1" onclick="app.saveE()">Enregistrer</button>'+(e.id?'<button class="btn d" onclick="app.delE(this)">Supprimer</button>':'')+'</div>';
+  +'<div class="row" style="margin-top:14px"><button class="btn dark" style="flex:1" onclick="app.saveE()">Enregistrer</button>'+(e.id?'<button class="btn d" onclick="app.delE(this)">Supprimer</button>':'')+'</div>';
 }
 function openSheet(toTop){const p=document.querySelector('.sheet .in'),st=toTop?0:(p?p.scrollTop:0);$('#sheet').innerHTML='<div class="sheet" onclick="if(event.target===this)app.close()"><div class="in"><div class="pad">'+vEdit()+'</div></div></div>';const c=document.querySelector('.sheet .in');if(c)c.scrollTop=st;}
 function vSuivi(){
@@ -813,7 +813,7 @@ function planStatus(ps){
   const today=todayISO(),r=realizedOf(ps);
   if(r)return {k:'done',r};
   if(isOff(ps.date))return {k:'off'};
-  if(ps.date<today)return {k:'missed'};if(ps.date===today)return {k:'today'};return {k:'next'};
+  if(ps.date<today||(ps.date===today&&ps.gen&&isRun(ps)&&manqueDe(ps)))return {k:'missed'};   /* D-72 : manquée déclarée le jour même */if(ps.date===today)return {k:'today'};return {k:'next'};
 }
 /* ENGINE:BEGIN — copie générée depuis tests/engine.js par tools/build.py. Ne pas modifier ici : modifier tests/engine.js puis relancer tools/build.py. */
 /* ---------- moteur de plan (v1 : refonte D-67/D-68 ; règles v0 conservées derrière regles:'v1') ----------
@@ -1423,7 +1423,7 @@ function vHome(){
   const doneN=planned.filter(p=>planStatus(p).k==='done').length;
   const goalDp=sum(run.map(p=>p.dplus||0));
   const pct=goalMin?Math.min(1,doneMin/goalMin):0,C=2*Math.PI*54;
-  const next=allPlan().filter(p=>p.date>=today&&planStatus(p).k!=='done'&&planStatus(p).k!=='off').sort(byDate)[0];
+  const next=allPlan().filter(p=>p.date>=today&&!['done','off','missed'].includes(planStatus(p).k)).sort(byDate)[0];
   const d=S.daily[today]||{},pain=d.pain,sl=rollAvg('sleepH',today,7);
   return '<header><div class="brand">Ascend<span>Reach your peak</span></div><h1>'+(P.name?'Bienvenue, '+esc(P.name.split(' ')[0]):'Bienvenue')+'</h1><div class="sub">'+(weekLabel(today)||'Semaine '+isoWeek(today))+'</div></header><main>'+gardeHTML()+manquesHTML()+ecartsHTML()+bilanHTML()
   +'<div class="card"><div class="ring">'
@@ -1473,7 +1473,8 @@ function sessCard(ps,withBtn){
    +'<div class="facts">'+sessFacts(ps,st.k==='done'?r:null).map(f=>'<div><b>'+f[0]+'</b><span>'+f[1]+'</span></div>').join('')+'</div>'
    +(adj&&adj.note?'<div class="mini" style="color:#9a6207;margin-top:10px">→ '+(adj.dur!=null&&adj.dur!==ps.dur?adj.dur+' min · ':'')+adj.note+'</div>':'')
    +(ps.note?'<div class="mini" style="margin-top:8px">'+esc(ps.note)+'</div>':'')
-   +(withBtn||st.k==='today'?'<button class="btn dark full" style="margin-top:14px" onclick="event.stopPropagation();app.'+(st.k==='today'?'newSession':'openSess')+'(\''+ps.id+'\')">'+(st.k==='today'?'Saisir ma séance':'Voir la séance')+'</button>':'')
+   +(st.k==='today'&&ps.gen&&isRun(ps)&&ps.type!=='race'?'<button class="btn dark full" style="margin-top:14px" onclick="event.stopPropagation();app.newSession(\''+ps.id+'\')">Saisir ma séance</button><button class="btn full" style="margin-top:8px;background:transparent;color:var(--mut);font-weight:600" onclick="event.stopPropagation();app.openSess(\''+ps.id+'\')">Séance manquée ?</button>'
+    :withBtn||st.k==='today'?'<button class="btn dark full" style="margin-top:14px" onclick="event.stopPropagation();app.'+(st.k==='today'?'newSession':'openSess')+'(\''+ps.id+'\')">'+(st.k==='today'?'Saisir ma séance':'Voir la séance')+'</button>':'')
    +'</div>';
 }
 function vSeances(){
@@ -1500,7 +1501,7 @@ function vSessDetail(){
   +'<div><h1 style="font-size:26px">'+esc(ps.title||(ps.type==='desc'?'Descentes':(TYPES[ps.type]||TYPES.autre).l))+'</h1><div class="sub">'+fmtD(ps.date)+'</div></div></div></header>'
   +'<main>'
   +'<div class="card"><div class="facts" style="border-top:0;margin-top:0;padding-top:0">'+sessFacts(ps,null).map(f=>'<div><b>'+f[0]+'</b><span>'+f[1]+'</span></div>').join('')+'</div></div>'
-  +(ps.gen&&isRun(ps)&&ps.type!=='race'&&st.k==='missed'?'<div class="card"><h2>Séance manquée</h2>'+manqueBtns(ps,true)+'</div>'
+  +(ps.gen&&isRun(ps)&&ps.type!=='race'&&(st.k==='missed'||st.k==='today')?'<div class="card"><h2>'+(st.k==='today'?'Séance manquée ?':'Séance manquée')+'</h2>'+manqueBtns(ps,true)+'</div>'
     :ps.gen&&(st.k==='today'||st.k==='next')&&(ps.decale||joursLibres(ps).length)?'<div class="card"><h2>Déplacer cette semaine</h2><div class="mini" style="margin-top:6px">'+(ps.decale?'Décalée du '+DOWN[parseISO(ps.decale).getDay()].toLowerCase()+'. ':'')+'Un empêchement ? Place-la un autre jour de la semaine. On ne la reporte jamais à la semaine suivante : rattraper, c\'est concentrer la charge.</div>'
       +'<div class="row" style="gap:8px;flex-wrap:wrap;margin-top:10px">'+(joursLibres(ps).length?'<button class="btn s" onclick="app.reprog(\''+ps.id+'\')">Choisir un jour</button>':'')+(ps.decale?'<button class="btn s" onclick="app.annulerDecal(\''+ps.decale+'\')">Remettre au '+DOWN[parseISO(ps.decale).getDay()].toLowerCase()+'</button>':'')+'</div>'
       +(REPROG===ps.id?reprogHTML(ps):'')+'</div>':'')
@@ -2073,7 +2074,7 @@ function vGate(){
     +authFormHTML('Un compte garde ton plan et tes séances en sécurité, et te permet de les retrouver sur un autre téléphone. Ton prénom personnalise l\'app.')
     +syncLineHTML()+versionLineHTML()+'</div></main>';
 }
-const APP_VERSION='v20';   /* généré depuis sw.js par tools/build.py */
+const APP_VERSION='v22';   /* généré depuis sw.js par tools/build.py */
 function versionLineHTML(){return '<div class="mini" id="ver" style="margin-top:12px;text-align:center;opacity:.7">Ascend '+APP_VERSION+' · moteur de plan v2</div>';}
 /* compare la page chargée au cache du service worker : signale un déploiement pas encore actif */
 function checkVersion(){if(!('caches' in window))return;caches.keys().then(ks=>{const c=ks.filter(k=>/^ascend-v\d+$/.test(k)).map(k=>+k.slice(8)).sort((a,b)=>b-a)[0],el=document.getElementById('ver');
