@@ -2964,5 +2964,5 @@ est du même genre (course ou renforcement) et non réalisée, elle est rattach�
 le menu « Rattacher à une séance prévue » reste à choisir. (f) *Type* déduit du type
 intervals.icu et du titre (course à pied : « Sortie longue » à partir de 90 min, sinon
 « Endurance » ; musculation/CrossFit : « Renforcement »). (g) Moteur inchangé. Les séances
-gardent `src:'intervals'` et `ext`. Limites connues : D− non fourni (reste vide) ; fenêtre fixe
-de 7 jours ; envoi du plan vers la montre non fait (v27).
+gardent `src:'intervals'` et `ext`. Limites connues : D− non fourni (reste vide) ; fenêtre
+de 7 jours (30 jours sur demande, bouton « Chercher sur 30 jours ») ; envoi du plan vers la montre non fait (v27).

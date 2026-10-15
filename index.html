@@ -560,7 +560,7 @@ function sLine(s){
 }
 function dplusSrc(s){return s.track?'trace GPX':s.src==='intervals'?'montre':s.src==='garmin'?'import Garmin':'saisi';}
 /* ---------- Ma montre : activités lues dans intervals.icu (fonction Supabase intervals-activities, lecture seule, D-77) ---------- */
-let WT={busy:false,list:null,seen:0,err:null};
+let WT={busy:false,list:null,seen:0,err:null,days:7};
 function actToSess(a){
   const dur=Math.round((a.dur_s||0)/60);if(!a.date||!a.id||!dur)return null;
   const t=((a.type||'')+' '+(a.name||'')).toLowerCase();let type='autre';
@@ -574,12 +574,13 @@ function watchNew(){
 }
 function watchCard(){
   const l=watchNew();
-  return '<div class="card"><h2>Ma montre'+(WT.list?'<span>7 derniers jours</span>':'')+'</h2>'
+  return '<div class="card"><h2>Ma montre'+(WT.list?'<span>'+WT.days+' derniers jours</span>':'')+'</h2>'
     +(WT.err?'<div class="note" style="margin-bottom:8px">'+esc(WT.err)+'</div>':'')
     +(WT.list&&!WT.err&&!l.length?'<div class="empty" style="margin:0 0 10px">Rien de nouveau.</div>':'')
     +l.map(o=>{const T=TYPES[o.type]||TYPES.autre;
       return '<div class="sessrow"><div style="min-width:0"><div><b>'+T.l+'</b> <span class="note">'+fmtS(o.date)+'</span></div><div class="m">'+[o.dur+' min',o.dist?r1(o.dist)+' km':null,o.dplus?r0(o.dplus)+' D+':null].filter(Boolean).join(' · ')+'</div></div><div class="r"><button class="btn s dark" onclick="app.addWatch(\''+esc(o.ext)+'\')">Ajouter</button></div></div>';}).join('')
-    +'<button class="btn full'+(l.length?'':' dark')+'" style="margin-top:8px" '+(WT.busy?'disabled':'')+' onclick="app.watchSync()">'+(WT.busy?'Recherche…':'Récupérer mes séances')+'</button></div>';
+    +'<button class="btn full'+(l.length?'':' dark')+'" style="margin-top:8px" '+(WT.busy?'disabled':'')+' onclick="app.watchSync()">'+(WT.busy?'Recherche…':'Récupérer mes séances')+'</button>'
+    +(WT.list&&WT.days<30&&!WT.busy?'<button class="btn full" style="margin-top:8px;background:transparent;color:var(--mut);font-weight:600" onclick="app.watchSync(30)">Chercher sur 30 jours</button>':'')+'</div>';
 }
 function calcLine(e){
   const bits=[];if(e.rpe!=null&&e.dur)bits.push('Charge <b>'+(e.rpe*e.dur)+'</b>');
@@ -2132,7 +2133,7 @@ function vGate(){
     +authFormHTML('Un compte garde ton plan et tes séances en sécurité, et te permet de les retrouver sur un autre téléphone. Ton prénom personnalise l\'app.')
     +syncLineHTML()+versionLineHTML()+'</div></main>';
 }
-const APP_VERSION='v25';   /* généré depuis sw.js par tools/build.py */
+const APP_VERSION='v26';   /* généré depuis sw.js par tools/build.py */
 function versionLineHTML(){return '<div class="mini" id="ver" style="margin-top:12px;text-align:center;opacity:.7">Ascend '+APP_VERSION+' · moteur de plan v2</div>';}
 /* compare la page chargée au cache du service worker : signale un déploiement pas encore actif */
 function checkVersion(){if(!('caches' in window))return;caches.keys().then(ks=>{const c=ks.filter(k=>/^ascend-v\d+$/.test(k)).map(k=>+k.slice(8)).sort((a,b)=>b-a)[0],el=document.getElementById('ver');
@@ -2258,11 +2259,12 @@ const app=window.app={
         E.aiNote=r.resume||null;E.aiConf=r.confiance||null;E.aiFresh=true;E.aiBusy=false;openSheet();
       }catch(e){E.aiBusy=false;flash('Lecture impossible : '+(e.message||'erreur réseau'));openSheet();}
     });},
-  async watchSync(){
+  async watchSync(days){
+    WT.days=days||7;
     if(!(await authOK())){flash('Connecte-toi (Profil, en bas) pour récupérer ta montre');return;}
     WT.busy=true;WT.err=null;render();
     try{const t=todayISO();
-      const r=await sbFetch('/functions/v1/intervals-activities',{method:'POST',body:JSON.stringify({oldest:addDays(t,-7),newest:t})});
+      const r=await sbFetch('/functions/v1/intervals-activities',{method:'POST',body:JSON.stringify({oldest:addDays(t,-WT.days),newest:t})});
       WT.list=((r&&r.activities)||[]).map(actToSess).filter(Boolean).sort((a,b)=>byDate(b,a));
     }catch(e){let m=e.message||'';try{m=JSON.parse(m).error||m;}catch(x){}
       WT.err=e.status===404?'Fonction intervals-activities introuvable : à déployer dans Supabase.':'Impossible de lire ta montre : '+m;}
