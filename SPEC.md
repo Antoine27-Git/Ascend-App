@@ -3011,3 +3011,11 @@ ce que le plan prévoit ensuite (prochaine sortie longue après une sortie longu
 du matin* : nouveau module, **désactivé par défaut**, y compris pour les profils existants
 (sommeil, énergie, jambes, envie, FC repos, poids). Le moteur ne lit pas ces notes ; le
 statut du jour et le module blessure restent hors du module. Moteur inchangé.
+
+**D-81 — Nom de la séance envoyée à la montre (15/10/2026).** Format `AAAAMMJJ_TYPE_D<D+>` :
+date ISO 8601 basique (unique sur 12 mois, tri alphabétique = tri chronologique), code du type
+(EF, SL, QUAL, DESC, COURSE, CF), puis le D+ repère (pas la fourchette) s'il existe. 2e séance le
+même jour : `AAAAMMJJ-2_TYPE`. Exemples : `20261018_SL_D300`, `20261016_EF`. Le `+` est remplacé
+par `D` (demande d'Antoine). Longueur : 17 caractères visibles mesurés sur la Fenix 7 (« Sortie
+longue 109 » coupé après le 9) ; jusqu'à 20 supposés, non mesurés. Le vrai identifiant reste
+`ascend:<id>` (external_id). Le séparateur `_` et les codes sont une convention, pas une norme.

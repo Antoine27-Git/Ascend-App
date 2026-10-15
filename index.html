@@ -1415,6 +1415,9 @@ let ENG=null;
 function eng(){if(!ENG){try{ENG=ENGINE.build({profile:S.profile,today:todayISO(),sessions:S.sessions,isRun,isOff});}
   catch(e){console.error(e);ENG={ok:false,weeks:[],sessions:[],garde:{level:2,reasons:['Erreur du moteur : '+e.message]},info:{}};}}return ENG;}
 function allPlan(){return S.plan.concat(eng().sessions);}
+const WCODE={ef:'EF',long:'SL',qual:'QUAL',race:'COURSE',desc:'DESC',cf:'CF',autre:'AUTRE'};
+function watchName(ps){const same=allPlan().filter(x=>x.date===ps.date&&x.type!=='cf'===(ps.type!=='cf')).map(x=>x.id).sort();const n=same.indexOf(ps.id);
+  return ps.date.replace(/-/g,'')+(n>0?'-'+(n+1):'')+'_'+(WCODE[ps.type]||'AUTRE')+(ps.type!=='cf'&&ps.dplus?'_D'+ps.dplus:'');}
 function findPlan(id){return allPlan().find(x=>x.id===id);}
 const SOUS={F1:'Reprise',F2:'Base aérobie',F3:'Endurance musculaire',F4:'Intensité en côte',bloc:'Bloc spécifique',pic:'Pic',affutage:'Affûtage'};
 function weekOf(date){const E=eng();return E.weeks.find(k=>date>=k.mon&&date<addDays(k.mon,7))||null;}
@@ -2396,7 +2399,7 @@ const app=window.app={
     if(!(await authOK())){flash('Connecte-toi (Profil, en bas)');return;}
     WS[id]='busy';refreshSend(id);
     try{const st=sessionSteps(ps);
-      const r=await sbFetch('/functions/v1/intervals-event',{method:'POST',body:JSON.stringify({action:'send',external_id:'ascend:'+ps.id,date:ps.date,name:planTitle(ps),description:stepsToIcu(st.steps)})});
+      const r=await sbFetch('/functions/v1/intervals-event',{method:'POST',body:JSON.stringify({action:'send',external_id:'ascend:'+ps.id,date:ps.date,name:watchName(ps),description:stepsToIcu(st.steps)})});
       if(r&&r.ok){const P=S.profile;P.sent=Object.assign({},P.sent||{});P.sent[ps.id]={date:ps.date,dur:ps.dur,at:todayISO()};delete WS[id];save();flash(r.result==='updated'?'Séance mise à jour':'Séance envoyée');}
       else WS[id]='Réponse inattendue';
     }catch(e){let m=e.message||'';try{const j=JSON.parse(m);m=(j.error||m)+(j.detail?' — '+(typeof j.detail==='string'?j.detail:JSON.stringify(j.detail)):'');}catch(x){}
