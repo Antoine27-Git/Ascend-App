@@ -2966,3 +2966,19 @@ intervals.icu et du titre (course à pied : « Sortie longue » à partir de 90 
 « Endurance » ; musculation/CrossFit : « Renforcement »). (g) Moteur inchangé. Les séances
 gardent `src:'intervals'` et `ext`. Limites connues : D− non fourni (reste vide) ; fenêtre
 de 7 jours (30 jours sur demande, bouton « Chercher sur 30 jours ») ; envoi du plan vers la montre non fait (v27).
+
+**D-78 — Envoi d'une séance prévue vers la montre (v27, 15/10/2026).** Chaîne inverse de D-77 :
+Ascend → fonction Supabase `intervals-event` → calendrier intervals.icu (événement WORKOUT) →
+Garmin Connect → Fenix 7. (a) *Une séance à la fois, sur demande* : bouton « Envoyer sur ma montre »
+sur la fiche d'une séance de course prévue (aujourd'hui ou plus tard, non réalisée) ; « Retirer »
+la supprime d'intervals.icu. Aucun envoi automatique : l'appli recommande, l'utilisateur décide.
+(b) *Identifiant* : `external_id = ascend:<id de la séance>` ; renvoyer met à jour l'événement
+existant au lieu d'en créer un second ; la fonction ne touche jamais un événement dont
+l'identifiant ne commence pas par `ascend:`. (c) *Contenu* : le déroulé de `sessionSteps` converti
+en texte intervals.icu (durées seulement, sans cible de FC ni d'allure, nom de l'étape en
+en-tête, `Nx` pour les répétitions). (d) *Suivi* : `profile.sent[id] = {date, dur, at}` ; si la date
+ou la durée prévues changent après l'envoi, la fiche indique « le plan a changé : renvoie ».
+Le renvoi n'est pas automatique. (e) *Fenêtre* : la fonction accepte de hier à +60 jours ; la
+fenêtre réellement acceptée par Garmin est à mesurer sur la Fenix (non documentée). (f) Moteur
+inchangé. Limites : pas de cible de FC dans la séance envoyée ; pas d'envoi de la semaine
+entière ; pas de suppression automatique d'une séance déplacée ou supprimée par le moteur.

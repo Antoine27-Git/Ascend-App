@@ -559,6 +559,23 @@ function sLine(s){
   return '<div class="sessrow" onclick="app.edit(\''+s.id+'\')"><div style="min-width:0"><div><b>'+T.l+'</b> <span class="note">'+fmtS(s.date)+'</span>'+(s.rpe==null?'<span class="tag w">effort ?</span>':'')+(injOn()&&s.heelPost>=2?'<span class="tag b">douleur</span>':'')+((s.impacts||[]).length?'<span class="tag w">impacts</span>':'')+(s.track?'<span class="tag '+(s.track.decoup>5?'w':'ok')+'">'+(s.track.decoup!=null?r1(s.track.decoup)+' %':'trace')+'</span>':'')+'</div><div class="m">'+m+'</div></div><div class="r"><b>'+(L||'–')+'</b><div class="m">charge</div></div></div>';
 }
 function dplusSrc(s){return s.track?'trace GPX':s.src==='intervals'?'montre':s.src==='garmin'?'import Garmin':'saisi';}
+function stepsToIcu(steps){
+  const dm=sec=>sec>=60&&sec%60===0?(sec/60)+'m':Math.round(sec)+'s',L=[];
+  steps.forEach(s=>{
+    if(s.rep)L.push(s.rep+'x','- '+dm(s.on.sec),'- '+dm(s.off.sec),'');
+    else L.push(s.n,'- '+dm(Math.round((s.min||0)*60)),'');
+  });
+  return L.join('\n').trim();
+}
+function sentInfo(ps){const x=(S.profile.sent||{})[ps.id];return x?{x,stale:x.date!==ps.date||x.dur!==ps.dur}:null;}
+let WS={};
+function watchSendBlock(ps){
+  const si=sentInfo(ps),busy=WS[ps.id]==='busy',m=WS[ps.id]&&WS[ps.id]!=='busy'?WS[ps.id]:'';
+  return '<div class="card" style="margin:0 0 10px;box-shadow:none;border:1px solid var(--line,#e3e8e5)"><h2 style="margin:0 0 4px">Ma montre</h2>'
+   +(si?'<div class="mini" style="margin:0">'+(si.stale?'Le plan a changé depuis l\'envoi du '+fmtS(si.x.at||ps.date)+' : renvoie la séance.':'Envoyée dans intervals.icu, le '+fmtS(si.x.at||ps.date)+' Elle arrive sur la montre à la prochaine synchro.')+'</div>':'<div class="mini" style="margin:0">Envoie cette séance dans intervals.icu : elle passe ensuite sur ta Garmin.</div>')
+   +(m?'<div class="note" style="margin-top:6px">'+esc(m)+'</div>':'')
+   +'<div class="row" style="gap:8px;margin-top:10px"><button class="btn s dark" style="flex:1" '+(busy?'disabled':'')+' onclick="app.sendWatch(\''+ps.id+'\')">'+(busy?'Envoi…':si?'Renvoyer':'Envoyer sur ma montre')+'</button>'+(si&&!busy?'<button class="btn s" style="flex:1" onclick="app.removeWatch(\''+ps.id+'\')">Retirer</button>':'')+'</div></div>';
+}
 /* ---------- Ma montre : activités lues dans intervals.icu (fonction Supabase intervals-activities, lecture seule, D-77) ---------- */
 let WT={busy:false,list:null,seen:0,err:null,days:7};
 function actToSess(a){
@@ -576,7 +593,7 @@ function watchCard(){
   const l=watchNew();
   return '<div class="card"><h2>Ma montre'+(WT.list?'<span>'+WT.days+' derniers jours</span>':'')+'</h2>'
     +(WT.err?'<div class="note" style="margin-bottom:8px">'+esc(WT.err)+'</div>':'')
-    +(WT.list&&!WT.err&&!l.length?'<div class="empty" style="margin:0 0 10px">Rien de nouveau.</div>':'')
+    +(WT.list&&!WT.err&&!l.length?'<div class="empty" style="margin:0 0 10px">'+(WT.list.length?'Rien de nouveau : '+WT.list.length+' sortie'+(WT.list.length>1?'s':'')+' déjà enregistrée'+(WT.list.length>1?'s':'')+'.':'Aucune activité dans intervals.icu sur cette période.')+'</div>':'')
     +l.map(o=>{const T=TYPES[o.type]||TYPES.autre;
       return '<div class="sessrow"><div style="min-width:0"><div><b>'+T.l+'</b> <span class="note">'+fmtS(o.date)+'</span></div><div class="m">'+[o.dur+' min',o.dist?r1(o.dist)+' km':null,o.dplus?r0(o.dplus)+' D+':null].filter(Boolean).join(' · ')+'</div></div><div class="r"><button class="btn s dark" onclick="app.addWatch(\''+esc(o.ext)+'\')">Ajouter</button></div></div>';}).join('')
     +'<button class="btn full'+(l.length?'':' dark')+'" style="margin-top:8px" '+(WT.busy?'disabled':'')+' onclick="app.watchSync()">'+(WT.busy?'Recherche…':'Récupérer mes séances')+'</button>'
@@ -1574,6 +1591,7 @@ function vSessDetail(){
   +(stp?'<div class="card" style="background:var(--deep);color:#fff"><h2 style="color:#fff">Le conseil</h2><div style="font-size:14.5px;line-height:1.5;opacity:.88;margin-top:8px">'+stp.notes.map(esc).join('<br><br>')+'</div></div>':'')
   +(ps.gen?'':'<label class="f">Note</label><input value="'+esc(ps.note)+'" onchange="app.setPE(\'note\',this.value)">')
   +'<div class="row" style="gap:10px;margin:16px 0 10px">'+(stp?'<button class="btn" style="flex:1;white-space:nowrap;font-size:14px;padding:14px 10px" onclick="app.planFit(\''+ps.id+'\')">Exporter Garmin</button>':'')+(st.k!=='done'?'<button class="btn dark" style="flex:1.2" onclick="app.newSession(\''+ps.id+'\')">Saisir ma séance</button>':'')+'</div>'
+  +(stp&&auth&&st.k!=='done'&&ps.date>=todayISO()?watchSendBlock(ps):'')
   +(ps.gen?'<div class="mini">Séance générée par le moteur : elle se recalcule avec tes données. Pour la changer, modifie tes réglages dans Profil ou saisis ce que tu as réellement fait.</div>':'<details><summary>Modifier la séance prévue</summary>'
    +'<label class="f">Date</label><input type="date" value="'+ps.date+'" onchange="app.setPE(\'date\',this.value)">'
    +'<div class="lbl"><span>Type</span></div>'+chips(Object.keys(TYPES),ps.type,v=>'app.setPE(\'type\',\''+v+'\')','type',Object.keys(TYPES).map(k=>TYPES[k].l),null,'txt')
@@ -2133,7 +2151,7 @@ function vGate(){
     +authFormHTML('Un compte garde ton plan et tes séances en sécurité, et te permet de les retrouver sur un autre téléphone. Ton prénom personnalise l\'app.')
     +syncLineHTML()+versionLineHTML()+'</div></main>';
 }
-const APP_VERSION='v26';   /* généré depuis sw.js par tools/build.py */
+const APP_VERSION='v27';   /* généré depuis sw.js par tools/build.py */
 function versionLineHTML(){return '<div class="mini" id="ver" style="margin-top:12px;text-align:center;opacity:.7">Ascend '+APP_VERSION+' · moteur de plan v2</div>';}
 /* compare la page chargée au cache du service worker : signale un déploiement pas encore actif */
 function checkVersion(){if(!('caches' in window))return;caches.keys().then(ks=>{const c=ks.filter(k=>/^ascend-v\d+$/.test(k)).map(k=>+k.slice(8)).sort((a,b)=>b-a)[0],el=document.getElementById('ver');
@@ -2259,6 +2277,25 @@ const app=window.app={
         E.aiNote=r.resume||null;E.aiConf=r.confiance||null;E.aiFresh=true;E.aiBusy=false;openSheet();
       }catch(e){E.aiBusy=false;flash('Lecture impossible : '+(e.message||'erreur réseau'));openSheet();}
     });},
+  async sendWatch(id){
+    const ps=findPlan(id);if(!ps)return;
+    if(!(await authOK())){flash('Connecte-toi (Profil, en bas)');return;}
+    WS[id]='busy';openPlanSheet();
+    try{const st=sessionSteps(ps);
+      const r=await sbFetch('/functions/v1/intervals-event',{method:'POST',body:JSON.stringify({action:'send',external_id:'ascend:'+ps.id,date:ps.date,name:planTitle(ps),description:stepsToIcu(st.steps)})});
+      if(r&&r.ok){const P=S.profile;P.sent=Object.assign({},P.sent||{});P.sent[ps.id]={date:ps.date,dur:ps.dur,at:todayISO()};delete WS[id];save();flash(r.result==='updated'?'Séance mise à jour':'Séance envoyée');}
+      else WS[id]='Réponse inattendue';
+    }catch(e){let m=e.message||'';try{const j=JSON.parse(m);m=(j.error||m)+(j.detail?' — '+(typeof j.detail==='string'?j.detail:JSON.stringify(j.detail)):'');}catch(x){}
+      WS[id]=e.status===404?'Fonction intervals-event introuvable : à déployer dans Supabase.':'Envoi impossible : '+m;}
+    openPlanSheet();},
+  async removeWatch(id){
+    const ps=findPlan(id),si=(S.profile.sent||{})[id];if(!ps&&!si)return;
+    if(!(await authOK())){flash('Connecte-toi (Profil, en bas)');return;}
+    WS[id]='busy';openPlanSheet();
+    try{await sbFetch('/functions/v1/intervals-event',{method:'POST',body:JSON.stringify({action:'remove',external_id:'ascend:'+id,date:si?si.date:ps.date})});
+      const P=S.profile;P.sent=Object.assign({},P.sent||{});delete P.sent[id];delete WS[id];save();flash('Séance retirée d\'intervals.icu');
+    }catch(e){let m=e.message||'';try{m=JSON.parse(m).error||m;}catch(x){}WS[id]='Retrait impossible : '+m;}
+    openPlanSheet();},
   async watchSync(days){
     WT.days=days||7;
     if(!(await authOK())){flash('Connecte-toi (Profil, en bas) pour récupérer ta montre');return;}
