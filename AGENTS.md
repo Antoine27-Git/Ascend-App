@@ -23,6 +23,8 @@ Lis ce fichier en entier avant de toucher au code. Il vaut pour tout assistant d
 | Fonction `intervals-event` (`supabase/functions/intervals-event/index.ts`) | envoie / retire une séance prévue dans le calendrier intervals.icu (D-78) ; même secret, `external_id` = `ascend:<id>` |
 | Fonction `analyze-wod` | lecture de photo de WOD, **pas déployée à ce jour** ; la clé API Anthropic ne doit exister que comme secret Supabase |
 
+Écrans (v28, D-80) : Aujourd'hui (`vHome`), Semaine (`vSeances`), Suivi, Profil ; Journal (`vJour`, les autres jours) n'est plus un onglet.
+
 Stockage navigateur : `trail-state-v1` (données), `trail-auth-v1` (session), `trail-sync-v1` (synchro).
 
 ## Règle d'or : ne jamais modifier le moteur dans index.html
@@ -39,7 +41,7 @@ La ligne « Ascend vNN » en bas de Profil sert à vérifier qu'un déploiement 
 - Le RPE pilote la fatigue, sur les **endurances seules** ; la FC est une observation secondaire (D-12).
 
 ## Décisions et documentation (sources de vérité)
-- `docs/SPEC.md` : registre des décisions `D-xx` (dernières : D-66 à D-78). `docs/HYPOTHESES.md` : hypothèses `H-xx` avec portée, détectabilité, priorité. `docs/GABARIT-TRAIL.md` : doctrine d'entraînement (Uphill Athlete, Koop, 80/20, Roche). `docs/MOTEUR-V1.md` : journal de la refonte de septembre 2026. `docs/SOURCES.md`, `REGLES.md`, `SCHEMA.md`, `LEXIQUE.md`, `TESTS.md`, `ALLEGEMENT.md`, `PHOTO-WOD.md` : références.
+- `docs/SPEC.md` : registre des décisions `D-xx` (dernières : D-66 à D-80). `docs/HYPOTHESES.md` : hypothèses `H-xx` avec portée, détectabilité, priorité. `docs/GABARIT-TRAIL.md` : doctrine d'entraînement (Uphill Athlete, Koop, 80/20, Roche). `docs/MOTEUR-V1.md` : journal de la refonte de septembre 2026. `docs/SOURCES.md`, `REGLES.md`, `SCHEMA.md`, `LEXIQUE.md`, `TESTS.md`, `ALLEGEMENT.md`, `PHOTO-WOD.md` : références.
 - Toute nouvelle règle : une entrée `D-xx` dans SPEC.md (avec date et motif) ; si elle repose sur une extrapolation ou une convention de coach, une entrée `H-xx` et la mention « convention » ou « extrapolation » dans le message affiché. **Ne présente jamais une convention comme un résultat scientifique.**
 - Preuve la plus solide du projet : règle des 30 jours (Frandsen et al., BJSM 2025 — une séance ne dépasse pas de plus de 10 % la plus longue des 30 derniers jours). Elle prime sur toute progression plus rapide.
 - Ne renumérote jamais un identifiant existant. Vérifie qu'un `H-xx` n'est pas déjà utilisé (grep dans `docs/` et dans le moteur) avant d'en créer un.

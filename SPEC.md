@@ -2982,3 +2982,32 @@ Le renvoi n'est pas automatique. (e) *Fenêtre* : la fonction accepte de hier à
 fenêtre réellement acceptée par Garmin est à mesurer sur la Fenix (non documentée). (f) Moteur
 inchangé. Limites : pas de cible de FC dans la séance envoyée ; pas d'envoi de la semaine
 entière ; pas de suppression automatique d'une séance déplacée ou supprimée par le moteur.
+
+**D-79 — D+ d'une séance affiché en fourchette (décidé le 15/10/2026, affichage en v29).**
+Le D+ prévu d'une séance de course s'affiche en fourchette : ± 10 % du repère, au moins
+± 50 m, au plus ± 150 m, bornes arrondies à 50 m (300 m → 250 à 350 m ; 1 500 m → 1 350 à
+1 650 m ; 3 000 m → 2 850 à 3 150 m). Convention (H-50). La première proposition (± 20 %)
+a été écartée par Antoine : ± 600 m sur 3 000 m n'a pas de sens. Une course (type `race`)
+n'a pas de fourchette : son D+ est celui du parcours.
+
+**D-80 — Écran Aujourd'hui (v28, 15/10/2026).** Accueil et Jour fusionnés ; 4 onglets :
+Aujourd'hui, Semaine (ex-Séances), Suivi, Profil. Jour devient « Journal » (les autres jours),
+accessible par un lien en bas d'Aujourd'hui. (a) *Ordre* : alertes (garde-fou, séances non
+saisies, écarts, bilan de phase), puis la séance du jour, « À compléter » (effort non noté,
+14 derniers jours), séances hors plan du jour, « Cette semaine » (7 jours, état de chaque
+séance), Journal du matin si le module est actif, « Ma montre », objectif. (b) *Séance du
+jour* : type, durée, D+, consigne, « Pourquoi » (texte du moteur, sans code de phase), bouton
+principal « J'ai fait ma séance » ; liens « Vers ma montre » (D-78) et « Pas faite » (D-72).
+La carte entière ouvre la fiche (fin du lien « Détail »). Seconde séance du jour : carte
+compacte. Faite : réalisé, effort, et la séance suivante. Pas de séance : « Repos » et la
+prochaine séance. Journée malade/blessé/indispo : la carte de statut remplace la séance ;
+le statut se choisit par « Malade, blessé ou indisponible ? ». (c) *Montre d'abord* : à
+l'ouverture, Ascend lit en silence les activités des 7 derniers jours (D-77, lecture seule,
+erreurs non affichées). Si une activité de course du même jour correspond à une séance
+prévue (du jour ou non saisie), la carte affiche « Ta montre · durée · km · D+ » et le
+bouton devient « Noter mon effort » : saisie pré-remplie, l'effort reste à noter. Rien n'est
+enregistré sans action d'Antoine. (d) *Après l'enregistrement* d'une course, un message dit
+ce que le plan prévoit ensuite (prochaine sortie longue après une sortie longue). (e) *Journal
+du matin* : nouveau module, **désactivé par défaut**, y compris pour les profils existants
+(sommeil, énergie, jambes, envie, FC repos, poids). Le moteur ne lit pas ces notes ; le
+statut du jour et le module blessure restent hors du module. Moteur inchangé.
