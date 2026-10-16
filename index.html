@@ -409,10 +409,10 @@ details>*:not(summary){margin-top:10px}
 .wwrap{position:relative;display:flex;gap:6px;margin-top:10px;height:200px}
 .wband{position:absolute;left:0;right:0;top:80px;height:40px;border-radius:12px;background:#e4f6ec}
 .wcol{flex:1;position:relative;display:flex;align-items:center}
-.wl{flex:1;height:200px;overflow-y:scroll;scroll-snap-type:y mandatory;padding:80px 0;box-sizing:border-box;position:relative;scrollbar-width:none;-webkit-mask-image:linear-gradient(transparent,#000 30%,#000 70%,transparent)}
-.wl::-webkit-scrollbar{display:none}
-.wl div{height:40px;display:flex;align-items:center;justify-content:center;font-size:19px;color:#a3ada7;scroll-snap-align:center;font-variant-numeric:tabular-nums}
-.wl div.on{font-size:24px;font-weight:800;color:var(--ink)}
+.whl{flex:1;height:200px;overflow-y:scroll;scroll-snap-type:y mandatory;padding:80px 0;box-sizing:border-box;position:relative;scrollbar-width:none;-webkit-mask-image:linear-gradient(transparent,#000 30%,#000 70%,transparent)}
+.whl::-webkit-scrollbar{display:none}
+.whl div{height:40px;display:flex;align-items:center;justify-content:center;font-size:19px;color:#a3ada7;scroll-snap-align:center;font-variant-numeric:tabular-nums}
+.whl div.on{font-size:24px;font-weight:800;color:var(--ink)}
 .wu{position:relative;width:38px;font-weight:800;font-size:15px}
 </style>
 </head>
@@ -2278,7 +2278,7 @@ function vProfil(){
   const f={objectif:vPObjectif,semaine:vPSemaine,toi:vPToi,modules:vPModules,materiel:vPMateriel,donnees:vPDonnees,avances:vPAvances}[PSUB];
   return f?f():vProfilHome();}
 /* ---- roue heures / minutes ---- */
-function wheelHTML(){const W=WHEEL,col=(n,id,u)=>'<div class="wcol"><div class="wl" id="'+id+'">'+Array.from({length:n},(_,i)=>'<div>'+i+'</div>').join('')+'</div><span class="wu">'+u+'</span></div>';
+function wheelHTML(){const W=WHEEL,col=(n,id,u)=>'<div class="wcol"><div class="whl" id="'+id+'">'+Array.from({length:n},(_,i)=>'<div>'+i+'</div>').join('')+'</div><span class="wu">'+u+'</span></div>';
   return '<div class="sheet" onclick="if(event.target===this)app.wheelClose()"><div class="in wsheet"><div class="row sbtw"><b style="font-size:17px">'+esc(W.title)+'</b><button class="btn s" onclick="app.wheelOk()">OK</button></div>'
     +'<div class="wwrap"><div class="wband"></div>'+col(W.max+1,'wh','h')+col(60,'wm','min')+'</div>'
     +(W.v?'<button class="plink2 c" style="color:var(--mut)" onclick="app.wheelClear()">Effacer la durée</button>':'')+'</div></div>';}
@@ -2557,7 +2557,7 @@ function vGate(){
     +authFormHTML('Un compte garde ton plan et tes séances en sécurité, et te permet de les retrouver sur un autre téléphone. Ton prénom personnalise l\'app.')
     +syncLineHTML()+versionLineHTML()+'</div></main>';
 }
-const APP_VERSION='v32';   /* généré depuis sw.js par tools/build.py */
+const APP_VERSION='v33';   /* généré depuis sw.js par tools/build.py */
 function versionLineHTML(){return '<div class="mini" id="ver" style="margin-top:12px;text-align:center;opacity:.7">Ascend '+APP_VERSION+' · moteur de plan v2</div>';}
 /* compare la page chargée au cache du service worker : signale un déploiement pas encore actif */
 function checkVersion(){if(!('caches' in window))return;caches.keys().then(ks=>{const c=ks.filter(k=>/^ascend-v\d+$/.test(k)).map(k=>+k.slice(8)).sort((a,b)=>b-a)[0],el=document.getElementById('ver');

@@ -3093,3 +3093,6 @@ de intervals-activities (champ `device_name` d'intervals.icu) s'il est vide ; mo
 (g) *Réglages avancés* : redémarrer le plan, tout effacer, tout retélécharger.
 (h) Correctif : la fonction d'étiquette « Ta montre » portait le même nom que `watchName(ps)` (D-81) et
 l'écrasait ; renommée `watchLabel()`.
+(i) v33 (16/10/2026), correctif : la classe CSS `.wl` de la roue de durée écrasait celle de la liste de la
+Semaine (D-83), qui s'affichait comme une roue. Roue renommée `.whl`. Avant chaque livraison, les classes
+CSS ajoutées sont désormais comparées à celles qui existent déjà.
