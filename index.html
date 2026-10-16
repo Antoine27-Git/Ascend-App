@@ -345,6 +345,17 @@ details>*:not(summary){margin-top:10px}
 .filebtn{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:12px;border:1.5px dashed #b3beb7;border-radius:14px;padding:13px;font-weight:700;font-size:15px;color:var(--ink);background:var(--card);cursor:pointer}
 .filebtn input{display:none}
 .modtog{border:0;font:inherit;cursor:pointer}
+/* v35 Ton objectif */
+.ofr{padding:14px 18px 12px}.ofh{display:flex;justify-content:space-between;align-items:baseline}.ofh span{font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--mintT)}.ofh b{font-size:15px}
+.ofb{position:relative;height:30px;margin:12px 13px 0}.ofl{position:absolute;left:0;right:0;top:14px;height:3px;background:#e3e9e4;border-radius:2px}
+.ofd{position:absolute;top:4px;transform:translateX(-50%);width:22px;height:22px;border-radius:50%;color:#fff;font-size:12px;font-weight:800;font-style:normal;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 3px #fff}
+.ofd.now{width:10px;height:10px;top:10px;background:var(--mintT)}.ofd.star{width:26px;height:26px;top:2px;background:#10251c}
+.ofx{display:flex;justify-content:space-between;margin-top:8px;font-size:12px;color:var(--mut);font-weight:600}
+.ob .ah{align-items:flex-start}.obn{width:26px;height:26px;border-radius:50%;color:#fff;font-size:12.5px;font-weight:800;font-style:normal;display:flex;align-items:center;justify-content:center;flex:none;margin-top:1px}
+.ob .ah .tx b{font-size:15.5px;line-height:1.3}.obt{display:flex;justify-content:space-between;align-items:baseline;gap:10px}.obt .obe{font-size:14.5px!important;white-space:nowrap;flex:none}
+.pc>.acc:first-child,.pc>.ob:first-child{border-top:0}
+.ebox{background:#f4f7f4;border-radius:16px;padding:14px;margin:0 0 6px}.ebt{display:flex;justify-content:space-between;align-items:flex-end;gap:10px}
+.ebv{font-size:22px;letter-spacing:-.02em;white-space:nowrap}.ebv.big{font-size:28px}
 /* v34 Profil */
 .hob0{padding:18px 18px 16px;background:linear-gradient(150deg,#10251c,#1d4a36);color:#fff}
 .hobt{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
@@ -388,7 +399,7 @@ details>*:not(summary){margin-top:10px}
 .pl{font-size:15px}
 .pv{display:flex;align-items:center;justify-content:flex-end;gap:5px;min-width:0}
 .pv input{width:92px;background:none;border:0;border-radius:0;padding:6px 2px;text-align:right;font-weight:800;font-size:16.5px;color:var(--ink)}
-.pv input.t{width:170px}.pv input.l{width:100%;text-align:left;font-weight:700;font-size:15.5px}
+.pv input.t{width:170px}.pr.stk{flex-direction:column;align-items:stretch;gap:2px;padding:10px 0}.pr.stk .pl{font-size:13px;color:var(--mut)}.pr.stk .pv{justify-content:flex-start}.pr.stk .pv input.t{width:100%;text-align:left;padding-left:0}.pv input.l{width:100%;text-align:left;font-weight:700;font-size:15.5px}
 .pv input:focus{outline:none;box-shadow:inset 0 -2px 0 var(--mintT)}
 .pv input::placeholder{color:#a3ada7;font-weight:600}
 .pv i{font-style:normal;color:var(--mut);font-size:14px}
@@ -2172,8 +2183,8 @@ function pAct(label,on){return '<button class="btn s" onclick="'+on+'">'+label+'
 /* lignes modifiables en place */
 function rNum(label,path,unit,step,fn){const v=pget(path);
   return '<label class="pr"><span class="pl">'+label+'</span><span class="pv"><input type="number" inputmode="decimal"'+(step?' step="'+step+'"':'')+' value="'+(v==null?'':esc(v))+'" placeholder="–" onchange="app.'+(fn||'pset')+'(\''+path+'\',this.value,\'n\')" aria-label="'+label+'">'+(unit?'<i>'+unit+'</i>':'')+'</span></label>';}
-function rTxt(label,path,ph,fn){const v=pget(path);
-  return '<label class="pr"><span class="pl">'+label+'</span><span class="pv"><input type="text" class="t" value="'+esc(v||'')+'" placeholder="'+(ph||'–')+'" onchange="app.'+(fn||'pset')+'(\''+path+'\',this.value,\'s\')" aria-label="'+label+'"></span></label>';}
+function rTxt(label,path,ph,fn,stk){const v=pget(path);
+  return '<label class="pr'+(stk?' stk':'')+'"><span class="pl">'+label+'</span><span class="pv"><input type="text" class="t" value="'+esc(v||'')+'" placeholder="'+(ph||'–')+'" onchange="app.'+(fn||'pset')+'(\''+path+'\',this.value,\'s\')" aria-label="'+label+'"></span></label>';}
 function rDate(label,path,fn,min){const v=pget(path);
   return '<label class="pr"><span class="pl">'+label+'</span><span class="pv pk pdt"><b>'+(v?fmtD2(v)+' '+v.slice(0,4):'–')+'</b><i class="chev">⌄</i><input type="date" value="'+esc(v||'')+'"'+(min?' min="'+min+'"':'')+' onclick="try{this.showPicker()}catch(e){}" onchange="app.'+(fn||'pset')+'(\''+path+'\',this.value,\'s\')" aria-label="'+label+'"></span></label>';}
 function rDur(label,path,maxH,title){const v=pget(path);
@@ -2224,17 +2235,40 @@ function vProfilHome(){
 }
 const fmtN=n=>n==null?'':String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g,' ');
 /* ---- Ton objectif ---- */
-function vPObjectif(){const P=S.profile,R=P.races||[],t=todayISO();
-  const ir=R.map((r,i)=>{const k='ir:'+i,open=accOpen(k,false),p='races.'+i+'.';
-    const sub=[r.date?fmtSY(r.date):'date à choisir',r.dist?String(r.dist).replace('.',',')+' km':null,r.dplus!=null?fmtN(r.dplus)+' m D+':null].filter(Boolean).join(' · ');
-    return '<div class="acc'+(open?' open':'')+'"><button class="ah" aria-expanded="'+open+'" onclick="app.ptog(\''+k+'\',false)"><span class="tx"><b>'+esc((r.name||'').trim()||'Nouvelle course')+' <span class="pill'+(r.prio==='C'?' grey':'')+'">'+(r.prio==='C'?'entraînement':'objectif')+'</span></b><span>'+sub+'</span></span><i class="chev">'+(open?'⌃':'⌄')+'</i></button>'
-      +(open?'<div class="ab prs">'+rSeg('Statut',p+'prio',['B','C'],['Objectif','Entraînement'],'psetS')
-        +'<div class="mini" style="padding:0 0 10px;border-top:0">'+(r.prio==='C'?'Elle remplace ta sortie longue de la semaine, sans affûtage ni récupération.':'L\'appli allège les jours d\'avant et te laisse récupérer après.')+'</div>'
-        +rTxt('Nom',p+'name','ex. Trail des Coursières')+rDate('Date',p+'date','psetS',t)+rNum('Distance',p+'dist','km','0.1','psetS')+rNum('Dénivelé',p+'dplus','m D+',null,'psetS')
-        +'<button class="pr plink red" onclick="app.pdelIR('+i+',this)">Supprimer cette course</button></div>':'')+'</div>';}).join('');
-  return pScreen('Ton objectif',
-    pCard('Ta course objectif','Le plan se construit à rebours depuis cette date.',rTxt('Nom','goalName','ex. Trail du Beaujolais')+rDate('Date','goalDate','psetS',addDays(t,1))+rNum('Distance','goalDist','km','0.1','psetS')+rNum('Dénivelé','goalDplus','m D+',null,'psetS'))
-    +pCard('Courses intermédiaires','Facultatif. Elles s\'intègrent au plan selon leur statut.',ir+rLink('+ Ajouter une course intermédiaire','app.paddIR()'))
+/* D-88 : durée estimée de départ = calcul du moteur (dureeCourse, course de référence) ; fourchette H-52 */
+function estRef(P){const St=P.start||{},i=refRace(P);if(i>=0)return Object.assign({nom:(St.pastRaces[i].name||'').trim()},St.pastRaces[i]);
+  const L=St.lastLong||{};return (!St.noLong&&L.dur&&L.dist)?Object.assign({nom:'ta plus longue sortie'},L):null;}
+function estDur(dist,dplus,P){const ke=(+dist||0)+(+dplus||0)/100;if(!ke)return null;const ref=estRef(P);
+  if(ref){const kr=ref.dist+(ref.dplus||0)/100,m=ref.dur*Math.pow(ke/kr,1.07),w=.05+.05*Math.abs(Math.log(ke/kr))/Math.LN2;return {m,lo:m*(1-w),hi:m*(1+w),ref};}
+  const m=ke/7*60;return {m,lo:m*.75,hi:m*1.25,ref:null};}
+const r5=m=>Math.round(m/5)*5,r15=m=>Math.round(m/15)*15,durR=m=>durTxt(m>=240?r15(m):r5(m));
+function estBox(e,big){if(!e)return '';const r=e.ref;
+  return '<div class="ebox"><div class="ebt"><div><div class="mini" style="margin:0;font-weight:700">Durée estimée</div><b class="ebv'+(big?' big':'')+'">≈ '+durR(e.m)+'</b></div>'
+    +'<div style="text-align:right"><div class="mini" style="margin:0">fourchette</div><b style="font-size:14px;white-space:nowrap">'+durR(e.lo)+' – '+durR(e.hi)+'</b></div></div>'
+    +'<div class="mini" style="margin-top:8px;line-height:1.45">'+(r?'Estimation de départ, à partir de '+(r.nom?esc(r.nom):'ta course')+' ('+String(r.dist).replace('.',',')+' km en '+durTxt(r.dur)+'). Elle se précisera avec tes courses.':'Aucune course de référence : estimation à 7 km-effort par heure. Ajoute une course passée dans Toi pour l\'affiner.')+' Elle ne change pas ton plan.</div></div>';}
+function vPObjectif(){const P=S.profile,t=todayISO(),R=(P.races||[]).map((r,i)=>Object.assign({i},r));
+  const sorted=R.slice().sort((a,b)=>(a.date||'9999')<(b.date||'9999')?-1:1);
+  const num={};let n=0;sorted.forEach(r=>{num[r.i]=++n;});
+  const col=r=>r.prio==='C'?'#c9d1cb':'#25c37e';
+  /* frise : aujourd'hui → objectif */
+  let frise='';if(P.goalDate&&P.goalDate>t){const tot=(parseISO(P.goalDate)-parseISO(t))/864e5,pos=d=>Math.max(0,Math.min(100,(parseISO(d)-parseISO(t))/864e5/tot*100));
+    frise='<div class="card ofr"><div class="ofh"><span>Jusqu\'au jour J</span><b>'+Math.round(tot)+' jours</b></div><div class="ofb"><i class="ofl"></i><i class="ofd now" style="left:0"></i>'
+      +sorted.filter(r=>r.date&&r.date>t&&r.date<P.goalDate).map(r=>'<i class="ofd" style="left:'+pos(r.date).toFixed(1)+'%;background:'+col(r)+'">'+num[r.i]+'</i>').join('')
+      +'<i class="ofd star" style="left:100%">★</i></div><div class="ofx"><span>aujourd\'hui</span><span>'+fmtSY(P.goalDate)+'</span></div></div>';}
+  const blk=(k,mark,mcol,name,sub,est,body)=>{const open=accOpen(k,false);
+    return '<div class="acc ob'+(open?' open':'')+'"><button class="ah" aria-expanded="'+open+'" onclick="app.ptog(\''+k+'\',false)"><i class="obn" style="background:'+mcol+'">'+mark+'</i><span class="tx"><span class="obt"><b>'+name+'</b>'+(est?'<b class="obe">≈ '+durR(est.m)+'</b>':'')+'</span><span class="obs">'+sub+'</span></span><i class="chev">'+(open?'⌃':'⌄')+'</i></button>'+(open?'<div class="ab">'+body+'</div>':'')+'</div>';};
+  const sub=(d,dist,dp)=>[d?fmtS(d):'date à choisir',dist?String(dist).replace('.',',')+' km':null,dp!=null&&dp!==''?fmtN(dp)+' m D+':null].filter(Boolean).join(' · ');
+  const items=sorted.map(r=>{const p='races.'+r.i+'.',e=estDur(r.dist,r.dplus,P);
+    return blk('ir:'+r.i,num[r.i],col(r),esc((r.name||'').trim()||'Nouvelle course'),sub(r.date,r.dist,r.dplus),e,
+      estBox(e)+'<div class="prs">'+rSeg('Statut',p+'prio',['B','C'],['Objectif','Entraînement'],'psetS')
+      +'<div class="mini" style="padding:0 0 10px;border-top:0">'+(r.prio==='C'?'Elle remplace ta sortie longue de la semaine, sans affûtage ni récupération.':'L\'appli allège les jours d\'avant et te laisse récupérer après.')+'</div>'
+      +rTxt('Nom',p+'name','ex. Trail des Coursières',null,1)+rDate('Date',p+'date','psetS',t)+rNum('Distance',p+'dist','km','0.1','psetS')+rNum('Dénivelé',p+'dplus','m D+',null,'psetS')
+      +'<button class="pr plink red" onclick="app.pdelIR('+r.i+',this)">Supprimer cette course</button></div>');}).join('');
+  const eg=estDur(P.goalDist,P.goalDplus,P);
+  const goal=blk('goal','★','#10251c',esc(P.goalName||'Ta course objectif'),sub(P.goalDate,P.goalDist,P.goalDplus),eg,
+    estBox(eg,1)+'<div class="prs">'+rTxt('Nom','goalName','ex. Trail du Beaujolais',null,1)+rDate('Date','goalDate','psetS',addDays(t,1))+rNum('Distance','goalDist','km','0.1','psetS')+rNum('Dénivelé','goalDplus','m D+',null,'psetS')+'</div>');
+  return pScreen('Ton objectif',frise
+    +'<div class="card pc" style="padding:2px 18px">'+items+goal+'<div class="acc">'+rLink('+ Ajouter une course intermédiaire','app.paddIR()')+'</div></div>'
     +'<div class="mini pfoot">Changer une date, une distance ou un D+ modifie le plan : l\'appli te montre ce qui change avant d\'enregistrer.</div>'
     +(P.planStart?'<div class="mini pfoot">Plan démarré la semaine du '+fmtD2(P.planStart)+'. Pour repartir de zéro : Réglages avancés.</div>':''));}
 function pconfHTML(diff,lab){return '<div class="sheet" onclick="if(event.target===this)app.pconfNo()"><div class="in"><div class="pad"><h2 style="margin-top:0">Ce que ça change</h2><div class="mini" style="margin-top:4px">'+(lab?esc(lab)+'. ':'')+'Sur les 14 prochains jours :</div>'
@@ -2269,7 +2303,7 @@ function vPToi(){const P=S.profile,St=P.start||{},races=St.pastRaces||[],ref=ref
     const sub=[r.dur?durTxt(r.dur):null,r.dist?String(r.dist).replace('.',',')+' km':null,r.dplus!=null?fmtN(r.dplus)+' m D+':null].filter(Boolean).join(' · ')||'à compléter';
     const name=(r.name||'').trim()||(r.dist?'Course de '+String(r.dist).replace('.',',')+' km':'Nouvelle course');
     return '<div class="acc'+(open?' open':'')+'"><button class="ah" aria-expanded="'+open+'" onclick="app.ptog(\''+k+'\',false)"><span class="tx"><b>'+esc(name)+(isRef?' <span class="pill">référence</span>':'')+'</b><span>'+sub+(r.date?' · '+fmtMY(r.date):'')+'</span></span><i class="chev">'+(open?'⌃':'⌄')+'</i></button>'
-      +(open?'<div class="ab prs">'+rTxt('Nom','start.pastRaces.'+i+'.name','ex. Trail du Beaujolais')+rDur('Durée','start.pastRaces.'+i+'.dur',72,'Durée de la course')+rNum('Distance','start.pastRaces.'+i+'.dist','km','0.1')+rNum('Dénivelé','start.pastRaces.'+i+'.dplus','m D+')+rDate('Date','start.pastRaces.'+i+'.date')
+      +(open?'<div class="ab prs">'+rTxt('Nom','start.pastRaces.'+i+'.name','ex. Trail du Beaujolais',null,1)+rDur('Durée','start.pastRaces.'+i+'.dur',73,'Durée de la course')+rNum('Distance','start.pastRaces.'+i+'.dist','km','0.1')+rNum('Dénivelé','start.pastRaces.'+i+'.dplus','m D+')+rDate('Date','start.pastRaces.'+i+'.date')
         +'<button class="pr plink red" onclick="app.pdelRace('+i+',this)">Supprimer cette course</button></div>':'')+'</div>';}).join('');
   return pScreen('Toi',
     pCard('Ton identité','Ton poids sert à doser la charge des montées lestées.',rTxt('Prénom','name')+rNum('Poids','weight','kg','0.1'))
@@ -2323,7 +2357,7 @@ function vProfil(){
 /* ---- roue heures / minutes ---- */
 function wheelHTML(){const W=WHEEL,col=(n,id,u)=>'<div class="wcol"><div class="whl" id="'+id+'">'+Array.from({length:n},(_,i)=>'<div>'+i+'</div>').join('')+'</div><span class="wu">'+u+'</span></div>';
   return '<div class="sheet" onclick="if(event.target===this)app.wheelClose()"><div class="in wsheet"><div class="row sbtw"><b style="font-size:17px">'+esc(W.title)+'</b><button class="btn s" onclick="app.wheelOk()">OK</button></div>'
-    +'<div class="wwrap"><div class="wband"></div>'+col(W.max+1,'wh','h')+col(60,'wm','min')+'</div>'
+    +'<div class="wwrap"><div class="wband"></div>'+col(W.max,'wh','h')+col(60,'wm','min')+'</div>'
     +(W.v?'<button class="plink2 c" style="color:var(--mut)" onclick="app.wheelClear()">Effacer la durée</button>':'')+'</div></div>';}
 function wheelSync(el){const i=Math.round(el.scrollTop/40);[...el.children].forEach((c,j)=>c.classList.toggle('on',j===i));}
 /* ---------- encodeur FIT (séance structurée) ---------- */
@@ -2600,7 +2634,7 @@ function vGate(){
     +authFormHTML('Un compte garde ton plan et tes séances en sécurité, et te permet de les retrouver sur un autre téléphone. Ton prénom personnalise l\'app.')
     +syncLineHTML()+versionLineHTML()+'</div></main>';
 }
-const APP_VERSION='v34';   /* généré depuis sw.js par tools/build.py */
+const APP_VERSION='v37';   /* généré depuis sw.js par tools/build.py */
 function versionLineHTML(){return '<div class="mini" id="ver" style="margin-top:12px;text-align:center;opacity:.7">Ascend '+APP_VERSION+' · moteur de plan v2</div>';}
 /* compare la page chargée au cache du service worker : signale un déploiement pas encore actif */
 function checkVersion(){if(!('caches' in window))return;caches.keys().then(ks=>{const c=ks.filter(k=>/^ascend-v\d+$/.test(k)).map(k=>+k.slice(8)).sort((a,b)=>b-a)[0],el=document.getElementById('ver');
@@ -2695,8 +2729,8 @@ const app=window.app={
   paddRace(){const St=S.profile.start,R=St.pastRaces||(St.pastRaces=[]);R.push({name:'',date:'',dur:null,dist:null,dplus:null});St.noGoal=false;Object.keys(POPEN).forEach(k=>{if(k.startsWith('race:'))delete POPEN[k];});POPEN['race:'+(R.length-1)]=true;save();render();},
   pdelRace(i,btn){if(!btn.dataset.armed){btn.dataset.armed='1';btn.textContent='Confirmer la suppression';return;}const St=S.profile.start;St.pastRaces.splice(i,1);St.noGoal=!St.pastRaces.length;Object.keys(POPEN).forEach(k=>{if(k.startsWith('race:'))delete POPEN[k];});save();render();},
   wheelOpen(path,max,title){const v=pget(path)||0;WHEEL={path,max,title,v};$('#sheet').innerHTML=wheelHTML();
-    const h=$('#wh'),m=$('#wm');[h,m].forEach(el=>el.addEventListener('scroll',()=>wheelSync(el),{passive:true}));h.scrollTop=Math.min(max,Math.floor(v/60))*40;m.scrollTop=(v%60)*40;wheelSync(h);wheelSync(m);},
-  wheelOk(){const W=WHEEL;if(!W)return;const h=Math.min(W.max,Math.round($('#wh').scrollTop/40)),m=Math.min(59,Math.round($('#wm').scrollTop/40));pput(W.path,(h*60+m)||null);WHEEL=null;$('#sheet').innerHTML='';save();render();},
+    const h=$('#wh'),m=$('#wm');[h,m].forEach(el=>el.addEventListener('scroll',()=>wheelSync(el),{passive:true}));h.scrollTop=Math.min(max-1,Math.floor(v/60))*40;m.scrollTop=(v%60)*40;wheelSync(h);wheelSync(m);},
+  wheelOk(){const W=WHEEL;if(!W)return;const h=Math.min(W.max-1,Math.round($('#wh').scrollTop/40)),m=Math.min(59,Math.round($('#wm').scrollTop/40));pput(W.path,(h*60+m)||null);WHEEL=null;$('#sheet').innerHTML='';save();render();},
   wheelClear(){const W=WHEEL;if(!W)return;pput(W.path,null);WHEEL=null;$('#sheet').innerHTML='';save();render();},
   wheelClose(){WHEEL=null;$('#sheet').innerHTML='';},
   day(n){curDate=addDays(curDate,n);render();},
