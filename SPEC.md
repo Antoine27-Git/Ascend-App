@@ -3096,3 +3096,19 @@ l'écrasait ; renommée `watchLabel()`.
 (i) v33 (16/10/2026), correctif : la classe CSS `.wl` de la roue de durée écrasait celle de la liste de la
 Semaine (D-83), qui s'affichait comme une roue. Roue renommée `.whl`. Avant chaque livraison, les classes
 CSS ajoutées sont désormais comparées à celles qui existent déjà.
+
+### D-87 — Profil, retouches après essai (v34, 16/10/2026)
+Maquettes validées par Antoine le 16/10/2026 (home_v3, objectif_v2, objectif_confirm, semaine_v4, bilan_v2).
+(a) Accueil : les sous-titres disent à quoi sert la rubrique (plus de données recopiées). Carte objectif
+visuelle : fond vert foncé, jours restants, distance / D+ / jalon en pastilles, frise des phases avec un repère
+« semaine n sur N ».
+(b) Ton objectif : lignes modifiables comme dans Toi ; courses intermédiaires dépliables avec statut en pastilles.
+Un changement de date, distance, D+ ou statut passe par « Ce que ça change » (14 prochains jours, `planDiff`)
+avant d'être enregistré ; sans effet sur 14 jours, il est enregistré directement. Le nom s'enregistre sans confirmation.
+(c) Ta semaine : un seul bouton « Modifier mes jours » ouvre une fenêtre unique (course, sortie longue,
+renforcement), avec l'aperçu existant. Phases : titre de section hors de la carte, frise verticale (point coloré
+par phase, orange pour la phase en cours), durée en semaines.
+(d) Bilan de phase : proposé seulement pendant les 2 dernières semaines de la phase (règle `fenetre` existante ;
+le lien de Ta semaine l'ignorait en v32-v33). Il doit arriver avant la phase suivante, pas après : il sert à décider
+des jours de cette phase. Contenu allégé : date de début, ce qui change, 2 chiffres sur la phase finie,
+recommandation s'il y en a, jours en carrés, « Modifier » / « Garder ces jours ».

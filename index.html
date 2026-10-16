@@ -345,6 +345,27 @@ details>*:not(summary){margin-top:10px}
 .filebtn{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:12px;border:1.5px dashed #b3beb7;border-radius:14px;padding:13px;font-weight:700;font-size:15px;color:var(--ink);background:var(--card);cursor:pointer}
 .filebtn input{display:none}
 .modtog{border:0;font:inherit;cursor:pointer}
+/* v34 Profil */
+.hob0{padding:18px 18px 16px;background:linear-gradient(150deg,#10251c,#1d4a36);color:#fff}
+.hobt{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.hob0 .k{font-size:11.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:#9fe3bf}
+.hob0 .n{display:block;font-size:22px;font-weight:800;margin-top:6px;line-height:1.15}
+.hob0 .j{text-align:right;flex:none}.hob0 .j b{display:block;font-size:34px;font-weight:800;line-height:1}.hob0 .j span{font-size:12px;color:#b9d6c7}
+.hoc{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}.hoc span{background:rgba(255,255,255,.12);border-radius:999px;padding:6px 12px;font-size:13px;font-weight:700}
+.hob{position:relative;margin-top:18px}.hobb{display:flex;gap:3px;border-radius:6px;overflow:hidden}.hobb i{height:8px;display:block}
+.hobm{position:absolute;top:-5px;width:4px;height:18px;border-radius:2px;background:#fff;box-shadow:0 0 0 2px #10251c}
+.hobl{display:flex;justify-content:space-between;margin-top:8px;font-size:12.5px;color:#b9d6c7}.hobl b{color:#fff}
+.psec{font-size:20px;font-weight:800;margin:24px 4px 2px}
+.pha{position:relative;display:flex;gap:12px;align-items:flex-start}
+.pha:not(.last)::before{content:'';position:absolute;left:6px;top:30px;bottom:-16px;width:2px;background:#e3e9e4}
+.pha .dot{width:14px;height:14px;border-radius:50%;flex:none;margin-top:17px;background:#fff;box-shadow:inset 0 0 0 2px var(--c);position:relative;z-index:1}
+.pha .dot.cur{background:#f5a623;box-shadow:0 0 0 4px #fdf0d5}
+.pha.past .dot{background:var(--c);box-shadow:none}
+.phc{flex:1;min-width:0}
+.pill.grey{background:#eef1ee;color:var(--mut)}
+.bk{font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--mintT)}
+.bsub{font-size:13.5px;font-weight:700;color:var(--mut);margin:16px 0 6px}
+.btile{flex:1;background:#fff;border-radius:16px;padding:12px}.btile b{display:block;font-size:20px;font-weight:800}.btile span{display:block;font-size:13px;color:var(--mut);margin-top:2px}
 /* v32 Profil (D-86) */
 .pfhd{padding-bottom:4px}.pfhd h1{margin:2px 0 0}
 .pfback{border:0;background:none;font:inherit;font-size:14px;font-weight:700;color:var(--mintT);padding:6px 0;cursor:pointer}
@@ -1891,7 +1912,7 @@ const orgTouch=()=>{if(PSEC==='org'&&PD){const e=PD.orgs.find(o=>o.from===PORG);
 const DAYS=()=>{if(PSEC==='org'&&PD){const e=PD.orgs.find(o=>o.from===PORG);if(e)return e.days;}const p=PR();return p.days||(p.days={});};                              /* profil édité : brouillon si une fenêtre est ouverte */
 function commitP(rerender){if(PD){if(rerender!==false)openProfSheet();}else{save();render();}}
 
-const STRUCT=['goal','week','start','terrain','strength','injury','org'];  /* sections qui changent le plan */
+const STRUCT=['goal','week','days','start','terrain','strength','injury','org'];  /* sections qui changent le plan */
 /* D-68 : phases expliquées au moment de la décision (gabarit § 2) */
 const PHASES={
   F1:{l:'Reprise',t:'Réhabituer le corps : endurance facile, quelques accélérations, force générale légère.'},
@@ -1915,6 +1936,7 @@ const SECT={
   org:{t:'Organisation par phase',h:'Tes jours peuvent changer d\'une phase à l\'autre. Le changement s\'applique le lundi où la phase commence ; les semaines passées ne bougent pas.'},
   ident:{t:'Toi',h:'Ton prénom personnalise l\'app. Ton poids sert à doser la charge des montées lestées.'},
   goal:{t:'Ton objectif',h:'Le plan se construit à rebours depuis cette date. Distance et D+ permettent d\'estimer ta durée de course, qui fixe la durée du bloc spécifique et de l\'affûtage.'},
+  days:{t:'Tes jours',h:'Coche les jours où tu peux courir, puis ta sortie longue et tes jours de renforcement. L\'appli te montre ce qui change avant d\'enregistrer.'},
   week:{t:'Ta semaine type',h:'Coche tous les jours où tu peux courir, même si tu ne cours pas tous ces jours-là : le plan choisit les séances selon ta phase. La sortie longue tombe sur son jour. Le temps disponible plafonne la séance de ce jour (vide = pas de limite).'},
   start:{t:'Ton point de départ',h:'Pas besoin d\'être précis : ces réponses servent à caler tes toutes premières semaines. Dès que tu enregistres tes séances, l\'app se base sur elles à la place, en 4 à 6 semaines.'},
   terrain:{t:'Ton terrain',h:'Il n\'y a pas de plafond de dénivelé : quelques allers-retours sur une petite bosse font autant de D+ qu\'une vraie montagne. Ce qui compte, c\'est la longueur de tes montées, pour savoir comment travailler la spécificité de ta course.'},
@@ -1941,7 +1963,7 @@ function secMissing(sec,p){
     if(vide(p.goalDist))m.push('distance');if(vide(p.goalDplus))m.push('D+ (0 si plat)');
     (p.races||[]).forEach((r,i)=>{if(vide(r.name)||vide(r.date)||vide(r.dist)||vide(r.dplus))m.push('course intermédiaire n°'+(i+1)+' incomplète');});}
   if(sec==='org'){const e=(p.orgs||[]).find(o=>o.from===PORG),d=e?e.days:{};if(!(d.run||[]).length)m.push('au moins un jour de course');else if(!(d.run||[]).includes(+d.long))m.push('un jour de sortie longue parmi tes jours de course');}
-  if(sec==='week'){if(!(D.run||[]).length)m.push('au moins un jour de course');else if(!(D.run||[]).includes(+D.long))m.push('un jour de sortie longue parmi tes jours de course');}
+  if(sec==='week'||sec==='days'){if(!(D.run||[]).length)m.push('au moins un jour de course');else if(!(D.run||[]).includes(+D.long))m.push('un jour de sortie longue parmi tes jours de course');}
   if(sec==='start'){
     if(vide(St.freq4w))m.push('sorties par semaine ces 4 dernières semaines');
     if(St.freq4w>0&&vide(St.dur4w))m.push('durée habituelle');
@@ -1983,6 +2005,7 @@ function vOrgForm(){
   return s;}
 function secForm(sec){
   if(sec==='org')return vOrgForm();
+  if(sec==='days'){const P=PD,D=P.days||{};return secForm('week')+((P.modules||{}).strength?'<div class="lbl"><span>Jours de renforcement</span><small>plusieurs jours possibles</small></div>'+chips([1,2,3,4,5,6,0],null,v=>'app.toggleCf('+v+')','cf',[1,2,3,4,5,6,0].map(i=>((D.cf||[]).includes(i)?'✓ ':'')+DOWS[i]),null,'txt')+((D.cf||[]).length?'<div class="mini" style="margin-top:10px">'+renfoMsg(P)+'</div>':''):'');}
   const P=PD,St=P.start||{},D=P.days||{},inj=(function(){const I=P.injury||{};return Object.assign({},INJURIES[I.type]||INJURIES.autre,I,{avoid:I.avoid||[]});})();
   const inp=(key,label,type,step,ph)=>'<div><label class="f">'+label+'</label><input type="'+(type||'number')+'"'+(!type||type==='number'?' inputmode="decimal"':'')+(step?' step="'+step+'"':'')+(ph?' placeholder="'+ph+'"':'')+' value="'+esc(P[key])+'" onchange="app.setP(\''+key+'\',this.value)"></div>';
   if(sec==='ident')return '<div class="g2">'+inp('name','Prénom','text')+inp('weight','Poids (kg)','number','0.1','ex. 78')+'</div>';
@@ -2137,26 +2160,26 @@ function vOrgCard(){const ph=phasesPlan(),P=S.profile,today=todayISO();
         +'<div class="mini" style="margin-top:2px">'+fmtS(x.from)+' → '+fmtS(x.to)+'</div><div class="mini" style="margin-top:2px">'+orgResume(P,x.k)+'</div></div>'
         +(past?'':'<button class="btn s" onclick="app.editOrg(\''+x.k+'\')">Modifier</button>')+'</div></div>';}).join('')+'</div></div>';}
 /* ---------- Profil v32 (D-86) : accueil en liste + 7 sous-écrans, édition en place ---------- */
-let PSUB=null,POPEN={},WHEEL=null;
+let PSUB=null,POPEN={},WHEEL=null,PCONF=null;
 const PDAYS=[1,2,3,4,5,6,0],PLET=['D','L','M','M','J','V','S'];
 function pget(path){return path.split('.').reduce((o,k)=>o==null?o:o[k],S.profile);}
-function pput(path,v){const ks=path.split('.'),last=ks.pop();const o=ks.reduce((o,k)=>o[k]==null?(o[k]={}):o[k],S.profile);o[last]=v;}
+function pput(path,v,obj){const ks=path.split('.'),last=ks.pop();const o=ks.reduce((o,k)=>o[k]==null?(o[k]={}):o[k],obj||S.profile);o[last]=v;}
 const pq=s=>String(s).replace(/'/g,"\\'");
 function pBack(){return '<button class="pfback" onclick="app.psub(null)">‹ Ton profil</button>';}
 function pScreen(title,inner){return '<header class="pfhd">'+pBack()+'<h1>'+title+'</h1></header><main>'+inner+'<div style="height:18px"></div></main>';}
 function pCard(title,note,body,act,after){return '<div class="card pc"><div class="pct"><h2>'+title+'</h2>'+(act||'')+'</div>'+(note?'<div class="pcn">'+note+'</div>':'')+'<div class="prs">'+body+'</div>'+(after||'')+'</div>';}
 function pAct(label,on){return '<button class="btn s" onclick="'+on+'">'+label+'</button>';}
 /* lignes modifiables en place */
-function rNum(label,path,unit,step){const v=pget(path);
-  return '<label class="pr"><span class="pl">'+label+'</span><span class="pv"><input type="number" inputmode="decimal"'+(step?' step="'+step+'"':'')+' value="'+(v==null?'':esc(v))+'" placeholder="–" onchange="app.pset(\''+path+'\',this.value,\'n\')" aria-label="'+label+'">'+(unit?'<i>'+unit+'</i>':'')+'</span></label>';}
-function rTxt(label,path,ph){const v=pget(path);
-  return '<label class="pr"><span class="pl">'+label+'</span><span class="pv"><input type="text" class="t" value="'+esc(v||'')+'" placeholder="'+(ph||'–')+'" onchange="app.pset(\''+path+'\',this.value,\'s\')" aria-label="'+label+'"></span></label>';}
-function rDate(label,path){const v=pget(path);
-  return '<label class="pr"><span class="pl">'+label+'</span><span class="pv pk pdt"><b>'+(v?fmtD2(v)+' '+v.slice(0,4):'–')+'</b><i class="chev">⌄</i><input type="date" value="'+esc(v||'')+'" onclick="try{this.showPicker()}catch(e){}" onchange="app.pset(\''+path+'\',this.value,\'s\')" aria-label="'+label+'"></span></label>';}
+function rNum(label,path,unit,step,fn){const v=pget(path);
+  return '<label class="pr"><span class="pl">'+label+'</span><span class="pv"><input type="number" inputmode="decimal"'+(step?' step="'+step+'"':'')+' value="'+(v==null?'':esc(v))+'" placeholder="–" onchange="app.'+(fn||'pset')+'(\''+path+'\',this.value,\'n\')" aria-label="'+label+'">'+(unit?'<i>'+unit+'</i>':'')+'</span></label>';}
+function rTxt(label,path,ph,fn){const v=pget(path);
+  return '<label class="pr"><span class="pl">'+label+'</span><span class="pv"><input type="text" class="t" value="'+esc(v||'')+'" placeholder="'+(ph||'–')+'" onchange="app.'+(fn||'pset')+'(\''+path+'\',this.value,\'s\')" aria-label="'+label+'"></span></label>';}
+function rDate(label,path,fn,min){const v=pget(path);
+  return '<label class="pr"><span class="pl">'+label+'</span><span class="pv pk pdt"><b>'+(v?fmtD2(v)+' '+v.slice(0,4):'–')+'</b><i class="chev">⌄</i><input type="date" value="'+esc(v||'')+'"'+(min?' min="'+min+'"':'')+' onclick="try{this.showPicker()}catch(e){}" onchange="app.'+(fn||'pset')+'(\''+path+'\',this.value,\'s\')" aria-label="'+label+'"></span></label>';}
 function rDur(label,path,maxH,title){const v=pget(path);
   return '<button class="pr" onclick="app.wheelOpen(\''+path+'\','+maxH+',\''+pq(title||label)+'\')"><span class="pl">'+label+'</span><span class="pv pk"><b>'+(v?durTxt(v):'–')+'</b><i class="chev">⌄</i></span></button>';}
-function rSeg(label,path,vals,labs){const cur=pget(path);
-  return '<div class="pr col"><span class="pl">'+label+'</span><div class="pseg">'+vals.map((v,i)=>'<button class="'+(cur===v?'on':'')+'" aria-pressed="'+(cur===v)+'" onclick="app.pset(\''+path+'\','+JSON.stringify(v).replace(/"/g,'&quot;')+',\'v\')">'+labs[i]+'</button>').join('')+'</div></div>';}
+function rSeg(label,path,vals,labs,fn){const cur=pget(path);
+  return '<div class="pr col"><span class="pl">'+label+'</span><div class="pseg">'+vals.map((v,i)=>'<button class="'+(cur===v?'on':'')+'" aria-pressed="'+(cur===v)+'" onclick="app.'+(fn||'pset')+'(\''+path+'\','+JSON.stringify(v).replace(/"/g,'&quot;')+',\'v\')">'+labs[i]+'</button>').join('')+'</div></div>';}
 function rLink(txt,on,cls){return '<button class="pr plink'+(cls?' '+cls:'')+'" onclick="'+on+'">'+txt+'</button>';}
 /* carrés des jours L M M J V S D */
 function dsq(on,kind){return '<div class="dsq">'+PDAYS.map(i=>'<span class="'+((on||[]).includes(i)?kind:'')+'" aria-label="'+DOWN[i]+((on||[]).includes(i)?' : oui':' : non')+'">'+PLET[i]+'</span>').join('')+'</div>';}
@@ -2171,45 +2194,65 @@ function refRace(P){const races=((P.start||{}).pastRaces||[]).map((r,i)=>({r,i})
   races.forEach(x=>{const ke=x.r.dist+(x.r.dplus||0)/100,d=Math.abs(Math.log(Math.max(ke,0.1)/Math.max(keT,0.1)));if(!best||d<best.d)best={i:x.i,d};});return best.i;}
 const fmtMY=s=>s?parseISO(s).toLocaleDateString('fr-FR',{month:'long',year:'numeric'}):'';
 /* ---- accueil ---- */
+const PHCOL={F1:'#7fd8a8',F2:'#3cbf7f',F3:'#1f9d63',F4:'#e9a23b',bloc:'#e07a3a',pic:'#c9542e',affutage:'#8a6cf0'};
+function planPos(){const o=eng();if(!o||!o.ok||!o.info||!o.info.cal)return null;const N=o.info.cal.N,w=Math.floor((parseISO(todayISO())-parseISO(o.info.start))/(7*864e5))+1;return {N,w:Math.max(1,Math.min(N,w)),start:o.info.start};}
+function heroObj(){const P=S.profile;if(!P.goalDate)return '';const j=daysTo(P.goalDate),ph=phasesPlan(),pp=planPos(),t=todayISO();
+  const nb=(P.races||[]).filter(r=>r.date&&r.date>=t).sort((a,b)=>a.date<b.date?-1:1)[0];
+  const chips=[P.goalDist?P.goalDist+' km':null,P.goalDplus!=null?fmtN(P.goalDplus)+' m D+':null,nb?'jalon '+fmtS(nb.date).replace(/\.$/,''):null].filter(Boolean).map(x=>'<span>'+x+'</span>').join('');
+  let bar='';if(ph.length&&pp){const cur=ph.find(x=>x.from<=t&&t<=x.to);
+    bar='<div class="hob"><div class="hobb">'+ph.map(x=>{const w=Math.round((parseISO(x.to)-parseISO(x.from))/864e5+1)/7;return '<i style="flex:'+w+';background:'+(PHCOL[x.k]||'#7fd8a8')+';opacity:'+(x.to<t||x===cur?1:.35)+'"></i>';}).join('')+'</div>'
+      +'<b class="hobm" style="left:calc('+((pp.w-.5)/pp.N*100).toFixed(1)+'% - 2px)"></b></div>'
+      +'<div class="hobl"><span>'+(cur?'<b>'+PHASES[cur.k].l+'</b> · ':'')+'semaine '+pp.w+' sur '+pp.N+'</span><span>'+PHASES[ph[ph.length-1].k].l+'</span></div>';}
+  return '<div class="card hob0"><div class="hobt"><div><div class="k">Ton objectif · '+fmtSY(P.goalDate)+'</div><b class="n">'+esc(P.goalName||'Ta course')+'</b></div>'
+    +(j!=null&&j>=0?'<div class="j"><b>'+j+'</b><span>jour'+(j>1?'s':'')+'</span></div>':'')+'</div>'+(chips?'<div class="hoc">'+chips+'</div>':'')+bar+'</div>';}
 function vProfilHome(){
-  const P=S.profile,M=P.modules||{},D=P.days||{},ph=phasesPlan();
+  const P=S.profile;
   const inc=['ident','goal','week','start','terrain'].filter(k=>secMissing(k,P).length);
-  const nb=(P.races||[]).filter(r=>r.date&&r.date>=todayISO()).sort((a,b)=>a.date<b.date?-1:1)[0];
-  const mods=[['strength','Renforcement'],['nutrition','Nutrition'],['injury','Blessure'],['journal','Journal']].filter(x=>M[x[0]]).map(x=>x[1]);
   const row=(k,ic,t,s)=>'<button class="pli" onclick="app.psub(\''+k+'\')"><span class="ic">'+mi(ic)+'</span><span class="tx"><b>'+t+'</b><span>'+s+'</span></span><i class="chev">›</i></button>';
-  const j=P.goalDate?daysTo(P.goalDate):null;
   return '<header><h1>Ton profil</h1><div class="sub">Tes réglages construisent ton plan</div></header><main>'
   +(inc.length?'<div class="card" style="box-shadow:inset 0 0 0 2px var(--sun),var(--cardShadow)"><h2>Configuration incomplète</h2><div class="mini">'+inc.length+' rubrique'+(inc.length>1?'s':'')+' à compléter pour que le plan soit fiable.</div><button class="btn dark full" style="margin-top:12px" onclick="app.startOnboarding()">Compléter ma configuration</button></div>':'')
-  +(P.goalDate?'<div class="card pfobj"><div class="k">Objectif</div><b>'+esc(P.goalName||'Ta course')+(j!=null&&j>=0?' · J−'+j:'')+'</b><span>'+[P.goalDist?P.goalDist+' km':null,P.goalDplus!=null?fmtN(P.goalDplus)+' m D+':null,P.planStart?'plan démarré le '+fmtS(P.planStart):null].filter(Boolean).join(' · ')+'</span></div>':'')
+  +heroObj()
   +'<div class="card pll">'
-  +row('objectif','terrain','Ton objectif',P.goalDate?esc(P.goalName||'Objectif')+' · '+fmtSY(P.goalDate)+(nb?' · jalon le '+fmtS(nb.date):''):'À renseigner')
-  +row('semaine','calendar','Ta semaine',(D.run||[]).length?djs(D.run)+' · sortie longue le '+DOWN[+D.long].toLowerCase()+(ph.length?' · '+ph.length+' phases':''):'À renseigner')
+  +row('objectif','terrain','Ton objectif','Ta course et tes courses intermédiaires')
+  +row('semaine','calendar','Ta semaine','Tes jours de course et les phases du plan')
   +row('toi','person','Toi','Historique, courses passées, terrain, poids')
-  +row('modules','fitness','Tes modules',mods.length?mods.join(', ')+(mods.length>1?' actifs':' actif'):'Aucun module actif')
-  +row('materiel','run','Ton matériel',(P.hasWatch===false?'Sans montre':esc((P.watchName||'').trim()||'Ta montre'))+' · '+(P.shoes.length?P.shoes.length+' paire'+(P.shoes.length>1?'s':''):'aucune paire de chaussures'))
+  +row('modules','fitness','Tes modules','Renforcement, nutrition, blessure, journal')
+  +row('materiel','run','Ton matériel','Ta montre et tes chaussures')
   +row('donnees','monitoring','Données et synchro','Sauvegarde, export, import')
   +row('avances','injury','Réglages avancés','Redémarrer le plan, tout effacer')
   +'</div>'+versionLineHTML()+'</main>';
 }
 const fmtN=n=>n==null?'':String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g,' ');
 /* ---- Ton objectif ---- */
-function vPObjectif(){const P=S.profile,R=P.races||[];
+function vPObjectif(){const P=S.profile,R=P.races||[],t=todayISO();
+  const ir=R.map((r,i)=>{const k='ir:'+i,open=accOpen(k,false),p='races.'+i+'.';
+    const sub=[r.date?fmtSY(r.date):'date à choisir',r.dist?String(r.dist).replace('.',',')+' km':null,r.dplus!=null?fmtN(r.dplus)+' m D+':null].filter(Boolean).join(' · ');
+    return '<div class="acc'+(open?' open':'')+'"><button class="ah" aria-expanded="'+open+'" onclick="app.ptog(\''+k+'\',false)"><span class="tx"><b>'+esc((r.name||'').trim()||'Nouvelle course')+' <span class="pill'+(r.prio==='C'?' grey':'')+'">'+(r.prio==='C'?'entraînement':'objectif')+'</span></b><span>'+sub+'</span></span><i class="chev">'+(open?'⌃':'⌄')+'</i></button>'
+      +(open?'<div class="ab prs">'+rSeg('Statut',p+'prio',['B','C'],['Objectif','Entraînement'],'psetS')
+        +'<div class="mini" style="padding:0 0 10px;border-top:0">'+(r.prio==='C'?'Elle remplace ta sortie longue de la semaine, sans affûtage ni récupération.':'L\'appli allège les jours d\'avant et te laisse récupérer après.')+'</div>'
+        +rTxt('Nom',p+'name','ex. Trail des Coursières')+rDate('Date',p+'date','psetS',t)+rNum('Distance',p+'dist','km','0.1','psetS')+rNum('Dénivelé',p+'dplus','m D+',null,'psetS')
+        +'<button class="pr plink red" onclick="app.pdelIR('+i+',this)">Supprimer cette course</button></div>':'')+'</div>';}).join('');
   return pScreen('Ton objectif',
-    pCard('Course objectif','Le plan se construit à rebours depuis cette date.',P.goalDate?'<div class="ptx"><b>'+esc(P.goalName||'Objectif')+'</b> · '+fmtSY(P.goalDate)+'<br>'+(P.goalDist||'?')+' km · '+(P.goalDplus!=null?fmtN(P.goalDplus):'?')+' m D+</div>':'<div class="ptx">À renseigner</div>',pAct('Modifier',"app.editSec('goal')"))
-    +pCard('Courses intermédiaires','Facultatif. Un objectif intermédiaire allège les jours d\'avant ; une course d\'entraînement remplace ta sortie longue.',R.length?R.map(r=>'<div class="ptx"><b>'+esc(r.name||'Course')+'</b> · '+(r.date?fmtSY(r.date):'date ?')+' · '+(r.prio==='C'?'entraînement':'objectif')+'</div>').join(''):'<div class="ptx" style="color:var(--mut)">Aucune pour l\'instant.</div>',pAct(R.length?'Modifier':'Ajouter',"app.editSec('goal')"))
+    pCard('Ta course objectif','Le plan se construit à rebours depuis cette date.',rTxt('Nom','goalName','ex. Trail du Beaujolais')+rDate('Date','goalDate','psetS',addDays(t,1))+rNum('Distance','goalDist','km','0.1','psetS')+rNum('Dénivelé','goalDplus','m D+',null,'psetS'))
+    +pCard('Courses intermédiaires','Facultatif. Elles s\'intègrent au plan selon leur statut.',ir+rLink('+ Ajouter une course intermédiaire','app.paddIR()'))
+    +'<div class="mini pfoot">Changer une date, une distance ou un D+ modifie le plan : l\'appli te montre ce qui change avant d\'enregistrer.</div>'
     +(P.planStart?'<div class="mini pfoot">Plan démarré la semaine du '+fmtD2(P.planStart)+'. Pour repartir de zéro : Réglages avancés.</div>':''));}
+function pconfHTML(diff,lab){return '<div class="sheet" onclick="if(event.target===this)app.pconfNo()"><div class="in"><div class="pad"><h2 style="margin-top:0">Ce que ça change</h2><div class="mini" style="margin-top:4px">'+(lab?esc(lab)+'. ':'')+'Sur les 14 prochains jours :</div>'
+  +diff.map(x=>'<div style="margin-top:6px;font-size:14.5px">'+esc(x)+'</div>').join('')
+  +'<div class="row" style="gap:10px;margin-top:18px"><button class="btn" style="flex:1" onclick="app.pconfNo()">Annuler</button><button class="btn dark" style="flex:1" onclick="app.pconfOk()">Confirmer</button></div></div></div></div>';}
 /* ---- Ta semaine ---- */
 function vPSemaine(){const P=S.profile,D=P.days||{},M=P.modules||{},ph=phasesPlan(),today=todayISO(),bd=bilanData();
-  const typ=pCard('Ta semaine type','Elle vaut pour toute la préparation, sauf pour une phase qui a ses propres jours.',dRows(D,M.strength)
-    +(M.strength?'<button class="plink2" onclick="app.editSec(\'strength\')">Modifier les jours de renforcement</button>':''),pAct('Modifier',"app.editSec('week')"));
-  const items=ph.map(x=>{const cur=x.from<=today&&today<=x.to,past=x.to<today,o=orgOf(P,x.k),own=o.own,open=accOpen('ph:'+x.k,cur),T=PHASES[x.k];
-    return '<div class="acc'+(past?' past':'')+(open?' open':'')+'"><button class="ah" aria-expanded="'+open+'" onclick="app.ptog(\'ph:'+x.k+'\','+cur+')"><span class="tx"><b>'+T.l+(cur?' <span class="pill sun">en cours</span>':'')+(own?' <span class="pill">jours propres</span>':'')+'</b><span>du '+fmtD2(x.from)+' au '+fmtD2(x.to)+'</span></span><i class="chev">'+(open?'⌃':'⌄')+'</i></button>'
-      +(open?'<div class="ab"><div class="ptx">'+T.t+'</div>'+(T.c?'<div class="pbox"><b>Conseil</b> · '+T.c+'</div>':'')
+  const typ=pCard('Ta semaine type','Elle vaut pour toute la préparation, sauf pour une phase qui a ses propres jours.',dRows(D,M.strength),'',
+    '<button class="btn full" style="margin:12px 0 10px" onclick="app.editSec(\'days\')">Modifier mes jours</button>');
+  const items=ph.map((x,i)=>{const cur=x.from<=today&&today<=x.to,past=x.to<today,o=orgOf(P,x.k),own=o.own,open=accOpen('ph:'+x.k,cur),T=PHASES[x.k],col=PHCOL[x.k]||'#7fd8a8';
+    const wk=Math.round((parseISO(x.to)-parseISO(x.from))/864e5+1)/7;
+    return '<div class="pha'+(past?' past':'')+(i===ph.length-1?' last':'')+'"><i class="dot'+(cur?' cur':'')+'" style="--c:'+col+'"></i><div class="phc"><button class="ah" aria-expanded="'+open+'" onclick="app.ptog(\'ph:'+x.k+'\','+cur+')"><span class="tx"><b>'+T.l+(cur?' <span class="pill sun">en cours</span>':'')+(own?' <span class="pill">jours propres</span>':'')+'</b><span>du '+fmtS(x.from)+' au '+fmtS(x.to)+' · '+Math.round(wk)+' sem.</span></span><i class="chev">'+(open?'⌃':'⌄')+'</i></button>'
+      +(open?'<div class="ab"><div class="ptx" style="padding-top:0">'+T.t+'</div>'+(T.c?'<div class="pbox"><b>Conseil</b> · '+T.c+'</div>':'')
         +dRows(o.d,M.strength)+(o.en?'<div class="mini" style="margin-top:8px">Week-end enchaîné.</div>':'')
         +'<div class="mini" style="margin-top:10px">'+(own?'Jours propres à cette phase.':'Mêmes jours que ta semaine type.')+'</div>'
         +(past?'':'<button class="btn full" style="margin-top:12px" onclick="app.editOrg(\''+x.k+'\')">Modifier les jours de cette phase</button>')
-        +(cur&&bd?'<button class="plink2 c" onclick="app.openBilan()">Bilan de la phase en cours</button>':'')+'</div>':'')+'</div>';}).join('');
-  return pScreen('Ta semaine',typ+(ph.length?'<div class="card pc"><div class="pct"><h2>Tes phases</h2></div><div class="pcn">Touche une phase pour voir ce qu\'elle travaille et ses jours.</div>'+items+'</div>':''));}
+        +(cur&&bd&&bd.fenetre?'<button class="plink2 c" onclick="app.openBilan()">Préparer la phase suivante</button>':'')+'</div>':'')+'</div></div>';}).join('');
+  return pScreen('Ta semaine',typ+(ph.length?'<h2 class="psec">Tes phases</h2><div class="pcn" style="margin:0 4px 8px">'+ph.length+' phases jusqu\'à ta course. Touche une phase pour voir ce qu\'elle travaille.</div><div class="card pc" style="padding:6px 18px">'+items+'</div>':''));}
 const fmtD2=s=>parseISO(s).toLocaleDateString('fr-FR',{day:'numeric',month:'long'});
 /* ---- Toi ---- */
 function vPToi(){const P=S.profile,St=P.start||{},races=St.pastRaces||[],ref=refRace(P);
@@ -2557,7 +2600,7 @@ function vGate(){
     +authFormHTML('Un compte garde ton plan et tes séances en sécurité, et te permet de les retrouver sur un autre téléphone. Ton prénom personnalise l\'app.')
     +syncLineHTML()+versionLineHTML()+'</div></main>';
 }
-const APP_VERSION='v33';   /* généré depuis sw.js par tools/build.py */
+const APP_VERSION='v34';   /* généré depuis sw.js par tools/build.py */
 function versionLineHTML(){return '<div class="mini" id="ver" style="margin-top:12px;text-align:center;opacity:.7">Ascend '+APP_VERSION+' · moteur de plan v2</div>';}
 /* compare la page chargée au cache du service worker : signale un déploiement pas encore actif */
 function checkVersion(){if(!('caches' in window))return;caches.keys().then(ks=>{const c=ks.filter(k=>/^ascend-v\d+$/.test(k)).map(k=>+k.slice(8)).sort((a,b)=>b-a)[0],el=document.getElementById('ver');
@@ -2639,6 +2682,16 @@ const app=window.app={
   psub(k){PSUB=k;POPEN={};exportText=null;render();window.scrollTo(0,0);},
   ptog(k,def){POPEN[k]=!accOpen(k,def);render();},
   pset(path,v,kind){if(kind==='n')v=(v===''||v==null)?null:+v;else if(kind==='s')v=String(v==null?'':v).trim();pput(path,v);save();render();},
+  psetS(path,v,kind){if(kind==='n')v=(v===''||v==null)?null:+v;else if(kind==='s')v=String(v==null?'':v).trim();
+    if(path==='goalDate'&&(!v||v<=todayISO())){flash('Choisis une date à venir');render();return;}
+    const d=JSON.parse(JSON.stringify(S.profile));pput(path,v,d);app.pconfirm(d);},
+  pconfirm(d,lab){if(!S.profile.planStart){S.profile=normProfile(d);save();render();return;}
+    const diff=planDiff(S.profile,d);if(!diff.length){S.profile=normProfile(d);save();render();return;}
+    PCONF=d;$('#sheet').innerHTML=pconfHTML(diff,lab);},
+  pconfOk(){if(!PCONF)return;S.profile=normProfile(PCONF);PCONF=null;$('#sheet').innerHTML='';save();render();},
+  pconfNo(){PCONF=null;$('#sheet').innerHTML='';render();},
+  paddIR(){const R=S.profile.races||(S.profile.races=[]);R.push({name:'',date:'',dist:null,dplus:null,prio:'B'});Object.keys(POPEN).forEach(k=>{if(k.startsWith('ir:'))delete POPEN[k];});POPEN['ir:'+(R.length-1)]=true;save();render();},
+  pdelIR(i,btn){if(!btn.dataset.armed){btn.dataset.armed='1';btn.textContent='Confirmer la suppression';return;}const d=JSON.parse(JSON.stringify(S.profile));d.races.splice(i,1);Object.keys(POPEN).forEach(k=>{if(k.startsWith('ir:'))delete POPEN[k];});app.pconfirm(d,'Course intermédiaire supprimée');},
   paddRace(){const St=S.profile.start,R=St.pastRaces||(St.pastRaces=[]);R.push({name:'',date:'',dur:null,dist:null,dplus:null});St.noGoal=false;Object.keys(POPEN).forEach(k=>{if(k.startsWith('race:'))delete POPEN[k];});POPEN['race:'+(R.length-1)]=true;save();render();},
   pdelRace(i,btn){if(!btn.dataset.armed){btn.dataset.armed='1';btn.textContent='Confirmer la suppression';return;}const St=S.profile.start;St.pastRaces.splice(i,1);St.noGoal=!St.pastRaces.length;Object.keys(POPEN).forEach(k=>{if(k.startsWith('race:'))delete POPEN[k];});save();render();},
   wheelOpen(path,max,title){const v=pget(path)||0;WHEEL={path,max,title,v};$('#sheet').innerHTML=wheelHTML();
@@ -2789,8 +2842,16 @@ const app=window.app={
       const H=(old.orgHist||[]).slice();if(!H.some(v=>v.until===t))H.push({until:t,days:JSON.parse(JSON.stringify(old.days)),orgs:JSON.parse(JSON.stringify(old.orgs||[]))});PD.orgHist=H;}
     S.profile=normProfile(JSON.parse(JSON.stringify(PD)));save();},
   ackPhase(k){S.profile.phaseAck=Object.assign({},S.profile.phaseAck,{[k]:todayISO()});save();flash('Noté');render();},
-  openBilan(){const b=bilanData();if(!b)return;$('#sheet').innerHTML='<div class="sheet" onclick="if(event.target===this)app.closeBilan()"><div class="in"><div class="pad"><h2 style="margin:0 0 8px">Bilan de phase</h2>'+bilanCorps(b)
-    +'<div class="row" style="gap:10px;margin-top:14px"><button class="btn dark" style="flex:1" onclick="app.ackPhase(\''+b.nx.k+'\');app.closeBilan()">C\'est bon pour moi</button><button class="btn" style="flex:1" onclick="app.closeBilan();app.editOrg(\''+b.nx.k+'\')">Modifier</button></div></div></div></div>';},
+  openBilan(){const b=bilanData();if(!b)return;const P=S.profile,n=daysTo(b.nx.from),M=P.modules||{};
+    const tile=(v,l)=>'<div class="btile"><b>'+v+'</b><span>'+l+'</span></div>';
+    $('#sheet').innerHTML='<div class="sheet" onclick="if(event.target===this)app.closeBilan()"><div class="in"><div class="pad">'
+    +'<div class="bk">'+(n>0?'Dans '+n+' jour'+(n>1?'s':''):'Cette semaine')+'</div><h2 style="margin:4px 0 8px">'+PHASES[b.nx.k].l+' commence le lundi '+fd(b.nx.from)+'</h2>'
+    +'<div class="ptx" style="padding:0">'+PHASES[b.nx.k].t+(b.lMax?' Ta sortie longue '+(b.lMin===b.lMax?'sera de '+hm(b.lMax):'passera de '+hm(b.lMin)+' à '+hm(b.lMax))+' sur la phase.':'')+'</div>'
+    +'<div class="bsub">Ta phase '+PHASES[b.cur.k].l+'</div><div class="row" style="gap:8px">'+tile(b.prevues?b.faites+' / '+b.prevues:'–','sorties faites')+tile(b.reelL?hm(b.reelL):'–',b.prevL?'sortie longue, sur '+hm(b.prevL):'sortie longue')+'</div>'
+    +(b.reco.length?'<div class="pbox" style="margin-top:12px"><b>Ma recommandation</b><ul style="margin:6px 0 0 18px;padding:0">'+b.reco.map(r=>'<li>'+r+'</li>').join('')+'</ul></div>':'')
+    +'<div class="bsub">Tes jours pour '+PHASES[b.nx.k].l+'</div>'+dRows(orgOf(P,b.nx.k).d,M.strength)
+    +'<div class="row" style="gap:10px;margin-top:16px"><button class="btn" style="flex:1" onclick="app.closeBilan();app.editOrg(\''+b.nx.k+'\')">Modifier</button><button class="btn dark" style="flex:1" onclick="app.ackPhase(\''+b.nx.k+'\');app.closeBilan()">Garder ces jours</button></div>'
+    +'<div class="mini" style="margin-top:10px;text-align:center">C\'est toi qui décides : rien n\'est modifié sans toi.</div></div></div></div>';},
   closeBilan(){$('#sheet').innerHTML='';},
   editOrg(k){PD=JSON.parse(JSON.stringify(S.profile));PD.orgs=PD.orgs||[];PORG=k;
     if(!PD.orgs.some(o=>o.from===k)){const o=orgOf(PD,k);PD.orgs.push({from:k,days:JSON.parse(JSON.stringify(o.d)),enchaine:o.en,_new:true});}
