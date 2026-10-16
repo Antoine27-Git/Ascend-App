@@ -318,11 +318,12 @@ details>*:not(summary){margin-top:10px}
 #splash{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;background:#114336;transition:opacity .35s ease}
 #splash.off{opacity:0;pointer-events:none}
 .sp-in{position:relative;display:flex;flex-direction:column;align-items:center}
-.sp-mtn{width:200px;display:block;filter:drop-shadow(0 8px 20px rgba(0,0,0,.28))}
-.sp-txt{position:absolute;top:100%;left:50%;margin:22px 0 0 -110px;width:220px;display:block;opacity:0;animation:sptxt .3s ease .05s forwards}
+.sp-mtn{width:128px;display:block;transform-origin:50% 50%;animation:spgrow .7s cubic-bezier(.25,.8,.25,1) .35s forwards}
+@keyframes spgrow{to{transform:scale(1.5625)}}
+.sp-txt{position:absolute;top:100%;left:50%;margin:64px 0 0 -110px;width:220px;display:block;opacity:0;animation:sptxt .6s ease .9s forwards}
 @keyframes sptxt{to{opacity:1}}
 @keyframes sprise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
-@media (prefers-reduced-motion:reduce){#splash,.sp-in{transition:none;animation:none}}
+@media (prefers-reduced-motion:reduce){#splash,.sp-in{transition:none;animation:none}.sp-mtn{animation:none;transform:scale(1.5625)}.sp-txt{animation:none;opacity:1}}
 .brand{font-size:12px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--mintT);margin-bottom:10px}
 .brand span{display:block;font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:none;color:var(--mut);margin-top:2px}
 @media (prefers-reduced-motion:reduce){.toast,details summary::before{transition:none}}
@@ -2634,7 +2635,7 @@ function vGate(){
     +authFormHTML('Un compte garde ton plan et tes séances en sécurité, et te permet de les retrouver sur un autre téléphone. Ton prénom personnalise l\'app.')
     +syncLineHTML()+versionLineHTML()+'</div></main>';
 }
-const APP_VERSION='v39';   /* généré depuis sw.js par tools/build.py */
+const APP_VERSION='v40';   /* généré depuis sw.js par tools/build.py */
 function versionLineHTML(){return '<div class="mini" id="ver" style="margin-top:12px;text-align:center;opacity:.7">Ascend '+APP_VERSION+' · moteur de plan v2</div>';}
 /* compare la page chargée au cache du service worker : signale un déploiement pas encore actif */
 function checkVersion(){if(!('caches' in window))return;caches.keys().then(ks=>{const c=ks.filter(k=>/^ascend-v\d+$/.test(k)).map(k=>+k.slice(8)).sort((a,b)=>b-a)[0],el=document.getElementById('ver');
@@ -2653,7 +2654,7 @@ function vSyncCard(){
 const SPLASH_T0=Date.now();
 function hideSplash(){
   const el=$('#splash');if(!el)return;
-  const wait=Math.max(0,700-(Date.now()-SPLASH_T0));
+  const wait=Math.max(0,2500-(Date.now()-SPLASH_T0));
   setTimeout(()=>{el.classList.add('off');setTimeout(()=>{if(el.parentNode)el.parentNode.removeChild(el);},500);},wait);
 }
 let recovery=null;
