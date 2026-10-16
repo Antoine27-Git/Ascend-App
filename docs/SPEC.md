@@ -3131,11 +3131,11 @@ la remplacera quand il sera prêt.
 (d) Roue de durée : heures de 0 à max − 1 et minutes de 0 à 59 (plus longue sortie : 0 à 23 h 59 ; course passée :
 0 à 72 h 59 (heures 0–72, minutes 0–59, tolérance assumée) ; durée moyenne : 0 à 5 h 59). Champ « Nom » d'une course : libellé au-dessus, champ sur toute la largeur.
 
-### D-89 — Geste « retour » (16/10/2026, v38)
-Constat (Antoine, Android) : le geste retour quittait l'appli, parce que l'appli ne créait aucune entrée d'historique.
-Règle : le geste retour remonte d'un niveau, dans l'ordre : fenêtre ouverte (roue, saisie, confirmation, bilan, assistant) → sous-écran du Profil → onglet autre qu'Aujourd'hui → Aujourd'hui. Depuis Aujourd'hui sans fenêtre, il quitte l'appli (comportement du système).
-Mise en œuvre : profondeur de l'interface = fenêtre (1) + sous-écran du Profil (1) + onglet ≠ Aujourd'hui (1). `histSync()` (appelée à la fin de `render()` et par un observateur sur `#sheet`) pousse une entrée d'historique par niveau ouvert, et retire (`history.go`) les entrées devenues inutiles quand l'interface se ferme seule, pour qu'il n'y ait jamais de retour « fantôme ». Au démarrage, les entrées laissées par un rechargement sont retirées. Changer d'onglet ne pousse pas d'entrée supplémentaire (Semaine → retour → Aujourd'hui).
-Test : `tests/ui/test_v38.py` (profondeur et onglet après chaque retour).
+### D-89 — Geste « retour » (16/10/2026, v38 ; refait en v39)
+Constat (Antoine, Android) : le geste retour quittait l'appli (v37), puis, en v38, renvoyait toujours à Aujourd'hui depuis un onglet.
+Règle (v39) : le geste retour rejoue le chemin inverse, écran par écran. Aujourd'hui → Semaine → Suivi → Profil → Toi, puis retour : Profil, Suivi, Semaine, Aujourd'hui. Une fenêtre ouverte (roue, saisie, confirmation, bilan, assistant) se ferme d'abord. On ne quitte l'appli que depuis le tout premier écran (comportement du système).
+Mise en œuvre : chaque écran (onglet + sous-écran du Profil + fenêtre ouverte ou non) est une entrée de l'historique du navigateur (`history.pushState` avec `{view, psub, sheet}`), poussée par `histSync()` (appelée à la fin de `render()` et par un observateur sur `#sheet`). Un retour (`popstate`) restaure l'écran de l'entrée. Revenir sur l'onglet où l'on est déjà ne pousse rien. Une fenêtre fermée par l'interface retire son entrée (`history.back()` ignoré par `HIGN`), pour qu'il n'y ait pas de retour « fantôme » ; une entrée de fenêtre ancienne rencontrée au retour est sautée. Après un rechargement (mise à jour du service worker), l'écran de l'entrée courante est retrouvé.
+Test : `tests/ui/test_v38.py` (chemin aller puis chemin retour, même onglet deux fois, fenêtre fermée par un bouton).
 
 ### D-90 — Écran de lancement unique (16/10/2026, v38)
 Constat : deux écrans successifs au lancement (celui d'Android, fait des icônes du manifeste, puis celui de l'appli), et « Reach your peak » n'apparaissait plus depuis la durée minimale de 0,6 s (le texte se fondait à 0,5 s).

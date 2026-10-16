@@ -2634,7 +2634,7 @@ function vGate(){
     +authFormHTML('Un compte garde ton plan et tes séances en sécurité, et te permet de les retrouver sur un autre téléphone. Ton prénom personnalise l\'app.')
     +syncLineHTML()+versionLineHTML()+'</div></main>';
 }
-const APP_VERSION='v38';   /* généré depuis sw.js par tools/build.py */
+const APP_VERSION='v39';   /* généré depuis sw.js par tools/build.py */
 function versionLineHTML(){return '<div class="mini" id="ver" style="margin-top:12px;text-align:center;opacity:.7">Ascend '+APP_VERSION+' · moteur de plan v2</div>';}
 /* compare la page chargée au cache du service worker : signale un déploiement pas encore actif */
 function checkVersion(){if(!('caches' in window))return;caches.keys().then(ks=>{const c=ks.filter(k=>/^ascend-v\d+$/.test(k)).map(k=>+k.slice(8)).sort((a,b)=>b-a)[0],el=document.getElementById('ver');
@@ -2667,7 +2667,7 @@ function vRecovery(){
 }
 
 async function boot(){
-  if(history.state&&history.state.d){HIGN++;history.go(-history.state.d);}
+  if(history.state&&history.state.view){view=history.state.view;PSUB=history.state.psub||null;HCUR=Object.assign({},history.state);}
   try{new MutationObserver(histSync).observe($('#sheet'),{childList:true});}catch(e){}
   sync=Object.assign({shadow:{},ts:{},del:{},lastPull:null},lsGet(SYNC_KEY,{}));
   sync.shadow=sync.shadow||{};sync.ts=sync.ts||{};sync.del=sync.del||{};
@@ -2713,17 +2713,20 @@ function render(){
   $('#view').innerHTML=({home:vHome,seances:vSeances,suivi:vSuivi,jour:vJour,profil:vProfil})[view]();
   histSync();
 }
-/* D-89 : le geste « retour » remonte d'un niveau (fenêtre, sous-écran du Profil, onglet) et ne quitte l'appli qu'à l'accueil */
-let HD=0,HIGN=0;
-function uiDepth(){const sh=$('#sheet');return (sh&&sh.firstElementChild?1:0)+(PSUB?1:0)+(view!=='home'?1:0);}
-function histSync(){const d=uiDepth();
-  if(d>HD){for(let i=HD;i<d;i++)history.pushState({d:i+1},'');HD=d;}
-  else if(d<HD){const n=HD-d;HD=d;HIGN++;history.go(-n);}}
-function closeTop(){const sh=$('#sheet');
-  if(sh&&sh.firstElementChild){WHEEL=null;PCONF=null;PD=null;PSEC=null;PFLOW=null;PBACK=null;PPREV=null;PERR=[];PDATEPICK=false;PM=false;E=null;MQS=null;PE=null;sh.innerHTML='';render();return;}
-  if(PSUB){app.psub(null);return;}
-  if(view!=='home')app.go('home');}
-addEventListener('popstate',()=>{if(HIGN>0){HIGN--;return;}if(HD>0){HD--;closeTop();histSync();}});
+/* D-89 : le geste « retour » rejoue le chemin inverse (onglets, sous-écrans du Profil, fenêtres) ; il ne quitte l'appli qu'au tout premier écran */
+let HCUR={view:'home',psub:null,sheet:false},HIGN=0,HAPPLY=false;
+function hDesc(){const sh=$('#sheet');return {view,psub:PSUB||null,sheet:!!(sh&&sh.firstElementChild)};}
+const hEq=(a,b)=>a.view===b.view&&a.psub===b.psub&&a.sheet===b.sheet;
+function histSync(){if(HAPPLY)return;const d=hDesc();if(hEq(d,HCUR))return;
+  if(HCUR.sheet&&!d.sheet&&d.view===HCUR.view&&d.psub===HCUR.psub){HCUR=d;HIGN++;history.back();return;}   /* la fenêtre s'est fermée seule : on retire son entrée */
+  history.pushState(d,'');HCUR=d;}
+function closeSheetState(){WHEEL=null;PCONF=null;PD=null;PSEC=null;PFLOW=null;PBACK=null;PPREV=null;PERR=[];PDATEPICK=false;PM=false;E=null;MQS=null;PE=null;const sh=$('#sheet');if(sh)sh.innerHTML='';}
+addEventListener('popstate',e=>{
+  if(HIGN>0){HIGN--;return;}
+  const st=e.state||{view:'home',psub:null,sheet:false};
+  if(st.sheet){history.back();return;}   /* entrée d'une fenêtre déjà fermée : on la saute */
+  HAPPLY=true;closeSheetState();view=st.view;PSUB=st.psub;POPEN={};exportText=null;
+  HCUR={view:st.view,psub:st.psub,sheet:false};render();HAPPLY=false;window.scrollTo(0,0);});
 /* ---------- actions ---------- */
 const app=window.app={
   go(v){view=v;if(v==='profil'){PSUB=null;POPEN={};}render();window.scrollTo(0,0);},
