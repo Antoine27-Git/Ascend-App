@@ -3019,3 +3019,77 @@ même jour : `AAAAMMJJ-2_TYPE`. Exemples : `20261018_SL_D300`, `20261016_EF`. Le
 par `D` (demande d'Antoine). Longueur : 17 caractères visibles mesurés sur la Fenix 7 (« Sortie
 longue 109 » coupé après le 9) ; jusqu'à 20 supposés, non mesurés. Le vrai identifiant reste
 `ascend:<id>` (external_id). Le séparateur `_` et les codes sont une convention, pas une norme.
+
+**D-82 — Fiche séance (v29, 15/10/2026).** Trois blocs : *À faire* (déroulé, puis les consignes :
+note de séance, D+, effort, FC, nutrition si le module est éteint), *Pourquoi* (texte du moteur,
+sans codes de phase ni de règle), une carte *Nutrition* (module actif). Le D+ prévu s'affiche en
+fourchette D-79 : sur la fiche (« 200–300 m de D+ repère ») et sur Aujourd'hui (« 200 à 300 m de
+D+ ») ; une course garde son D+ de parcours. « Pas faite », « Déplacer », « Remettre au… » et
+« Exporter le fichier Garmin » passent dans le menu ⋯ (plus de lien « Séance manquée ? »). Le
+bouton principal s'appelle « J'ai fait ma séance » comme sur Aujourd'hui. La phrase « D+ repère :
+environ N m » et la ligne « Joins la trace TCX » quittent les consignes (la saisie gère la trace).
+Une seule nutrition : la carte si le module est actif, la ligne de consigne sinon. Moteur inchangé ;
+le texte exporté (`planText`) n'a plus de ligne D+. Point ouvert : la carte (35 g/h) et la ligne
+du module éteint (60 g/h) viennent de deux règles différentes (`nutriFor` / `sessionSteps`).
+
+**D-83 — Semaine en liste de 7 jours (v30, 15/10/2026).** L'onglet Semaine affiche une carte de
+synthèse (séances faites / prévues, minutes de course, D+ réalisé / prévu), puis les 7 jours du
+lundi au dimanche : jour, icône, titre, ligne de détail (durée, D+ en fourchette D-79 ; pour une
+séance faite, durée, D+ et effort réels), et un statut (Fait, Manquée, Annulée, ou › pour ouvrir
+la fiche). Un jour sans séance s'affiche « Repos » (« Indisponible » si le statut du jour l'est) ;
+le jour courant est surligné, deux séances le même jour partagent le même fond. Navigation de
+semaine, alerte du garde-fou et « Ajouter une séance prévue » inchangés. Moteur inchangé.
+
+**D-82 amendé (v31, 15/10/2026) — Fiche séance en deux sections, sans menu ⋯.** Après revue des
+maquettes : en-tête avec « × » et « Déplacer » (si un autre jour libre existe ; « Remettre au … »
+dans le cadre de déplacement), chiffres de la séance, puis **1 · Ta séance** (carte de la montre :
+« Envoyer » / « Renvoyer » / « Retirer de la montre » ; sans connexion intervals.icu, « Fichier
+Garmin » en secours ; À faire ; Pourquoi ; nutrition réduite à la cible) et **2 · Résultat de la
+séance** (le jour même ou après : « Récupérer depuis ta montre » si une sortie du jour est lue
+dans intervals.icu, « Saisir à la main », « Pas faite » ; séance faite : « Réalisé »). À faire :
+un bloc unique s'annonce en une ligne (« 1 h 50 d'endurance continue ») ; une séance structurée
+affiche une barre de déroulé et sa légende. Nom de la montre : `profile.watchName` s'il existe,
+sinon « Ta montre » (écran Matériel à venir). Durée prévue affichée en heures et minutes.
+
+**D-84 — Endurance et sortie longue en un seul bloc (v31, 15/10/2026).** Demande d'Antoine :
+une endurance ou une sortie longue n'a ni échauffement ni retour au calme structurés (avant :
+10 + 5 min et 15 + 5 min) ; la consigne dit « départ tranquille : les premières minutes servent
+d'échauffement ». Les séances de qualité (côtes, intervalles, tempo, montées) gardent leur
+échauffement et leur retour au calme (moteur inchangé). La séance envoyée à la montre suit (un
+seul pas). Convention, sans source qui montre un bénéfice d'un retour au calme structuré après
+un effort facile.
+
+**D-85 — Saisie : effort avec repères, nutrition par séance (v31, 15/10/2026 ; précise D-76).**
+(a) *Effort* : boutons 1 à 10 sur une rangée (D-76 inchangé) avec des repères visibles avant le
+choix sous 1, 3, 5, 7 et 10 (Très facile, Modéré, Dur, Très dur, Maximal), aux places des repères
+de l'échelle CR-10 ; libellé du chiffre choisi dessous. L'échelle en 4 mots a été écartée : le
+moteur utilise le chiffre (charge durée × effort, effort des endurances comme signal de fatigue).
+(b) *Nutrition* : un interrupteur « J'ai suivi ma nutrition sur cette séance », activé par défaut,
+remplace les trois réponses ; désactivé = « Non suivi » (champs vidés). « Rien pris » devient
+« suivi, 0 g ». La progression de la cible ne compte toujours que les sorties avec des glucides
+pris (> 0 g). (c) Champ libre « Détail de ce que tu as pris » (`nutriNote`), non lu par le moteur.
+(d) Champ « Coup de mou » retiré (demande d'Antoine du 27/09/2026, jamais appliquée).
+
+### D-86 — Profil en 7 sous-écrans, édition en place (v32, 16/10/2026)
+Maquettes validées par Antoine le 16/10/2026 (home, semaine_v3, toi_v5, toi_v5_roue, acc_1, materiel2, donnees, avances).
+(a) *Accueil* : carte objectif (nom, J−n, distance, D+, début du plan) puis une liste de 7 entrées :
+Ton objectif, Ta semaine, Toi, Tes modules, Ton matériel, Données et synchro, Réglages avancés.
+(b) *Ta semaine* : jours en carrés L M M J V S D (course, sortie longue, renforcement si le module est actif),
+lecture seule ; « Modifier » ouvre la fenêtre existante, qui garde l'aperçu des 14 prochains jours.
+Phases en accordéon, la phase en cours ouverte par défaut ; fermée : nom, dates, badges « en cours » /
+« jours propres ». Ouverte : description (PHASES), conseil, jours, « Modifier les jours de cette phase »,
+bilan de phase. Le texte « logique du plan » par phase est reporté à la version consacrée aux textes.
+(c) *Toi* : chaque champ se modifie en place et s'enregistre à la sortie de la case, sans aperçu du plan
+(ces réponses ne calent que les premières semaines). Choix fermés en pastilles, durées par une roue
+heures + minutes (course passée : 0 à 72 h, pour couvrir la Diagonale des Fous, 66 h ; plus longue sortie :
+0 à 24 h ; durée moyenne : 0 à 6 h). Courses passées dépliables (fermée : nom, durée · km · D+ · date) ;
+badge « référence » sur la course retenue par le moteur (km-effort le plus proche de l'objectif, même calcul que refC).
+Champ `name` ajouté aux courses passées (non lu par le moteur).
+(d) *Tes modules* : accordéon, interrupteur sur chaque carte ; ouvert : pourquoi, ce que ça change, réglages.
+(e) *Ton matériel* : « Tu cours avec une montre ? » Oui/Non (`hasWatch`, oui par défaut). Non = pas de carte
+montre ni de « Récupérer depuis ta montre » dans la fiche séance. `watchName` rempli depuis le champ `device`
+de intervals-activities (champ `device_name` d'intervals.icu) s'il est vide ; modifiable.
+(f) *Données et synchro* : sauvegarde, exports (CSV journal masqué si le module journal est éteint), imports.
+(g) *Réglages avancés* : redémarrer le plan, tout effacer, tout retélécharger.
+(h) Correctif : la fonction d'étiquette « Ta montre » portait le même nom que `watchName(ps)` (D-81) et
+l'écrasait ; renommée `watchLabel()`.
