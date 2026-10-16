@@ -1,0 +1,25 @@
+/* D-73 : décalage d'une séance dans la semaine en cours */
+const E=require('./engine.js');const prof=require('./t_prof.json');
+const isRun=s=>['ef','long','qual','desc'].includes(s.type);
+const add=(d,n)=>{const x=new Date(d+'T12:00:00');x.setDate(x.getDate()+n);return x.toISOString().slice(0,10);};
+const today='2026-10-14';let ok=true;const chk=(c,m)=>{console.log((c?'✓ ':'✗ ')+m);if(!c)ok=false;};
+const base=E.build({profile:prof,today,sessions:[],isRun});
+const k=base.weeks.find(w=>today>=w.mon&&today<add(w.mon,7)),mon=k.mon,dans=s=>s.date>=mon&&s.date<add(mon,7);
+const runs=base.sessions.filter(s=>dans(s)&&isRun(s)),pris=new Set(runs.map(s=>s.date));
+const src=runs.find(s=>s.type!=='long'&&s.date>=today)||runs[0];
+const libre=[0,1,2,3,4,5,6].map(i=>add(mon,i)).find(d=>!pris.has(d)&&d>=today);
+console.log('semaine du',mon,'· séance',src.id,src.date,'→',libre);
+const mv=E.build({profile:Object.assign({},prof,{decal:{[src.date]:libre}}),today,sessions:[],isRun});
+const m=mv.sessions.find(s=>s.id===src.id);
+chk(m&&m.date===libre&&m.decale===src.date,'la séance garde son identifiant et passe au jour choisi');
+chk(m&&m.dur===src.dur,'même durée');
+const r2=mv.sessions.filter(s=>dans(s)&&isRun(s));chk(new Set(r2.map(s=>s.date)).size===r2.length,'jamais deux courses le même jour');
+chk(r2.length===runs.length,'aucune séance perdue ni ajoutée');
+const autreRun=runs.find(s=>s.id!==src.id);
+const bad1=E.build({profile:Object.assign({},prof,{decal:{[src.date]:autreRun.date}}),today,sessions:[],isRun});
+chk(bad1.sessions.find(s=>s.id===src.id).date===src.date,'refusé vers un jour qui a déjà une course');
+const bad2=E.build({profile:Object.assign({},prof,{decal:{[src.date]:add(mon,8)}}),today,sessions:[],isRun});
+chk(bad2.sessions.find(s=>s.id===src.id).date===src.date,'refusé hors de la semaine');
+const v1=E.build({profile:Object.assign({},prof,{decal:{[src.date]:libre}}),today,sessions:[],isRun,regles:'v1'});
+chk(!v1.sessions.some(s=>s.decale),'règles v1 inchangées');
+console.log(ok?'décalage de séance : ✓':'décalage de séance : ✗');if(!ok)process.exitCode=1;
