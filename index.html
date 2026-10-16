@@ -315,11 +315,11 @@ details>*:not(summary){margin-top:10px}
 .btn.d{color:#cf2f28;background:#fff}
 .btn.x{background:none;font-size:24px;padding:0 10px;color:var(--mut);line-height:1}
 .btn:focus-visible,.chip:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--mintT);outline-offset:2px}
-#splash{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;background:linear-gradient(#f6f7f4 0%,#f6f7f4 43%,#1b5443 43%,#022d23 100%);transition:opacity .45s ease}
+#splash{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;background:#f6f7f4;transition:opacity .35s ease}
 #splash.off{opacity:0;pointer-events:none}
-.sp-in{display:flex;flex-direction:column;align-items:center}
-.sp-mtn{width:270px;display:block;filter:drop-shadow(0 10px 26px rgba(0,0,0,.35))}
-.sp-txt{margin-top:26px;width:220px;display:block;opacity:0;animation:sptxt 1.1s ease .5s forwards}
+.sp-in{position:relative;display:flex;flex-direction:column;align-items:center}
+.sp-mtn{width:200px;display:block;filter:drop-shadow(0 8px 20px rgba(0,0,0,.28))}
+.sp-txt{position:absolute;top:100%;left:50%;margin:22px 0 0 -110px;width:220px;display:block;opacity:0;animation:sptxt .3s ease .05s forwards}
 @keyframes sptxt{to{opacity:1}}
 @keyframes sprise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){#splash,.sp-in{transition:none;animation:none}}
@@ -2634,7 +2634,7 @@ function vGate(){
     +authFormHTML('Un compte garde ton plan et tes séances en sécurité, et te permet de les retrouver sur un autre téléphone. Ton prénom personnalise l\'app.')
     +syncLineHTML()+versionLineHTML()+'</div></main>';
 }
-const APP_VERSION='v37';   /* généré depuis sw.js par tools/build.py */
+const APP_VERSION='v38';   /* généré depuis sw.js par tools/build.py */
 function versionLineHTML(){return '<div class="mini" id="ver" style="margin-top:12px;text-align:center;opacity:.7">Ascend '+APP_VERSION+' · moteur de plan v2</div>';}
 /* compare la page chargée au cache du service worker : signale un déploiement pas encore actif */
 function checkVersion(){if(!('caches' in window))return;caches.keys().then(ks=>{const c=ks.filter(k=>/^ascend-v\d+$/.test(k)).map(k=>+k.slice(8)).sort((a,b)=>b-a)[0],el=document.getElementById('ver');
@@ -2653,7 +2653,7 @@ function vSyncCard(){
 const SPLASH_T0=Date.now();
 function hideSplash(){
   const el=$('#splash');if(!el)return;
-  const wait=Math.max(0,600-(Date.now()-SPLASH_T0));
+  const wait=Math.max(0,700-(Date.now()-SPLASH_T0));
   setTimeout(()=>{el.classList.add('off');setTimeout(()=>{if(el.parentNode)el.parentNode.removeChild(el);},500);},wait);
 }
 let recovery=null;
@@ -2667,6 +2667,8 @@ function vRecovery(){
 }
 
 async function boot(){
+  if(history.state&&history.state.d){HIGN++;history.go(-history.state.d);}
+  try{new MutationObserver(histSync).observe($('#sheet'),{childList:true});}catch(e){}
   sync=Object.assign({shadow:{},ts:{},del:{},lastPull:null},lsGet(SYNC_KEY,{}));
   sync.shadow=sync.shadow||{};sync.ts=sync.ts||{};sync.del=sync.del||{};
   auth=lsGet(AUTH_KEY,null);syncAt=sync.lastSync||null;
@@ -2709,7 +2711,19 @@ function render(){
   const TABS=[['home','Aujourd\'hui','home'],['seances','Semaine','calendar'],['suivi','Suivi','monitoring'],['profil','Profil','person']];
   $('#tabs').innerHTML=TABS.map(x=>'<button class="'+(view===x[0]||(x[0]==='home'&&view==='jour')?'on':'')+'" onclick="app.go(\''+x[0]+'\')" aria-label="'+x[1]+'">'+mi(x[2])+x[1]+'</button>').join('');
   $('#view').innerHTML=({home:vHome,seances:vSeances,suivi:vSuivi,jour:vJour,profil:vProfil})[view]();
+  histSync();
 }
+/* D-89 : le geste « retour » remonte d'un niveau (fenêtre, sous-écran du Profil, onglet) et ne quitte l'appli qu'à l'accueil */
+let HD=0,HIGN=0;
+function uiDepth(){const sh=$('#sheet');return (sh&&sh.firstElementChild?1:0)+(PSUB?1:0)+(view!=='home'?1:0);}
+function histSync(){const d=uiDepth();
+  if(d>HD){for(let i=HD;i<d;i++)history.pushState({d:i+1},'');HD=d;}
+  else if(d<HD){const n=HD-d;HD=d;HIGN++;history.go(-n);}}
+function closeTop(){const sh=$('#sheet');
+  if(sh&&sh.firstElementChild){WHEEL=null;PCONF=null;PD=null;PSEC=null;PFLOW=null;PBACK=null;PPREV=null;PERR=[];PDATEPICK=false;PM=false;E=null;MQS=null;PE=null;sh.innerHTML='';render();return;}
+  if(PSUB){app.psub(null);return;}
+  if(view!=='home')app.go('home');}
+addEventListener('popstate',()=>{if(HIGN>0){HIGN--;return;}if(HD>0){HD--;closeTop();histSync();}});
 /* ---------- actions ---------- */
 const app=window.app={
   go(v){view=v;if(v==='profil'){PSUB=null;POPEN={};}render();window.scrollTo(0,0);},
