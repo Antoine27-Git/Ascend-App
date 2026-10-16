@@ -3112,3 +3112,21 @@ par phase, orange pour la phase en cours), durée en semaines.
 le lien de Ta semaine l'ignorait en v32-v33). Il doit arriver avant la phase suivante, pas après : il sert à décider
 des jours de cette phase. Contenu allégé : date de début, ce qui change, 2 chiffres sur la phase finie,
 recommandation s'il y en a, jours en carrés, « Modifier » / « Garder ces jours ».
+
+### D-88 — Ton objectif en frise et blocs fins, durée estimée en fourchette (v35, 16/10/2026)
+Maquettes validées par Antoine le 16/10/2026 (objF, objF_open).
+(a) Écran Ton objectif : frise horizontale « Jusqu'au jour J » sans texte sur la ligne (numéros 1, 2… dans l'ordre
+des dates, ★ pour l'objectif), puis un bloc fin par course (objectif en dernier) : nom en entier, durée estimée à droite,
+date · km · D+ dessous. Toucher un bloc l'ouvre : durée estimée, puis lignes modifiables (statut, nom, date, distance,
+D+, suppression). Couleur du numéro : vert = objectif intermédiaire, gris = course d'entraînement.
+(b) Durée estimée : même calcul que le moteur (`dureeCourse` : Riegel, exposant 1,07, sur la course de référence retenue
+par le moteur, sinon la plus longue sortie, sinon 7 km-effort/h). Affichée en « ≈ » avec une fourchette (H-52), arrondie à
+15 min au-delà de 4 h, 5 min en dessous. Elle **n'agit jamais sur le plan** : la durée qui sert à construire le plan
+(tranche) reste figée à la création du plan (A-08).
+(c) Décidé, pas encore codé : la durée affichée évoluera avec les données réelles — recalage à chaque course enregistrée
+(source la plus fiable), et entre deux courses selon l'évolution des sorties longues (même effort ressenti, même D+ :
+convention à écrire). Mise à jour aux courses et en fin de phase seulement, pas chaque semaine ; affichage de l'écart
+depuis le départ et d'une courbe dont la fourchette se resserre. Le modèle allure-effort (D-01, composition par segment)
+la remplacera quand il sera prêt.
+(d) Roue de durée : heures de 0 à max − 1 et minutes de 0 à 59 (plus longue sortie : 0 à 23 h 59 ; course passée :
+0 à 72 h 59 (heures 0–72, minutes 0–59, tolérance assumée) ; durée moyenne : 0 à 5 h 59). Champ « Nom » d'une course : libellé au-dessus, champ sur toute la largeur.
