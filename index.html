@@ -88,7 +88,7 @@ nav svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.9;st
 
 
 :root{--coralT:#b8352d;--sunT:#8a5a0a;--acc:#087a49;--cardShadow:0 1px 2px rgba(15,28,22,.04),0 12px 30px rgba(15,28,22,.05);--s1:#fff;--s3:#c9d1cb;--bg:#f6f7f4;--card:#fff;--ink:#0f1c16;--mut:#5b6961;--line:#eef2ee;--mint:#25c37e;--mintT:#087a49;--accent:#ecd08f;--accentInk:#4a3610;--deep:#10251c;--ember:#ff7a3d;--sun:#f5a623;--coral:#f0544c;--sky:#3f8fe0;--violet:#8b6cf0;--r:24px}
-.halo{position:fixed;inset:0 0 auto;height:300px;overflow:hidden;pointer-events:none;z-index:0}
+.halo{position:fixed;inset:0 0 auto;height:300px;overflow:hidden;pointer-events:none;z-index:0;-webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 80px);mask-image:linear-gradient(to bottom,transparent 0,#000 80px)}
 .halo i{position:absolute;display:block;border-radius:50%;filter:blur(52px);opacity:.5}
 .halo .a{width:260px;height:200px;background:#b9f5d6;left:-50px;top:-70px}
 .halo .b{width:230px;height:180px;background:#ffe0b8;right:-60px;top:-40px}
@@ -316,9 +316,9 @@ details>*:not(summary){margin-top:10px}
 .btn.d{color:#cf2f28;background:#fff}
 .btn.x{background:none;font-size:24px;padding:0 10px;color:var(--mut);line-height:1}
 .btn:focus-visible,.chip:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--mintT);outline-offset:2px}
-#splash{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;background:#114336;transition:opacity .35s ease}
+#splash{position:fixed;inset:0;z-index:100;display:flex;align-items:flex-start;justify-content:center;background:#114336;transition:opacity .35s ease}
 #splash.off{opacity:0;pointer-events:none}
-.sp-in{position:relative;display:flex;flex-direction:column;align-items:center;margin-top:-20px}
+.sp-in{position:relative;display:flex;flex-direction:column;align-items:center;margin-top:236px}
 .sp-mtn{width:253.333px;display:block}
 .sp-txt{position:absolute;top:100%;left:50%;margin:5px 0 0 -110px;width:220px;display:block;opacity:0;animation:sptxt .7s ease .5s forwards}
 @keyframes sptxt{to{opacity:1}}
@@ -2635,7 +2635,7 @@ function vGate(){
     +authFormHTML('Un compte garde ton plan et tes séances en sécurité, et te permet de les retrouver sur un autre téléphone. Ton prénom personnalise l\'app.')
     +syncLineHTML()+versionLineHTML()+'</div></main>';
 }
-const APP_VERSION='v44';   /* généré depuis sw.js par tools/build.py */
+const APP_VERSION='v45';   /* généré depuis sw.js par tools/build.py */
 function versionLineHTML(){return '<div class="mini" id="ver" style="margin-top:12px;text-align:center;opacity:.7">Ascend '+APP_VERSION+' · moteur de plan v2</div>';}
 /* compare la page chargée au cache du service worker : signale un déploiement pas encore actif */
 function checkVersion(){if(!('caches' in window))return;caches.keys().then(ks=>{const c=ks.filter(k=>/^ascend-v\d+$/.test(k)).map(k=>+k.slice(8)).sort((a,b)=>b-a)[0],el=document.getElementById('ver');
