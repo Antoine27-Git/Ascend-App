@@ -3159,3 +3159,27 @@ Amendement v48 (17/10/2026) : le fondu de sortie du lancement reste un point ouv
 
 ### D-91 — Mise à jour immédiate de l'appli (17/10/2026, v42)
 Constat : après une fusion, l'appli installée affichait l'ancienne version (« une version plus récente est prête ») pendant plusieurs minutes. Cause : GitHub Pages envoie `Cache-Control: max-age=600` ; le service worker lisait `index.html` à travers le cache HTTP du navigateur (réseau d'abord, mais sans contourner ce cache), et l'installation d'une nouvelle version pouvait y mettre en cache l'ancien fichier. Règle : le service worker contourne le cache HTTP, pour les pages (`fetch(url, {cache:'no-store'})`) et à l'installation (`new Request(url, {cache:'reload'})`). Une nouvelle version est donc visible dès le déploiement terminé (environ 1 minute après la fusion) et au lancement suivant, en fermant l'appli puis en la rouvrant. Le fichier `_headers` (hérité de Netlify) n'a aucun effet sur GitHub Pages.
+
+### D-92 — Écran Suivi : des questions, un verdict, un levier (17/10/2026, décidé, pas encore codé)
+Constat : l'écran Suivi (v28) montre des chiffres sans repère (charge « 420 », charge par jour, monotonie, tuiles de la semaine, minutes sur 12 semaines) et ne répond à aucune question de l'utilisateur. Les maquettes du 17/10 (PR #12) répondaient à trois questions tirées de la feuille de route, pas de l'utilisateur. Décision d'Antoine (17/10/2026) : partir des questions d'un coureur amateur à l'objectif ambitieux, puis dessiner.
+
+(a) *Filtre* : un élément n'entre dans Suivi que s'il (1) répond à une question que l'utilisateur se pose, (2) se lit sans être expert, (3) mène à un levier ou à « rien à faire, continue » (la conclusion la plus fréquente). Leviers d'un amateur : continuer, protéger la sortie longue, déplacer une séance, changer ses jours, noter son effort honnêtement, lever le pied ou consulter, revoir l'objectif. « Rattraper » n'en fait pas partie et n'est jamais suggéré. L'appli recommande, l'utilisateur décide.
+
+(b) *Moments d'ouverture visés* : dimanche soir après la sortie longue, après une semaine ratée, en cas de doute (fatigue, motivation), avant une course.
+
+(c) *Questions, dans l'ordre de l'écran* :
+1. **« Serai-je prêt le jour J ? »** Trois briques, chacune avec une cible datée et un verdict (dans les temps / en retard / hors de portée à cette date), jamais un score global (D-60) :
+   - *durée* : plus longue sortie tenue et niveau projeté face à la sortie clé visée (tranche, D-21) ; verdict = écarts du moteur (D-69, H-45) ;
+   - *dénivelé* : plus grand D+ tenu en une sortie face au D+ de la plus longue sortie prévue (rampe de densité, H-41) ; verdict H-53 ;
+   - *ventre* (module nutrition actif) : glucides par heure tolérés (`nutriTarget`) face à 60–90 g/h ; verdict H-53. Motif : nausées et vomissements sont la première cause d'abandon sur 161 km (23 % des abandons, Hoffman et Fogard, IJSPP 2011).
+   En retard : la vraie cause (point de départ, temps restant) et le levier, comme les alertes d'écart.
+2. **« Est-ce que je fais ce qu'il faut ? »** Séances faites sur séances dues depuis le début du plan, course et renforcement séparés, sorties longues nommées en premier (H-54). Levier type : ne pas rattraper ; si le jour de sortie longue saute souvent, « Modifier mes jours ».
+3. **« Est-ce que j'encaisse, ou est-ce que j'en fais trop ? »** Remplace « charge par rapport à une zone habituelle » (abandonnée : sans preuve de protection, le rapport aigu/chronique est contesté et la hausse d'une semaine à l'autre n'est pas associée à la blessure, S-BLE-004). Données : signal de fatigue du moteur (effort des endurances face à la référence, H-46 ; séances manquées pour « fatigue », D-72) ; règle des 30 jours appliquée aux séances *faites* (S-BLE-004, transposition à la durée H-21) ; douleur si le module blessure est actif. Verdicts H-55.
+4. **« Est-ce que je progresse ? »** Pas un graphique permanent (D-60) : un message ponctuel qui sert de preuve (« tu as déjà tenu 2 h 30 avec 800 m de D+ »), H-56. Motif : un faible sentiment d'efficacité prédit l'abandon en ultra-trail (Corrion et al., PLoS ONE 2018). La vraie mesure (même montée plus vite au même effort, G-TER-002) attend le modèle allure-effort.
+5. **« En combien de temps ? »** Lien vers Ton objectif (durée estimée, D-88), pas de copie.
+
+(d) *Retiré de Suivi* : charge brute et charge par jour, monotonie, tuiles de la semaine (doublon de Semaine), minutes et charge sur 12 semaines. Poids, sommeil, FC de repos, douleur détaillée : dans leurs modules (le moteur ne lit pas le journal). Force et WOD refaits : module renforcement.
+
+(e) *Préalables au code (moteur, sans changer ses règles)* : exposer à l'écran le niveau de sortie longue et le repère de reprise, le signal de fatigue par semaine (`sympt` existe dans `weeks`) et la référence d'effort des endurances (`model.base`). Compter les séances dues des semaines classées « arrêt » d'après les jours de la période, car le moteur efface leur prévu (le passé est recalculé). Tests : parité et `t_react3.js` inchangés.
+
+(f) *Points ouverts* : barrières horaires des courses (inconnues d'Ascend ; c'est la vraie peur d'un amateur sur 80 km) ; la sortie longue de reprise s'appuie sur le repère dégressif (H-48, H-40 sans texte) et peut dépasser de loin la plus longue sortie réelle des 30 jours (1 h 49 prévue le 18/10/2026 contre 30 min réelles) : le Suivi rendra ce décalage visible, à trancher avant de coder la brique durée.
