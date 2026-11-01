@@ -479,6 +479,10 @@ details>*:not(summary){margin-top:10px}
 .svgp{fill:var(--mint);opacity:.45}.svge{fill:none;stroke:var(--mintT);stroke-width:2.2;stroke-linejoin:round}.svgn{stroke:var(--ink);stroke-dasharray:2 3;opacity:.45}.svgr{stroke:var(--ink);stroke-width:1.2}
 .svgd{fill:#d1601a;stroke:#fff;stroke-width:1.5}.svgd0{fill:var(--card);stroke:#d1601a;stroke-width:2}.svgx{fill:var(--card);stroke:var(--mintT);stroke-width:2.2}
 .svo{padding:10px 0;border-top:1px solid var(--line)}.svo:first-child{border-top:0}.svo h3{font-size:14px;margin:0 0 6px}
+.rsg{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+.rsp{display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;border:0;border-radius:14px;padding:12px 14px;background:transparent;box-shadow:inset 0 0 0 1px var(--line);font:inherit;color:var(--ink);text-align:left;cursor:pointer}
+.rsp b{font-size:15px}.rsp span{font-size:13px;color:var(--mut);white-space:nowrap}
+.rsp.on{background:#e4f6ec;box-shadow:inset 0 0 0 2px var(--mintT)}.rsp.on span{color:var(--mintT);font-weight:700}
 </style>
 </head>
 <body>
@@ -2495,9 +2499,19 @@ function vPDonnees(){const P=S.profile,J=(P.modules||{}).journal;
     +'<details><summary>Une sauvegarde JSON</summary><textarea id="jin" placeholder="{…}"></textarea><button class="btn w" onclick="app.importJSON()">Restaurer, remplace tout</button></details></div>';
   return pScreen('Données et synchro',sync+ex+im);}
 /* ---- Réglages avancés ---- */
+/* v50 : redémarrer le plan à une date choisie (cette semaine, la semaine prochaine ou une autre date) ; le plan part du lundi de cette semaine-là */
+let RSTART=null;
+function restartCard(){const t=todayISO(),m0=monday(t),m1=addDays(m0,7),v=RSTART;
+  const opt=(k,l,sub)=>'<button class="rsp'+(v&&v.k===k?' on':'')+'" onclick="app.rsPick(\''+k+'\')"><b>'+l+'</b><span>'+sub+'</span></button>';
+  const d=v?(v.k==='now'?m0:v.k==='next'?m1:v.d):null;
+  return '<div class="card pc"><div class="pct"><h2>Redémarrer le plan</h2></div><div class="pcn">Le plan repart du lundi de la semaine choisie. Tes séances enregistrées restent.</div>'
+    +'<div class="rsg">'+opt('now','Cette semaine','lundi '+fmtS(m0))+opt('next','Semaine prochaine','lundi '+fmtS(m1))+opt('other','Autre date',v&&v.k==='other'&&v.d?'lundi '+fmtS(monday(v.d)):'à choisir')+'</div>'
+    +(v&&v.k==='other'?'<input type="date" id="rsdate" style="margin-top:10px" min="'+m0+'"'+(S.profile.goalDate?' max="'+S.profile.goalDate+'"':'')+' value="'+(v.d||'')+'" onchange="app.rsDate(this.value)">':'')
+    +(d&&v.k==='now'&&t>m0?'<div class="mini" style="margin-top:8px">Ce lundi est déjà passé : les séances d\'avant aujourd\'hui ne seront pas proposées.</div>':'')
+    +'<button class="btn full" style="margin-top:12px"'+(d?'':' disabled')+' onclick="app.restartPlan(this)">'+(d?'Redémarrer le lundi '+fmtS(monday(d)):'Choisis une date')+'</button></div>';}
 function vPAvances(){const P=S.profile;
   return pScreen('Réglages avancés',
-    (P.planStart?'<div class="card pc"><div class="pct"><h2>Redémarrer le plan cette semaine</h2></div><div class="pcn">Le plan repart de la semaine en cours. Tes séances enregistrées restent.</div><button class="btn full" style="margin-top:12px" onclick="app.restartPlan(this)">Redémarrer</button></div>':'')
+    (P.planStart?restartCard():'')
     +'<div class="card pc"><div class="pct"><h2 style="color:var(--coralT)">Effacer toutes les données</h2></div><div class="pcn">'+(!storageOK?'Aucun stockage disponible ici : exporte un JSON avant de fermer.':auth?'Efface aussi la copie en ligne, donc sur tous tes appareils. Exporte un JSON avant si tu veux garder une trace.':'Données sur ce téléphone uniquement.')+'</div><button class="btn d full" style="margin-top:12px" onclick="app.reset(this)">Effacer</button></div>'
     +(auth?'<div class="card pc"><div class="pct"><h2>Dépannage de la synchro</h2></div><div class="pcn">Reprend l\'intégralité des données depuis le serveur, en ignorant le repère de dernière synchro. Utile seulement si cet appareil semble incomplet.</div><button class="btn full" style="margin-top:12px" onclick="app.resync(this)">Tout retélécharger</button></div>':''));}
 function vProfil(){
@@ -2783,7 +2797,7 @@ function vGate(){
     +authFormHTML('Un compte garde ton plan et tes séances en sécurité, et te permet de les retrouver sur un autre téléphone. Ton prénom personnalise l\'app.')
     +syncLineHTML()+versionLineHTML()+'</div></main>';
 }
-const APP_VERSION='v49';   /* généré depuis sw.js par tools/build.py */
+const APP_VERSION='v50';   /* généré depuis sw.js par tools/build.py */
 function versionLineHTML(){return '<div class="mini" id="ver" style="margin-top:12px;text-align:center;opacity:.7">Ascend '+APP_VERSION+' · moteur de plan v2</div>';}
 /* compare la page chargée au cache du service worker : signale un déploiement pas encore actif */
 function checkVersion(){if(!('caches' in window))return;caches.keys().then(ks=>{const c=ks.filter(k=>/^ascend-v\d+$/.test(k)).map(k=>+k.slice(8)).sort((a,b)=>b-a)[0],el=document.getElementById('ver');
@@ -3081,7 +3095,11 @@ const app=window.app={
   _E(){return E;},
   _S(){return S;},
   startPlan(){S.profile.planStart=monday(todayISO());S.profile.planFrom=todayISO();save();flash('Plan démarré');render();},
-  restartPlan(btn){if(!btn.dataset.armed){btn.dataset.armed='1';btn.textContent='Confirmer : repartir de cette semaine';return;}S.profile.planStart=monday(todayISO());S.profile.planFrom=todayISO();save();flash('Plan redémarré');render();},
+  rsPick(k){RSTART=k==='other'?{k,d:(RSTART&&RSTART.k==='other')?RSTART.d:null}:{k};render();},
+  rsDate(v){RSTART={k:'other',d:v||null};render();},
+  restartPlan(btn){const t=todayISO(),m0=monday(t),v=RSTART;if(!v)return;const d=v.k==='now'?m0:v.k==='next'?addDays(m0,7):v.d;if(!d)return;
+    if(!btn.dataset.armed){btn.dataset.armed='1';btn.textContent='Confirmer : repartir du lundi '+fmtS(monday(d));return;}
+    S.profile.planStart=monday(d);S.profile.planFrom=d<t?t:d;RSTART=null;save();flash('Plan redémarré le lundi '+fmtS(monday(d)));render();},
   toggleRunDay(d){const D=DAYS();orgTouch();const i=D.run.indexOf(d);if(i<0)D.run.push(d);else{D.run.splice(i,1);delete D.time[d];}D.run.sort();if(!D.run.includes(+D.long)&&D.run.length)D.long=D.run.includes(6)?6:D.run[D.run.length-1];commitP();},
   setLong(v){orgTouch();DAYS().long=+v;commitP();},
   setTerrain(k,v){PR().terrain[k]=v;commitP();},
