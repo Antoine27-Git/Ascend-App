@@ -202,7 +202,7 @@ function build(inp){
   if(!dMain)G(1,'Distance de l\'objectif manquante : tranche 8–20 h par défaut.');
   if(!refC)G(1,'Aucune course ou sortie de référence déclarée : la durée de ton objectif est estimée à 7 km-effort par heure.');
   const tr=TRANCHES[trName],c=Calendrier(N,tr);
-  out.info={N,start,trName,dureeMain:dMain,cal:c,refUsed:races.length>1?refC:undefined};
+  out.info={N,start,trName,dureeMain:dMain,cal:c,refUsed:races.length>1?refC:undefined,cible:tr.cible.slice()};   /* D-92 : cible de sortie clé (sortie seule) */
   if(N<tr.min)G(1,'Préparation de '+N+' semaines pour la tranche '+trName+' : en dessous du minimum de '+tr.min+' semaines (D-21). Le plan est compressé.');
   let n=run.length,longDow=run.includes(+Dy.long)?+Dy.long:run[run.length-1],offSL=off(longDow);
   let autresDows=run.filter(d=>d!==longDow).sort((a,b)=>off(a)-off(b));
@@ -263,6 +263,7 @@ function build(inp){
   const densC=P.goalDplus&&dMain?P.goalDplus/(dMain/60):dens0;
   /* GABARIT § 5 : le D+ monte pendant le fond. Départ à la moitié au plus de la densité de course (H-41, extrapolation) */
   dens0=Math.min(dens0,densC*0.5);
+  out.info.densite={dep:dens0,course:densC};   /* D-92 : rampe de D+ exposée à l'écran (sortie seule, règles inchangées) */
   const dens=w=>w>=c.fond?densC:dens0+(densC-dens0)*w/Math.max(1,c.fond);
   const terr=P.terrain||{};
   if(terr.climb&&['lt1','1-5'].includes(terr.climb)&&terr.mountain==='jamais')
