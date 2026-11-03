@@ -973,10 +973,11 @@ function vEdit(){
   +'<label class="f">Date</label><input type="date" max="'+todayISO()+'" value="'+e.date+'" onchange="app.setE(\'date\',this.value)">'
   +'<details class="tsel"><summary>Type : '+((TYPES[e.type]||TYPES.autre).l)+'</summary>'+chips(Object.keys(TYPES),e.type,v=>'app.setE(\'type\',\''+v+'\')','type',Object.keys(TYPES).map(k=>TYPES[k].l),null,'txt')+'</details>'
   +'<div class="g2">'+inp('dur',cf?'Durée totale (min)':'Durée (min)','min')+(run?inp('dist','Distance (km)','km','0.1'):'')+'</div>'
+  +(cf?'<div class="mini" style="margin-top:-4px">Toute la séance, échauffement compris, sans les longues pauses.</div>':'')
   +(cf?vEditCF(e):'')
   +(run?'<div class="g2">'+inp('dplus','D+ (m)','m')+inp('dminus','D− (m)','m')+'</div>':'')
-  +'<div class="lbl"><span>Effort ressenti</span><small>'+(cf?'séance entière, à froid':'à froid, 30 min après')+'</small></div>'+ch('rpe',[1,2,3,4,5,6,7,8,9,10],null,null,'scale r10')
-  +'<div class="rpe-anc">'+[1,2,3,4,5,6,7,8,9,10].map(i=>'<span>'+({1:'Très<br>facile',3:'Modéré',5:'Dur',7:'Très<br>dur',10:'Maximal'}[i]||'·')+'</span>').join('')+'</div><div class="rpe-now" id="rpeh">'+(e.rpe!=null?e.rpe+' · '+RPEL[e.rpe]:'<span style="color:var(--mut);font-weight:600">Touche le chiffre qui résume la séance</span>')+'</div>'
+  +'<div class="lbl"><span>Effort ressenti</span><small>'+'environ 30 min après'+'</small></div>'+ch('rpe',[1,2,3,4,5,6,7,8,9,10],null,null,'scale r10')
+  +'<div class="rpe-anc">'+[1,2,3,4,5,6,7,8,9,10].map(i=>'<span>'+({1:'Très<br>facile',3:'Modéré',5:'Dur',7:'Très<br>dur',10:'Maximal'}[i]||'·')+'</span>').join('')+'</div><div class="rpe-now" id="rpeh">'+(e.rpe!=null?e.rpe+' · '+RPEL[e.rpe]:'<span style="color:var(--mut);font-weight:600">Toute la séance, pas ton moment le plus dur</span>')+'</div>'
   +(injOn()?'<div class="lbl"><span>Douleur pendant ou après</span></div>'+ch('heelPost',[0,1,2,3],HEEL,HEELC,'txt'):'')
   +'<label class="f">Note</label><textarea placeholder="sensations, terrain, météo…" onchange="app.setE(\'note\',this.value)">'+esc(e.note)+'</textarea>'
   +(showNut?'<div class="lbl"><span>Nutrition</span><small>'+(nu?'ta cible : '+nu.perH+' g/h, soit '+nu.total+' g':'')+'</small></div>'
@@ -2797,7 +2798,7 @@ function vGate(){
     +authFormHTML('Un compte garde ton plan et tes séances en sécurité, et te permet de les retrouver sur un autre téléphone. Ton prénom personnalise l\'app.')
     +syncLineHTML()+versionLineHTML()+'</div></main>';
 }
-const APP_VERSION='v50';   /* généré depuis sw.js par tools/build.py */
+const APP_VERSION='v51';   /* généré depuis sw.js par tools/build.py */
 function versionLineHTML(){return '<div class="mini" id="ver" style="margin-top:12px;text-align:center;opacity:.7">Ascend '+APP_VERSION+' · moteur de plan v2</div>';}
 /* compare la page chargée au cache du service worker : signale un déploiement pas encore actif */
 function checkVersion(){if(!('caches' in window))return;caches.keys().then(ks=>{const c=ks.filter(k=>/^ascend-v\d+$/.test(k)).map(k=>+k.slice(8)).sort((a,b)=>b-a)[0],el=document.getElementById('ver');
