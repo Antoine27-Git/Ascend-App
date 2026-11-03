@@ -477,7 +477,9 @@ details>*:not(summary){margin-top:10px}
 .svlgl{display:inline-block;width:14px;height:3px;border-radius:2px;background:var(--mintT)}.svlgz{display:inline-block;width:11px;height:11px;border-radius:3px;background:#e4f6ec;box-shadow:inset 0 0 0 1px #9fdcbc}
 .svg{display:block;margin-top:4px}.svgz{fill:#e4f6ec}.svgg{stroke:var(--line);stroke-width:1}.svgt{font-size:10px;fill:var(--mut)}.svgt.b{fill:var(--ink);font-weight:800}
 .svgp{fill:var(--mint);opacity:.45}.svge{fill:none;stroke:var(--mintT);stroke-width:2.2;stroke-linejoin:round}.svgn{stroke:var(--ink);stroke-dasharray:2 3;opacity:.45}.svgr{stroke:var(--ink);stroke-width:1.2}
-.svgd{fill:#d1601a;stroke:#fff;stroke-width:1.5}.svgd0{fill:var(--card);stroke:#d1601a;stroke-width:2}.svgx{fill:var(--card);stroke:var(--mintT);stroke-width:2.2}
+.svgd{fill:#d1601a;stroke:#fff;stroke-width:1.5}.svgpl{fill:none;stroke:var(--mintT);stroke-width:2;stroke-dasharray:5 4;opacity:.8}.svgre{fill:none;stroke:#d1601a;stroke-width:3;stroke-linejoin:round}.svgrd{fill:#d1601a}
+.svlgr{display:inline-block;width:16px;height:3px;border-radius:2px;background:#d1601a}.svlgp{display:inline-block;width:16px;border-top:2px dashed var(--mintT)}.svd.v0{box-shadow:inset 0 0 0 2px var(--mintT)}.svp.bad{background:var(--coralT)}
+.svwhy{background:var(--bg);border-radius:14px;padding:10px 12px;margin-top:10px;font-size:13px;line-height:1.45}.svgd0{fill:var(--card);stroke:#d1601a;stroke-width:2}.svgx{fill:var(--card);stroke:var(--mintT);stroke-width:2.2}
 .svo{padding:10px 0;border-top:1px solid var(--line)}.svo:first-child{border-top:0}.svo h3{font-size:14px;margin:0 0 6px}
 .rsg{display:flex;flex-direction:column;gap:8px;margin-top:12px}
 .rsp{display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;border:0;border-radius:14px;padding:12px 14px;background:transparent;box-shadow:inset 0 0 0 1px var(--line);font:inherit;color:var(--ink);text-align:left;cursor:pointer}
@@ -1014,66 +1016,70 @@ function svBase(){
   const runs=S.sessions.filter(s=>isRun(s)&&s.dur&&s.date<=t).sort(byDate);
   return {E,P,t,decl,runs,start:E.info.start};}
 const svMax=(arr,f)=>arr.reduce((m,x)=>f(x)>(m?f(m):-1)?x:m,null);
-/* graphique : sortie longue prévue jusqu'au jour J, sorties faites */
+/* v52 (D-92, 3e tour) : « Prêt pour le jour J ? » compare le réel au plan à la date du jour (H-57) */
+const svLong=s=>s.type==='long'||s.type==='race';
+function svVerd(real,plan){if(!real)return ['neu','à construire'];if(!plan)return ['ok','dans le plan'];const r=real/plan;return r>=.95?['ok','dans le plan']:r>=.8?['late','un peu en retard']:['bad','en retard'];}
+function svLvl(list,t,f){let m=0;list.forEach(s=>{if(s.date<=t&&f(s)>m)m=f(s);});return m;}
+function svPrev(B){const {E,start}=B;return E.sessions.filter(s=>s.type==='long'&&s.date>=start&&s.dur).sort(byDate);}
+/* graphique : niveau de sortie longue réel (trait plein) face au prévu (pointillés), de la reprise au jour J */
 function svChart(B){
-  const {E,P,t,decl,runs,start}=B,W=300,H=150,x0=6,x1=W-34,yt=14,yb=H-22;
-  const t0=parseISO(decl&&decl.date<start?decl.date:start),t1=parseISO(P.goalDate||addDays(start,7*E.info.N));
-  const proj=E.sessions.filter(s=>s.type==='long'&&s.date>=t&&s.dur),done=runs.filter(s=>s.type==='long'||s.type==='race'||s.dur>=90);
-  const ymax=Math.max(360,...proj.map(s=>s.dur),...done.map(s=>s.dur),decl?decl.dur:0);
+  const {E,P,t,runs,start}=B,W=320,H=190,x0=6,x1=288,yt=18,yb=H-22,c=E.info.cible||[300,360];
+  const plan=svPrev(B),real=runs.filter(s=>s.date>=start),longs=real.filter(svLong);
+  const t0=parseISO(start),t1=parseISO(P.goalDate||addDays(start,7*E.info.N));
+  const ymax=Math.max(c[1],...plan.map(s=>s.dur),...real.map(s=>s.dur));
   const X=d=>x0+Math.max(0,Math.min(1,(parseISO(d)-t0)/((t1-t0)||1)))*(x1-x0),Y=m=>yb-m/ymax*(yb-yt);
-  const c=E.info.cible||[300,360];
-  let s='<svg class="svg" viewBox="0 0 '+W+' '+H+'" width="100%" role="img" aria-label="Sortie longue jusqu\'au jour J">';
+  let s='<svg class="svg" viewBox="0 0 '+W+' '+H+'" width="100%" role="img" aria-label="Ta sortie longue, réel et prévu, jusqu\'au jour J">';
   s+='<rect x="'+x0+'" y="'+Y(c[1]).toFixed(1)+'" width="'+(x1-x0)+'" height="'+(Y(c[0])-Y(c[1])).toFixed(1)+'" class="svgz"/>';
-  for(let h=2;h*60<=ymax;h+=2){s+='<line x1="'+x0+'" x2="'+x1+'" y1="'+Y(h*60).toFixed(1)+'" y2="'+Y(h*60).toFixed(1)+'" class="svgg"/><text x="'+(x1+6)+'" y="'+(Y(h*60)+3.5).toFixed(1)+'" class="svgt">'+h+' h</text>';}
+  for(let h=1;h*60<=ymax;h++){s+='<line x1="'+x0+'" x2="'+x1+'" y1="'+Y(h*60).toFixed(1)+'" y2="'+Y(h*60).toFixed(1)+'" class="svgg"/>';if(h%2===0)s+='<text x="'+(x1+5)+'" y="'+(Y(h*60)+3.5).toFixed(1)+'" class="svgt">'+h+' h</text>';}
   s+='<line x1="'+x0+'" x2="'+x1+'" y1="'+yb+'" y2="'+yb+'" class="svgg"/>';
-  proj.forEach(p=>{s+='<circle cx="'+X(p.date).toFixed(1)+'" cy="'+Y(p.dur).toFixed(1)+'" r="1.9" class="svgp"/>';});
-  let mx=0;const env=proj.map(p=>{mx=Math.max(mx,p.dur);return X(p.date).toFixed(1)+','+Y(mx).toFixed(1);});
-  if(env.length>1)s+='<path d="M'+env.join(' L')+'" class="svge"/>';
-  const xt=X(t);s+='<line x1="'+xt.toFixed(1)+'" x2="'+xt.toFixed(1)+'" y1="'+(yt-4)+'" y2="'+yb+'" class="svgn"/>';
-  (P.races||[]).filter(r=>r.date&&r.date>t&&r.date<P.goalDate).forEach(r=>{const xr=X(r.date);s+='<line x1="'+xr.toFixed(1)+'" x2="'+xr.toFixed(1)+'" y1="'+(yt-4)+'" y2="'+yb+'" class="svgr"/><text x="'+(xr+3).toFixed(1)+'" y="'+(yt+5)+'" class="svgt b">'+(r.dist?Math.round(r.dist)+' km':'course')+'</text>';});
-  if(P.goalDate){const xg=X(P.goalDate);s+='<line x1="'+xg.toFixed(1)+'" x2="'+xg.toFixed(1)+'" y1="'+(yt-4)+'" y2="'+yb+'" class="svgr"/><text x="'+(xg-3).toFixed(1)+'" y="'+(yt+5)+'" text-anchor="end" class="svgt b">★</text>';}
-  if(decl)s+='<circle cx="'+X(decl.date).toFixed(1)+'" cy="'+Y(decl.dur).toFixed(1)+'" r="4" class="svgd0"/>';
-  done.forEach(r=>{s+='<circle cx="'+X(r.date).toFixed(1)+'" cy="'+Y(r.dur).toFixed(1)+'" r="4.5" class="svgd"/>';});
-  const nx=proj[0];if(nx)s+='<circle cx="'+X(nx.date).toFixed(1)+'" cy="'+Y(nx.dur).toFixed(1)+'" r="4.5" class="svgx"/>';
-  const ms=[];for(let k=1;k<=3;k++){const d=new Date(t0.getTime()+(t1-t0)*k/4);ms.push(d);}
-  ms.forEach(d=>{const iso=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');s+='<text x="'+X(iso).toFixed(1)+'" y="'+(H-6)+'" text-anchor="middle" class="svgt">'+d.toLocaleDateString('fr-FR',{month:'short'})+'</text>';});
-  s+='<text x="'+(x1+30)+'" y="'+(H-6)+'" text-anchor="end" class="svgt">'+fmtS(P.goalDate)+'</text>';
-  return s+'</svg><div class="svlg"><span><i class="svd long f"></i>faite</span>'+(decl?'<span><i class="svd d0"></i>déclarée</span>':'')+'<span><i class="svlgl"></i>niveau prévu</span><span><i class="svlgz"></i>sortie clé visée</span></div>';}
-/* 1. Prêt ? */
+  let m=0;const pp=[X(start).toFixed(1)+','+Y(0).toFixed(1)].concat(plan.map(p=>{m=Math.max(m,p.dur);return X(p.date).toFixed(1)+','+Y(m).toFixed(1);}));
+  if(plan.length)s+='<path d="M'+pp.join(' L')+'" class="svgpl"/>';
+  if(real.length){m=0;const rp=[X(start).toFixed(1)+','+Y(0).toFixed(1)];real.forEach(r=>{if(r.dur>m){rp.push(X(r.date).toFixed(1)+','+Y(m).toFixed(1));m=r.dur;rp.push(X(r.date).toFixed(1)+','+Y(m).toFixed(1));}});rp.push(X(t).toFixed(1)+','+Y(m).toFixed(1));
+    s+='<path d="M'+rp.join(' L')+'" class="svgre"/>';longs.forEach(r=>{s+='<circle cx="'+X(r.date).toFixed(1)+'" cy="'+Y(r.dur).toFixed(1)+'" r="2.6" class="svgrd"/>';});}
+  const nx=plan.find(p=>p.date>=t&&!runs.some(r=>r.date===p.date&&svLong(r)));
+  if(nx)s+='<circle cx="'+X(nx.date).toFixed(1)+'" cy="'+Y(nx.dur).toFixed(1)+'" r="5" class="svgx"/>';
+  const xt=X(t),left=xt<160;s+='<line x1="'+xt.toFixed(1)+'" x2="'+xt.toFixed(1)+'" y1="'+(yt-8)+'" y2="'+yb+'" class="svgn"/><text x="'+(xt+(left?3:-3)).toFixed(1)+'" y="'+yt+'" text-anchor="'+(left?'start':'end')+'" class="svgt b">auj.</text>';
+  (P.races||[]).filter(r=>r.date&&r.date>start&&r.date<P.goalDate).forEach(r=>{const xr=X(r.date);s+='<line x1="'+xr.toFixed(1)+'" x2="'+xr.toFixed(1)+'" y1="'+(yt-8)+'" y2="'+yb+'" class="svgr"/><text x="'+(xr+3).toFixed(1)+'" y="'+yt+'" class="svgt b">'+(r.dist?Math.round(r.dist)+' km':'course')+'</text>';});
+  if(P.goalDate){const xg=X(P.goalDate);s+='<line x1="'+xg.toFixed(1)+'" x2="'+xg.toFixed(1)+'" y1="'+(yt-8)+'" y2="'+yb+'" class="svgr"/><text x="'+(xg-3).toFixed(1)+'" y="'+yt+'" text-anchor="end" class="svgt b">★'+(P.goalDist?' '+Math.round(P.goalDist)+' km':'')+'</text>';}
+  for(let k=1;k<=4;k++){const d=new Date(t0.getTime()+(t1-t0)*k/5);const iso=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');s+='<text x="'+X(iso).toFixed(1)+'" y="'+(H-6)+'" text-anchor="middle" class="svgt">'+d.toLocaleDateString('fr-FR',{month:'short'})+'</text>';}
+  return s+'</svg><div class="svlg"><span><i class="svlgr"></i>ta plus longue sortie à ce jour</span><span><i class="svd long f"></i>chaque sortie longue faite</span><span><i class="svlgp"></i>prévu</span><span><i class="svd v0"></i>prochaine</span><span><i class="svlgz"></i>zone visée : '+svD(c[0])+' à '+svD(c[1])+'</span></div>';}
 function svReady(B){
-  const {E,P,t,decl,runs,start}=B,c=E.info.cible||[300,360],out=[];
-  const cand=runs.concat(decl?[decl]:[]),lg=svMax(cand,x=>x.dur),r30=svMax(runs.filter(s=>s.date>addDays(t,-30)),x=>x.dur),rs=svMax(runs.filter(s=>s.date>=start),x=>x.dur);
+  const {E,P,t,decl,runs,start}=B,c=E.info.cible||[300,360],out=[],plan=svPrev(B),real=runs.filter(s=>s.date>=start);
   const ec=(E.ecarts||[]).find(e=>e.obj==='principal'),secs=(E.ecarts||[]).filter(e=>e.obj==='secondaire');
-  const bd=svChart(B)
-    +(decl?svLn('Déclarée au départ',durTxt(decl.dur),fmtS(decl.date)):'')
-    +svLn('Plus longue faite depuis le début du plan',rs?durTxt(rs.dur):'aucune',rs?fmtS(rs.date):'')
-    +svLn('Dans les 30 derniers jours',r30?durTxt(r30.dur):'aucune',r30?fmtS(r30.date):'')
-    +svLn('Visée',durTxt(c[0])+' à '+durTxt(c[1]),'ta plus longue sortie d\'ici la fin du bloc')
-    +secs.map(e=>svLn(esc(e.nom),durTxt(e.atteint)+' sur '+durTxt(e.cible),'sortie longue visée avant le '+fmtS(e.limite))).join('')
-    +svN(ec?'À ce rythme, ta plus longue sortie prévue avant le '+fmtS(ec.limite)+' fait '+durTxt(ec.atteint)+' pour '+durTxt(ec.cible)+' visées. La cause : ton point de départ et le temps restant. Leviers : protéger ta sortie longue, ajouter un jour de course, ou revoir la date (Ton objectif).'
-      :'Le plan y arrive à ce rythme, si tes sorties longues sont faites.'+(decl&&(!rs||rs.dur<decl.dur)?' Ton point de départ reste ta sortie déclarée tant que tu ne l\'as pas dépassée.':''));
-  out.push(svRow('duree','terrain','s','La durée',ec?'en retard':'dans les temps',ec?'late':'ok',lg?durTxt(lg.dur):'–','sur '+durTxt(c[0])+' à '+durTxt(c[1]).replace(/^(\d+) h$/,'$1 h'),bd,true));
-  /* dénivelé (H-53) */
-  const dn=E.info.densite,cal=E.info.cal,wk=weekOf(t),w=wk?wk.w:1;
-  const dens=dn?(w>=cal.fond?dn.course:dn.dep+(dn.course-dn.dep)*w/Math.max(1,cal.fond)):null;
-  const mD=svMax(cand.filter(x=>x.dplus>0),x=>x.dplus),rep=dens&&lg?Math.max(50,round50(dens*lg.dur/60)):null;
-  const tg=svMax(E.sessions.filter(s=>s.type==='long'&&s.date>=t&&s.dplus),x=>x.dplus);
-  const dOk=!rep||(mD&&mD.dplus>=.8*rep);
-  out.push(svRow('dplus','terrain','k','Le dénivelé',rep?(dOk?'dans les temps':'en retard'):'pas encore de repère',rep?(dOk?'ok':'late'):'neu',mD?fmtN(mD.dplus)+' m':'–',tg?'sur ≈ '+fmtN(round50(tg.dplus))+' m':'',
-    svLn('Plus grand D+ en une sortie',mD?fmtN(mD.dplus)+' m':'aucun',mD?fmtS(mD.date)+(mD.decl?' · déclarée':''):'')
-    +(rep?svLn('Repère à cette date','≈ '+fmtN(rep)+' m','monte avec ta sortie longue'):'')
+  const nx=plan.find(p=>p.date>=t&&!runs.some(r=>r.date===p.date&&svLong(r)));
+  const nxt=nx?'dim'===DOWS[parseISO(nx.date).getDay()].toLowerCase()?'dim.':DOWS[parseISO(nx.date).getDay()].toLowerCase()+'.':'';
+  /* durée */
+  const rL=svLvl(real,t,s=>s.dur||0),pL=svLvl(plan,t,s=>s.dur||0),[vc,vt]=svVerd(rL,pL);
+  const why='<div class="svwhy"><b>Pourquoi '+svD(c[0])+' à '+svD(c[1])+' et pas '+(E.info.dureeMain?durR(E.info.dureeMain):'la durée de ta course')+' ?</b> On ne court jamais la durée de la course à l\'entraînement : trop de fatigue pour trop peu de gain. La fin de course se prépare en répétant des sorties longues de '+svD(c[0])+' à '+svD(c[1])+' et des week-ends enchaînés, pendant le bloc spécifique.</div>';
+  const bd=svLn('Ta plus longue depuis la reprise',rL?svD(rL):'aucune',rL?fmtS(svMax(real,x=>x.dur).date):'')
+    +svLn('Prévu à cette date',pL?svD(pL):'—','niveau que le plan visait')
+    +(nx?svLn('Prochaine',svD(nx.dur),svDay(nx.date)):'')
+    +svLn('Visée',svD(c[0])+' à '+svD(c[1]),'ta plus longue sortie, pendant le bloc spécifique')
+    +(decl&&decl.date<start?svLn('Avant la reprise',svD(decl.dur),'déclarée le '+fmtS(decl.date)+' · sert de point de départ'):'')
+    +secs.map(e=>svLn(esc(e.nom),svD(e.atteint)+' sur '+svD(e.cible),'sortie longue prévue avant le '+fmtS(e.limite))).join('')
+    +(ec?svN('<b style="color:var(--coralT)">À ce rythme, le plan n\'atteint pas la cible :</b> sa plus longue sortie avant le '+fmtS(ec.limite)+' fait '+svD(ec.atteint)+' pour '+svD(ec.cible)+' visées. Cause : ton point de départ et le temps restant. Leviers : protéger ta sortie longue, ajouter un jour de course, ou revoir la date (Ton objectif).'):'')
+    +why;
+  out.push(svRow('duree','terrain','s','Ta sortie longue',vt,vc,rL?svD(rL):'aucune',rL?'prévu '+(pL?svD(pL):'—'):(nx?nxt+' : '+svD(nx.dur):''),bd,true));
+  /* dénivelé */
+  const rD=svLvl(real,t,s=>s.dplus||0),pD=svLvl(plan,t,s=>s.dplus||0),[dc,dt]=svVerd(rD,pD);
+  const tg=svMax(plan.filter(s=>s.dplus),x=>x.dplus);
+  out.push(svRow('dplus','terrain','k','Ton dénivelé',dt,dc,rD?fmtN(rD)+' m':'aucun',rD?'prévu '+(pD?fmtN(round50(pD))+' m':'—'):(nx&&nx.dplus?nxt+' : '+fmtN(nx.dplus)+' m':''),
+    svLn('Ton plus gros D+ en une sortie',rD?fmtN(rD)+' m':'aucun','depuis la reprise')
+    +svLn('Prévu à cette date',pD?'≈ '+fmtN(round50(pD))+' m':'—')
+    +(nx&&nx.dplus?svLn('Prochaine','≈ '+fmtN(nx.dplus)+' m','avec ta sortie longue'):'')
     +(tg?svLn('Visé','≈ '+fmtN(round50(tg.dplus))+' m','sur ta plus longue sortie, '+fmtS(tg.date)):'')
-    +svN((P.goalDplus&&P.goalDist?'Ta course : '+fmtN(P.goalDplus)+' m de D+ sur '+fmtN(P.goalDist)+' km. ':'')+'Le D+ de tes sorties longues monte jusqu\'à la densité de la course à la fin de la phase de fond (convention).')));
-  /* ventre (H-53) */
-  if(modOn('nutrition')){const nt=nutriTarget(t),need=Math.max(0,Math.ceil((60-nt.t)/6)),bloc=addDays(start,7*cal.fond);
-    const avail=E.sessions.filter(s=>s.type==='long'&&s.date>=t&&s.date<bloc).length,ok=nt.t>=60||avail>=need;
-    out.push(svRow('ventre','nutrition','c','Le ventre',ok?'dans les temps':'en retard',ok?'ok':'late',nt.t+' g/h','sur 60 à 90',
-      svLn('Toléré aujourd\'hui',nt.t+' g/h',nt.held?'progression gelée : dernière sortie nourrie mal digérée':'')
-      +svLn('Visé','60 à 90 g/h','sur les sorties longues')
-      +(need?svLn('Il te faut','≈ '+need+' semaine'+(need>1?'s':''),'de sorties longues nourries et bien digérées pour 60 g/h ; '+avail+' prévues d\'ici le bloc spécifique'):'')
-      +svN('Nausées et vomissements : première cause d\'abandon sur 160 km. Teste ce que tu prendras en course.')));}
-  const n=out.length,okN=out.filter(h=>h.indexOf('svp ok')>=0).length;
-  return '<div class="card svc0"><div class="svhd"><b>Prêt pour le jour J ?</b><span>'+okN+' sur '+n+'</span></div>'+out.join('')+'</div>';}
+    +svN((P.goalDplus?'Ta course : '+fmtN(P.goalDplus)+' m de D+. ':'')+'Le D+ de tes sorties longues monte avec leur durée.')));
+  /* ventre */
+  if(modOn('nutrition')){const fed=real.filter(s=>(s.carbs||0)>0);
+    if(!fed.length)out.push(svRow('ventre','nutrition','c','Ton ventre','à construire','neu','—','pas commencé',
+      svLn('Toléré','—','aucune sortie nourrie saisie')+svLn('Visé en course','60 à 90 g/h')+svN('Le plan te demandera de manger dès que tes sorties dépasseront 1 h 30 : c\'est ce qui entraîne ton ventre. Nausées et vomissements : première cause d\'abandon sur 160 km.')));
+    else{const nt=nutriTarget(addDays(t,1)),base=P.carbStart!=null?P.carbStart:35;
+      const wk=new Set(plan.filter(s=>s.date<=t&&s.dur>=90).map(s=>monday(s.date))).size,pv=Math.min(90,base+6*wk),[nc,nv]=svVerd(nt.t,pv);
+      out.push(svRow('ventre','nutrition','c','Ton ventre',nv,nc,nt.t+' g/h','prévu '+pv+' g/h',
+        svLn('Toléré aujourd\'hui',nt.t+' g/h',nt.held?'progression gelée : dernière sortie nourrie mal digérée':fed.length+' sortie'+(fed.length>1?'s':'')+' nourrie'+(fed.length>1?'s':''))
+        +svLn('Prévu à cette date',pv+' g/h','+6 g/h par semaine de sortie longue bien digérée')+svLn('Visé en course','60 à 90 g/h')
+        +svN('Nausées et vomissements : première cause d\'abandon sur 160 km. Teste ce que tu prendras en course.')));}}
+  return '<div class="card svc0"><div class="svhd"><b>Prêt pour le jour J ?</b><span>'+(P.goalDate?fmtSY(P.goalDate):'')+'</span></div>'+svChart(B)+out.join('').replace('<div class="sva f','<div class="sva')+'</div>';}
 /* 2. Tu fais ce qu'il faut ? (H-54) — semaines « arrêt » : séances dues d'après les jours de la période (D-92 e) */
 function svWeeks(B){
   const {E,P,t,start}=B,res=[];
@@ -1090,7 +1096,7 @@ function svPlan(B){
   const {E,P,t}=B,W=svWeeks(B),last=W.slice(-4),all=[].concat(...W.map(w=>w.items)),it=[].concat(...last.map(w=>w.items));
   const due=it.filter(x=>x.s!=='v'),done=due.filter(x=>x.s==='f'),cnt=(a,k)=>a.filter(x=>x.k===k);
   const mL=cnt(due,'long').filter(x=>x.s==='m');
-  const vc=!due.length?'neu':mL.length?'late':'ok',vt=!due.length?'Pas encore de séance due':mL.length?(mL.length>1?mL.length+' sorties longues ratées':'1 sortie longue ratée'):'Tu suis le plan';
+  const vc=!due.length?'neu':mL.length?'late':'ok',vt=!due.length?'Pas encore de séance due':mL.length?(mL.length>1?mL.length+' sorties longues manquées':'1 sortie longue manquée'):done.length===due.length?'Rien de manqué':(due.length-done.length)+' séance'+(due.length-done.length>1?'s':'')+' manquée'+(due.length-done.length>1?'s':'')+', aucune sortie longue';
   const line=(k,l)=>{const d=cnt(due,k);return d.length?svLn(l,d.filter(x=>x.s==='f').length+' sur '+d.length,k==='long'&&mL.length?mL.map(x=>fmtS(x.date)).join(', ')+' manquée'+(mL.length>1?'s':''):''):'';};
   const rows=last.slice().reverse().map(w=>{const d=w.items.filter(x=>x.s!=='v');const run=w.items.filter(x=>x.k!=='cf'),cf=w.items.filter(x=>x.k==='cf');
     return '<div class="svwk"><span class="svwn">S'+w.w+'<small>'+fmtS(w.mon)+'</small></span><span class="svds">'+run.map(x=>'<i class="svd '+x.k+' '+x.s+'"></i>').join('')+(cf.length?'<i class="svsep"></i>'+cf.map(x=>'<i class="svd cf '+x.s+'"></i>').join(''):'')+'</span>'
@@ -1116,7 +1122,7 @@ function svLoad(B){
     const mx=Math.max(0,...prev);return mx>0&&r.dur>1.1*mx;});
   const fat=fatW.length||fatM.length;
   const ref=nEF>=4,vc=fat||over.length?'late':!ref?'neu':'ok';
-  const vt=fat?'Fatigue détectée, le plan a ralenti':over.length?'Une sortie au-delà du prévu':!ref?'Rien d\'anormal, repère en cours':'Tu encaisses';
+  const vt=fat?'Fatigue détectée, le plan a ralenti':over.length?'Une sortie au-delà du prévu':!ref?'Repère en cours : '+nEF+' endurance'+(nEF>1?'s':'')+' notée'+(nEF>1?'s':'')+' sur 4':'Tu encaisses';
   let pain='';if(injOn()){const d7=[];for(let i=6;i>=0;i--){const d=addDays(t,-i);if(S.daily[d]&&S.daily[d].pain!=null)d7.push(S.daily[d].pain);}const hb=heelBaseline(t);
     if(d7.length)pain=svLn('Douleur au lever, 7 jours',r1(avg(d7))+'/10',hb!=null?'référence '+r1(hb):'référence en calcul');}
   const body=svLn('Effort de tes endurances',ref?'repère établi':'pas encore',ref?nEF+' endurances notées ; le plan compare chacune à ton repère':nEF+' notée'+(nEF>1?'s':'')+' sur 4 pour avoir ton repère')
@@ -2798,7 +2804,7 @@ function vGate(){
     +authFormHTML('Un compte garde ton plan et tes séances en sécurité, et te permet de les retrouver sur un autre téléphone. Ton prénom personnalise l\'app.')
     +syncLineHTML()+versionLineHTML()+'</div></main>';
 }
-const APP_VERSION='v51';   /* généré depuis sw.js par tools/build.py */
+const APP_VERSION='v52';   /* généré depuis sw.js par tools/build.py */
 function versionLineHTML(){return '<div class="mini" id="ver" style="margin-top:12px;text-align:center;opacity:.7">Ascend '+APP_VERSION+' · moteur de plan v2</div>';}
 /* compare la page chargée au cache du service worker : signale un déploiement pas encore actif */
 function checkVersion(){if(!('caches' in window))return;caches.keys().then(ks=>{const c=ks.filter(k=>/^ascend-v\d+$/.test(k)).map(k=>+k.slice(8)).sort((a,b)=>b-a)[0],el=document.getElementById('ver');

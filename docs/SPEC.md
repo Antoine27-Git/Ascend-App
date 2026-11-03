@@ -3194,3 +3194,10 @@ Amendement v49 (01/11/2026), codé :
 
 ### D-93 — Redémarrer le plan à une date choisie (01/11/2026, v50 ; précise D-86 g)
 Demande d'Antoine : reprendre le plan de zéro au lundi suivant plutôt qu'à la semaine en cours. « Redémarrer le plan » (Réglages avancés) propose trois choix : cette semaine (lundi en cours), semaine prochaine, autre date (sélecteur, du lundi en cours à la date de l'objectif). Le plan part du lundi de la semaine choisie (`planStart`) ; `planFrom` = la date choisie, ou aujourd'hui si elle est passée (pas de séance proposée avant). Confirmation en deux touches, comme avant. Moteur inchangé.
+
+Amendement v52 (03/11/2026), après essai de la v49 par Antoine (« la forme est bien, le fond est mauvais ») : « 1 h 47 sur 5 à 6 h » ne se comprenait pas (sortie déclarée de septembre face à une cible non expliquée), la courbe n'avait pas de réel et était trop petite, des verdicts verts tombaient sans données, « Tu suis le plan ? » répétait la question. Maquettes du 3e tour (PR #17), variante B validée :
+- « Prêt pour le jour J ? » compare le **réel depuis la reprise** au **prévu à la même date** (H-57) : sortie longue (niveau atteint), dénivelé (plus gros D+ en une sortie), ventre (glucides par heure tolérés ; prévu = départ + 6 g/h par semaine de sortie longue de 1 h 30 ou plus). Sans séance réelle : « à construire ». La sortie déclarée avant la reprise passe dans le détail (« sert de point de départ »).
+- Courbe en tête de carte, de la reprise au jour J : niveau réel (trait plein), chaque sortie longue faite (points), prévu (pointillés), prochaine, zone visée ; légende sous la courbe, aucun texte dans la zone.
+- La cible est expliquée dans le détail : pourquoi la plus longue sortie visée est de 5 à 6 h et pas la durée de la course.
+- L'écart du moteur (cible inatteignable à ce rythme) reste affiché dans le détail de la sortie longue, avec sa cause et ses leviers.
+- « Tu suis le plan ? » : « Rien de manqué », « 1 sortie longue manquée », ou le nombre de séances manquées ; « Tu encaisses ? » : « Repère en cours : n endurances notées sur 4 ».
