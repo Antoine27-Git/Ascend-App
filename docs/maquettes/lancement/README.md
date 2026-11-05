@@ -9,3 +9,5 @@ Déroulé (v2, retour d'Antoine : commencer par l'animation, finir sur le logo ;
 4,2–4,7 s halo au sommet ; 4,5–5,3 s le logo naît au sommet et prend sa place (position de l'écran de lancement, D-90) pendant que le relief s'efface ;
 5,25–5,9 s « Reach your peak » ; fin sur le logo, puis fondu vers Aujourd'hui. Limite : sur Android, l'écran système (icône) s'affiche toujours avant la page.
 Relief généré (gaussiennes + bruit), courbes par marching squares, projection en perspective sur un canvas 2D.
+
+v3 (05/11) : deux variantes (A relief d'abord, B départ du logo qui s'ouvre sur le relief), écran d'Android simulé 0,8 s avant chacune ; logo final tenu environ 1,4 s (A) ou 0,9 s (B) dans les 6 s.

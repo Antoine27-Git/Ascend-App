@@ -12,8 +12,10 @@ canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
 #app h1{margin:0;font-size:23px;letter-spacing:-.03em}#app p{margin:4px 0 0;color:#5b6961;font-size:13px}
 #app .c{background:#fff;border-radius:22px;height:180px;margin-top:18px;box-shadow:0 10px 26px rgba(15,28,22,.06)}
 #ctl{position:fixed;left:0;right:0;bottom:calc(18px + env(safe-area-inset-bottom,0px));display:flex;justify-content:center;gap:10px;z-index:5}
-#ctl button{font:700 15px -apple-system,Roboto,sans-serif;border:0;border-radius:16px;padding:12px 18px;background:#10251c;color:#fff;box-shadow:0 6px 18px rgba(0,0,0,.25);cursor:pointer}
+#ctl button{white-space:nowrap;font:700 14px -apple-system,Roboto,sans-serif;border:0;border-radius:16px;padding:12px 18px;background:#10251c;color:#fff;box-shadow:0 6px 18px rgba(0,0,0,.25);cursor:pointer}
 #ctl button.s{background:rgba(255,255,255,.9);color:#10251c}
+#tag{position:fixed;top:calc(12px + env(safe-area-inset-top,0px));left:0;right:0;text-align:center;font:700 12px -apple-system,Roboto,sans-serif;color:rgba(233,196,106,.85);letter-spacing:.06em;z-index:5}
+#ctl button.on{box-shadow:inset 0 0 0 2px #e9c46a}
 #ctl button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 </style>
 <div id="st">
@@ -22,7 +24,7 @@ canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
   <div class="tx" id="tx"><img src="__TXT__" alt="Reach your peak"></div>
   <div id="app"><h1>Mercredi 5 novembre</h1><p>Semaine 1 sur 47 · Reprise</p><div class="c"></div><div class="c" style="height:120px"></div></div>
 </div>
-<div id="ctl"><button id="rp">Rejouer</button><button id="sl" class="s">Ralenti ×3</button></div>
+<div id="ctl"><button id="ba">A · relief</button><button id="bb">B · logo</button><button id="sl" class="s">Ralenti</button></div><div id="tag">A · relief d'abord</div>
 <script>
 (function(){
 const cv=document.getElementById('cv'),cx=cv.getContext('2d'),lg=document.getElementById('lg'),tx=document.getElementById('tx'),app=document.getElementById('app');
@@ -54,7 +56,7 @@ const path=[];{let x=-0.35,y=-0.95;const tx_=SX,ty_=SY;for(let k=0;k<260;k++){co
   x+=vx/vl*0.0085;y+=vy/vl*0.0085;path.push([x,y,hgt(x,y)*HS+0.006]);}path.push([tx_,ty_,hgt(tx_,ty_)*HS+0.006]);}
 /* caméra */
 const sm=t=>t<=0?0:t>=1?1:t*t*(3-2*t),lerp=(a,b,t)=>a+(b-a)*t,L3=(a,b,t)=>[lerp(a[0],b[0],t),lerp(a[1],b[1],t),lerp(a[2],b[2],t)];
-const K=[[0.0,[0.05,-0.25,3.4],[0.05,0.15,0]],[2.2,[-0.35,-2.05,1.15],[0.0,0.15,0.2]],[4.6,[0.2,-0.85,0.95],[0.12,0.5,0.5]]];
+const K=[[0.0,[0.05,-0.25,3.4],[0.05,0.15,0]],[1.8,[-0.35,-2.05,1.15],[0.0,0.15,0.2]],[3.9,[0.2,-0.85,0.95],[0.12,0.5,0.5]]];
 function cam(t){if(t<=K[0][0])return [K[0][1],K[0][2]];for(let i=0;i<K.length-1;i++){const a=K[i],b=K[i+1];if(t<=b[0]){const u=sm((t-a[0])/(b[0]-a[0]));return [L3(a[1],b[1],u),L3(a[2],b[2],u)];}}return [K[K.length-1][1],K[K.length-1][2]];}
 function proj(C,Tg){const f=[Tg[0]-C[0],Tg[1]-C[1],Tg[2]-C[2]],fl=Math.hypot(...f);f[0]/=fl;f[1]/=fl;f[2]/=fl;
   let r=[f[1],-f[0],0];const rl=Math.hypot(r[0],r[1])||1;r[0]/=rl;r[1]/=rl;const u=[r[1]*f[2]-0,-(r[0]*f[2]),r[0]*f[1]-r[1]*f[0]];
@@ -62,32 +64,39 @@ function proj(C,Tg){const f=[Tg[0]-C[0],Tg[1]-C[1],Tg[2]-C[2]],fl=Math.hypot(...
     return [W/2+F*(dx*r[0]+dy*r[1])/zc,H*0.46-F*(dx*u[0]+dy*u[1]+dz*u[2])/zc,zc];};}
 const ease=(t,a,b)=>sm((t-a)/(b-a));
 let t0=0,speed=1,raf=0;
-function frame(now){const t=(now-t0)/1000*speed;draw(Math.min(t,6.4));if(t<6.4)raf=requestAnimationFrame(frame);}
+/* simulation : l'écran d'Android (icône fixe) précède toujours la page, 0,8 s ici */
+let MODE='A',PRE=0.8;
+function frame(now){const T=(now-t0)/1000*speed,t=T-PRE;if(t<0){pre();}else draw(Math.min(t,6.4));if(t<6.4)raf=requestAnimationFrame(frame);}
+function pre(){cx.clearRect(0,0,W,H);lg.style.transform='none';lg.style.opacity=1;tx.style.opacity=0;app.style.opacity=0;}
 function draw(t){
+  /* B : la page démarre sur le logo (comme Android), qui s'ouvre sur le relief ; tout le reste est décalé de 0,6 s */
+  const b=MODE==='B'?0.6:0,intro=MODE==='B'?ease(t,0,0.7):1;t=t-b;
   /* logo : fixe, puis zoom et fondu (0,8 → 1,6 s) ; retour 4,8 → 5,4 s */
-  const em=ease(t,4.5,5.3);
-  tx.style.opacity=ease(t,5.25,5.9);
+  const em=ease(t,3.85,4.55);
+  tx.style.opacity=ease(t,4.55,5.1);
   /* relief */
-  const ta=ease(t,0.0,0.7)*(1-ease(t,4.7,5.3));cx.clearRect(0,0,W,H);
+  const ta=(MODE==='B'?ease(t+b,0.15,0.75):ease(t,0.0,0.7))*(1-ease(t,4.05,4.6));cx.clearRect(0,0,W,H);
   if(ta>0){const [C,Tg]=cam(t),pr=proj(C,Tg);cx.lineWidth=1;
     const B=[[],[],[],[]];for(let k=0;k<S.length;k+=5){const a=pr(S[k],S[k+1],S[k+4]),b=pr(S[k+2],S[k+3],S[k+4]);if(!a||!b)continue;
       if((a[0]<-50&&b[0]<-50)||(a[0]>W+50&&b[0]>W+50)||(a[1]<-50&&b[1]<-50)||(a[1]>H+50&&b[1]>H+50))continue;
       const dz=(a[2]+b[2])/2,bi=dz<1.2?0:dz<1.9?1:dz<2.8?2:3;B[bi].push(a[0],a[1],b[0],b[1]);}
     const al=[0.85,0.6,0.38,0.2];B.forEach((arr,bi)=>{cx.strokeStyle='rgba(214,240,226,'+(al[bi]*ta)+')';cx.beginPath();for(let k=0;k<arr.length;k+=4){cx.moveTo(arr[k],arr[k+1]);cx.lineTo(arr[k+2],arr[k+3]);}cx.stroke();});
     /* chemin doré qui grimpe (1,6 → 4,6 s) */
-    const pg=ease(t,0.6,4.2),n=Math.max(2,Math.floor(pg*path.length));
+    const pg=ease(t,0.5,3.6),n=Math.max(2,Math.floor(pg*path.length));
     cx.save();cx.globalAlpha=ta;cx.strokeStyle='#e9c46a';cx.lineWidth=3.2;cx.lineJoin=cx.lineCap='round';cx.shadowColor='rgba(233,196,106,.9)';cx.shadowBlur=10;
     cx.beginPath();let st=false,last=null;for(let k=0;k<n;k++){const q=pr(...path[k]);if(!q){st=false;continue;}if(!st){cx.moveTo(q[0],q[1]);st=true;}else cx.lineTo(q[0],q[1]);last=q;}cx.stroke();
     if(last&&pg>0&&pg<1){cx.fillStyle='#fff7df';cx.beginPath();cx.arc(last[0],last[1],4.2,0,7);cx.fill();}
-    if(pg>=1&&last){const pu=ease(t,4.2,4.7);cx.fillStyle='rgba(255,247,223,'+(1-pu*.6)+')';cx.beginPath();cx.arc(last[0],last[1],4.2+pu*10,0,7);cx.fill();}cx.restore();}
+    if(pg>=1&&last){const pu=ease(t,3.6,4.05);cx.fillStyle='rgba(255,247,223,'+(1-pu*.6)+')';cx.beginPath();cx.arc(last[0],last[1],4.2+pu*10,0,7);cx.fill();}cx.restore();}
   /* le logo naît au sommet et prend sa place (4,5 → 5,3 s) */
   {const [C,Tg]=cam(t),q=proj(C,Tg)(SX,SY,hgt(SX,SY)*HS),r=lg.getBoundingClientRect(),cy=236+126.667,dx=q?q[0]-W/2:0,dy=q?q[1]-cy:0;
    lg.style.transform='translate('+(dx*(1-em))+'px,'+(dy*(1-em))+'px) scale('+lerp(0.08,1,em)+')';lg.style.opacity=em<=0?0:Math.min(1,em*1.6);}
   /* sortie vers l'appli (5,6 → 6,0 s) */
-  app.style.opacity=ease(t,6.0,6.35);
+  app.style.opacity=ease(t+b,6.0,6.35);
+  if(MODE==='B'&&t+b<0.75){const z=ease(t+b,0,0.7);lg.style.transform='scale('+(1+z*2.2)+')';lg.style.opacity=1-z;}
 }
-function play(sp){cancelAnimationFrame(raf);speed=sp;t0=performance.now();raf=requestAnimationFrame(frame);}
-document.getElementById('rp').onclick=()=>play(1);document.getElementById('sl').onclick=()=>play(1/3);
-if(matchMedia('(prefers-reduced-motion: reduce)').matches)draw(5.95);else play(1);
+let slow=false;function play(m){if(m)MODE=m;cancelAnimationFrame(raf);speed=slow?1/3:1;t0=performance.now();document.getElementById('tag').textContent=(MODE==='A'?'A · relief d\'abord':'B · départ du logo')+(slow?' · ralenti':'');
+  document.getElementById('ba').className=MODE==='A'?'on':'';document.getElementById('bb').className=MODE==='B'?'on':'';raf=requestAnimationFrame(frame);}
+document.getElementById('ba').onclick=()=>play('A');document.getElementById('bb').onclick=()=>play('B');document.getElementById('sl').onclick=e=>{slow=!slow;e.target.textContent=slow?'Vitesse normale':'Ralenti';play();};
+if(matchMedia('(prefers-reduced-motion: reduce)').matches)draw(5.95);else play('A');
 })();
 </script>
