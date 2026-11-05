@@ -11,3 +11,5 @@ Déroulé (v2, retour d'Antoine : commencer par l'animation, finir sur le logo ;
 Relief généré (gaussiennes + bruit), courbes par marching squares, projection en perspective sur un canvas 2D.
 
 v3 (05/11) : deux variantes (A relief d'abord, B départ du logo qui s'ouvre sur le relief), écran d'Android simulé 0,8 s avant chacune ; logo final tenu environ 1,4 s (A) ou 0,9 s (B) dans les 6 s.
+
+v4 (05/11) : variante C, sans logo final : départ du logo comme B, « Reach your peak » en haut pendant la montée, puis un cercle part du sommet et révèle Aujourd'hui (environ 5,2 s, écran d'Android compris). B validée par Antoine ; C proposée pour comparaison.
