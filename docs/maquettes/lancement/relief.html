@@ -8,6 +8,7 @@ canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
 .lg img{width:100%;display:block}
 .tx{position:absolute;left:50%;top:494px;width:220px;margin-left:-110px;opacity:0}
 .tx img{width:100%;display:block}
+#card{position:absolute;background:#fff;opacity:0;box-shadow:0 10px 26px rgba(15,28,22,.12);pointer-events:none}
 #app{position:absolute;inset:0;background:var(--app);opacity:0;pointer-events:none;font:15px -apple-system,Roboto,sans-serif;color:#0f1c16;padding:24px 20px}
 #app h1{margin:0;font-size:23px;letter-spacing:-.03em}#app p{margin:4px 0 0;color:#5b6961;font-size:13px}
 #app .c{background:#fff;border-radius:22px;height:180px;margin-top:18px;box-shadow:0 10px 26px rgba(15,28,22,.06)}
@@ -22,9 +23,9 @@ canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
   <canvas id="cv"></canvas>
   <div class="lg" id="lg" style="opacity:0"><img src="__LOGO__" alt="Ascend"></div>
   <div class="tx" id="tx"><img src="__TXT__" alt="Reach your peak"></div>
-  <div id="app"><h1>Jeudi 5 novembre</h1><p>Semaine 1 sur 47 · Reprise</p><div class="c" style="padding:18px"><div style="font-size:11.5px;font-weight:800;letter-spacing:.08em;color:#087a49">AUJOURD'HUI</div><div style="font-size:21px;font-weight:800;margin-top:8px">Endurance facile</div><div style="font-size:13.5px;color:#5b6961;margin-top:3px">30 min · effort facile</div><div style="margin-top:22px;height:50px;border-radius:16px;background:#ecd08f"></div></div><div class="c" style="height:120px"></div></div>
+  <div id="card"></div><div id="app"><h1>Jeudi 5 novembre</h1><p>Semaine 1 sur 47 · Reprise</p><div class="c" style="padding:18px"><div style="font-size:11.5px;font-weight:800;letter-spacing:.08em;color:#087a49">AUJOURD'HUI</div><div style="font-size:21px;font-weight:800;margin-top:8px">Endurance facile</div><div style="font-size:13.5px;color:#5b6961;margin-top:3px">30 min · effort facile</div><div style="margin-top:22px;height:50px;border-radius:16px;background:#ecd08f"></div></div><div class="c" style="height:120px"></div></div>
 </div>
-<div id="ctl"><button id="ba">A · relief</button><button id="bb">B · logo</button><button id="bc">C · cercle</button><button id="sl" class="s">Ralenti</button></div><div id="tag">A · relief d'abord</div>
+<div id="ctl"><button id="bb">B · logo</button><button id="bc">C · cercle</button><button id="bd">D · carte</button><button id="be">E · lumière</button><button id="sl" class="s">Ralenti</button></div><div id="tag">A · relief d'abord</div>
 <script>
 (function(){
 const cv=document.getElementById('cv'),cx=cv.getContext('2d'),lg=document.getElementById('lg'),tx=document.getElementById('tx'),app=document.getElementById('app');
@@ -73,9 +74,10 @@ function draw(t){
   const LB=MODE!=='A',b=LB?0.6:0;t=t-b;
   /* logo : fixe, puis zoom et fondu (0,8 → 1,6 s) ; retour 4,8 → 5,4 s */
   const em=ease(t,3.85,4.55);
-  if(MODE==='C'){tx.style.top='calc(70px + env(safe-area-inset-top,0px))';tx.style.opacity=ease(t,1.4,2.0)*(1-ease(t,3.3,3.7));}else{tx.style.top='494px';tx.style.opacity=ease(t,4.55,5.1);}
+  const isC='CDE'.includes(MODE);
+  if(isC){tx.style.top='calc(70px + env(safe-area-inset-top,0px))';tx.style.opacity=ease(t,1.4,2.0)*(1-ease(t,3.3,3.7));}else{tx.style.top='494px';tx.style.opacity=ease(t,4.55,5.1);}
   /* relief */
-  const ta=(LB?ease(t+b,0.15,0.75):ease(t,0.0,0.7))*(MODE==='C'?1:1-ease(t,4.05,4.6));cx.clearRect(0,0,W,H);
+  const ta=(LB?ease(t+b,0.15,0.75):ease(t,0.0,0.7))*(MODE==='C'?1:MODE==='D'?1-ease(t,4.05,4.55):MODE==='E'?1-ease(t,3.95,4.3):1-ease(t,4.05,4.6));cx.clearRect(0,0,W,H);
   if(ta>0){const [C,Tg]=cam(t),pr=proj(C,Tg);cx.lineWidth=1;
     const B=[[],[],[],[]];for(let k=0;k<S.length;k+=5){const a=pr(S[k],S[k+1],S[k+4]),b=pr(S[k+2],S[k+3],S[k+4]);if(!a||!b)continue;
       if((a[0]<-50&&b[0]<-50)||(a[0]>W+50&&b[0]>W+50)||(a[1]<-50&&b[1]<-50)||(a[1]>H+50&&b[1]>H+50))continue;
@@ -89,15 +91,21 @@ function draw(t){
     if(pg>=1&&last){const pu=ease(t,3.6,4.05);cx.fillStyle='rgba(255,247,223,'+(1-pu*.6)+')';cx.beginPath();cx.arc(last[0],last[1],4.2+pu*10,0,7);cx.fill();}cx.restore();}
   /* le logo naît au sommet et prend sa place (4,5 → 5,3 s) */
   {const [C,Tg]=cam(t),q=proj(C,Tg)(SX,SY,hgt(SX,SY)*HS),r=lg.getBoundingClientRect(),cy=236+126.667,dx=q?q[0]-W/2:0,dy=q?q[1]-cy:0;
-   lg.style.transform='translate('+(dx*(1-em))+'px,'+(dy*(1-em))+'px) scale('+lerp(0.08,1,em)+')';lg.style.opacity=MODE==='C'||em<=0?0:Math.min(1,em*1.6);
-   if(MODE==='C'){const R=ease(t,3.85,4.6)*Math.hypot(W,H)*1.05,ox=q?q[0]:W/2,oy=q?q[1]:H/3;app.style.opacity=R>0?1:0;app.style.clipPath='circle('+R.toFixed(1)+'px at '+ox.toFixed(1)+'px '+oy.toFixed(1)+'px)';}else app.style.clipPath='none';}
+   lg.style.transform='translate('+(dx*(1-em))+'px,'+(dy*(1-em))+'px) scale('+lerp(0.08,1,em)+')';lg.style.opacity=isC||em<=0?0:Math.min(1,em*1.6);
+   const card=document.getElementById('card');card.style.opacity=0;app.style.filter='none';app.style.transform='none';
+   if(MODE==='D'){const tg=app.querySelector('.c').getBoundingClientRect(),u=ease(t,3.75,4.45),ox=q?q[0]:W/2,oy=q?q[1]:H/3,w=lerp(10,tg.width,u),h=lerp(10,tg.height,u),x=lerp(ox-5,tg.left,u),y=lerp(oy-5,tg.top,u);
+     card.style.cssText+=';left:'+x+'px;top:'+y+'px;width:'+w+'px;height:'+h+'px;border-radius:'+lerp(10,22,u)+'px;opacity:'+(t>=3.7?1:0);app.style.clipPath='none';app.style.opacity=ease(t,4.3,4.75);
+     cx.save();cx.fillStyle='rgba(246,247,244,'+ease(t,4.1,4.6)+')';cx.fillRect(0,0,W,H);cx.restore();}
+   else if(MODE==='E'){const g=ease(t,3.55,4.25),ox=q?q[0]:W/2,oy=q?q[1]:H/3;if(g>0){const R=lerp(10,Math.hypot(W,H)*1.1,g),gr=cx.createRadialGradient(ox,oy,0,ox,oy,R);gr.addColorStop(0,'rgba(255,250,232,'+Math.min(1,g*1.5)+')');gr.addColorStop(0.55,'rgba(246,247,244,'+Math.min(1,g*1.2)+')');gr.addColorStop(1,'rgba(246,247,244,'+g*g+')');cx.fillStyle=gr;cx.fillRect(0,0,W,H);}
+     const a=ease(t,4.05,4.75);app.style.clipPath='none';app.style.opacity=a;app.style.filter='blur('+((1-a)*14).toFixed(1)+'px)';app.style.transform='scale('+(1+(1-a)*0.05)+')';}
+   else if(MODE==='C'){const R=ease(t,3.85,4.6)*Math.hypot(W,H)*1.05,ox=q?q[0]:W/2,oy=q?q[1]:H/3;app.style.opacity=R>0?1:0;app.style.clipPath='circle('+R.toFixed(1)+'px at '+ox.toFixed(1)+'px '+oy.toFixed(1)+'px)';}else app.style.clipPath='none';}
   /* sortie vers l'appli (5,6 → 6,0 s) */
   if(MODE!=='C')app.style.opacity=ease(t+b,6.0,6.35);
   if(LB&&t+b<0.75){const z=ease(t+b,0,0.7);lg.style.transform='scale('+(1+z*2.2)+')';lg.style.opacity=1-z;}
 }
-let slow=false;function play(m){if(m)MODE=m;cancelAnimationFrame(raf);speed=slow?1/3:1;t0=performance.now();document.getElementById('tag').textContent=({A:'A · relief d\'abord',B:'B · départ du logo',C:'C · cercle vers Aujourd\'hui'})[MODE]+(slow?' · ralenti':'');
-  document.getElementById('ba').className=MODE==='A'?'on':'';document.getElementById('bb').className=MODE==='B'?'on':'';document.getElementById('bc').className=MODE==='C'?'on':'';raf=requestAnimationFrame(frame);}
-document.getElementById('ba').onclick=()=>play('A');document.getElementById('bb').onclick=()=>play('B');document.getElementById('bc').onclick=()=>play('C');document.getElementById('sl').onclick=e=>{slow=!slow;e.target.textContent=slow?'Vitesse normale':'Ralenti';play();};
-if(matchMedia('(prefers-reduced-motion: reduce)').matches)draw(5.95);else play('A');
+let slow=false;function play(m){if(m)MODE=m;cancelAnimationFrame(raf);speed=slow?1/3:1;t0=performance.now();document.getElementById('tag').textContent=({A:'A · relief d\'abord',B:'B · départ du logo',C:'C · cercle vers Aujourd\'hui',D:'D · le sommet devient ta séance',E:'E · la lumière du sommet'})[MODE]+(slow?' · ralenti':'');
+  ['bd','be'].forEach(k=>document.getElementById(k).className=MODE===k[1].toUpperCase()?'on':'');document.getElementById('bb').className=MODE==='B'?'on':'';document.getElementById('bc').className=MODE==='C'?'on':'';raf=requestAnimationFrame(frame);}
+document.getElementById('bd').onclick=()=>play('D');document.getElementById('be').onclick=()=>play('E');document.getElementById('bb').onclick=()=>play('B');document.getElementById('bc').onclick=()=>play('C');document.getElementById('sl').onclick=e=>{slow=!slow;e.target.textContent=slow?'Vitesse normale':'Ralenti';play();};
+if(matchMedia('(prefers-reduced-motion: reduce)').matches)draw(5.95);else play('D');
 })();
 </script>
