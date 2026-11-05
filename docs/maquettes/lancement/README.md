@@ -4,6 +4,8 @@ Inspiré de l'écran d'accueil de la Dacia d'Antoine (vidéo du 05/11) : relief 
 `relief.html` : prototype, 6 s (durée demandée par Antoine). Les images du logo et de « Reach your peak » sont remplacées par `__LOGO__` et `__TXT__` :
 les recopier depuis `#splash` de `index.html` pour l'ouvrir. Rien n'est branché dans l'appli.
 
-Déroulé : 0–0,8 s logo fixe (raccord avec l'écran d'Android, D-90) ; 0,8–1,6 s zoom et fondu du logo, le relief apparaît vu de haut ;
-1,6–4,6 s la caméra descend et avance, le chemin doré grimpe jusqu'au sommet ; 4,8–5,5 s retour du logo et de « Reach your peak » ;
-5,6–6 s fondu vers l'écran Aujourd'hui. Relief généré (gaussiennes + bruit), courbes par marching squares, projection en perspective sur un canvas 2D.
+Déroulé (v2, retour d'Antoine : commencer par l'animation, finir sur le logo ; le chemin ne doit pas s'arrêter dans le vide) :
+0–0,7 s le relief apparaît vu de haut ; 0,6–4,2 s la caméra descend et avance, le chemin doré grimpe jusqu'au vrai sommet du relief (courbes de niveau jusqu'au point le plus haut) ;
+4,2–4,7 s halo au sommet ; 4,5–5,3 s le logo naît au sommet et prend sa place (position de l'écran de lancement, D-90) pendant que le relief s'efface ;
+5,25–5,9 s « Reach your peak » ; fin sur le logo, puis fondu vers Aujourd'hui. Limite : sur Android, l'écran système (icône) s'affiche toujours avant la page.
+Relief généré (gaussiennes + bruit), courbes par marching squares, projection en perspective sur un canvas 2D.

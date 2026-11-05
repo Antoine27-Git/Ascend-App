@@ -18,7 +18,7 @@ canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
 </style>
 <div id="st">
   <canvas id="cv"></canvas>
-  <div class="lg" id="lg"><img src="__LOGO__" alt="Ascend"></div>
+  <div class="lg" id="lg" style="opacity:0"><img src="__LOGO__" alt="Ascend"></div>
   <div class="tx" id="tx"><img src="__TXT__" alt="Reach your peak"></div>
   <div id="app"><h1>Mercredi 5 novembre</h1><p>Semaine 1 sur 47 · Reprise</p><div class="c"></div><div class="c" style="height:120px"></div></div>
 </div>
@@ -37,7 +37,7 @@ function hgt(x,y){let h=0;for(const g of G){const dx=x-g[0],dy=y-g[1];h+=g[2]*Ma
 const N=96,HS=0.55,grid=new Float32Array((N+1)*(N+1));const P=i=>-1.2+2.4*i/N;
 for(let j=0;j<=N;j++)for(let i=0;i<=N;i++)grid[j*(N+1)+i]=hgt(P(i),P(j));
 /* courbes de niveau (marching squares) */
-const segs=[];const L=[];for(let v=0.05;v<1.15;v+=0.05)L.push(v);
+let gmax=0;for(const v of grid)gmax=Math.max(gmax,v);const segs=[];const L=[];for(let v=0.05;v<gmax-0.012;v+=0.05)L.push(v);L.push(gmax-0.012);
 for(const lv of L){for(let j=0;j<N;j++)for(let i=0;i<N;i++){
   const a=grid[j*(N+1)+i],b=grid[j*(N+1)+i+1],c=grid[(j+1)*(N+1)+i+1],d=grid[(j+1)*(N+1)+i];
   const k=(a>lv)|((b>lv)<<1)|((c>lv)<<2)|((d>lv)<<3);if(k===0||k===15)continue;
@@ -47,13 +47,14 @@ for(const lv of L){for(let j=0;j<N;j++)for(let i=0;i<N;i++){
   for(const [p,q] of T)segs.push(e[p][0],e[p][1],e[q][0],e[q][1],lv*HS);}}
 const S=new Float32Array(segs);
 /* chemin : du bas vers le sommet, en suivant la pente avec des lacets */
-const path=[];{let x=-0.35,y=-0.95;const tx_=0.12,ty_=0.55;for(let k=0;k<260;k++){const dx=tx_-x,dy=ty_-y,d=Math.hypot(dx,dy);if(d<0.015)break;
+let SX=0,SY=0;{let bi=0;for(let k=0;k<grid.length;k++)if(grid[k]>grid[bi])bi=k;SX=P(bi%(N+1));SY=P(Math.floor(bi/(N+1)));}
+const path=[];{let x=-0.35,y=-0.95;const tx_=SX,ty_=SY;for(let k=0;k<260;k++){const dx=tx_-x,dy=ty_-y,d=Math.hypot(dx,dy);if(d<0.015)break;
   const e=0.01,gx=(hgt(x+e,y)-hgt(x-e,y))/(2*e),gy=(hgt(x,y+e)-hgt(x,y-e))/(2*e),gl=Math.hypot(gx,gy)||1;
   const w=Math.sin(k*0.11)*0.9;let vx=dx/d*0.75+gx/gl*0.25-dy/d*w*0.6,vy=dy/d*0.75+gy/gl*0.25+dx/d*w*0.6;const vl=Math.hypot(vx,vy);
   x+=vx/vl*0.0085;y+=vy/vl*0.0085;path.push([x,y,hgt(x,y)*HS+0.006]);}path.push([tx_,ty_,hgt(tx_,ty_)*HS+0.006]);}
 /* caméra */
 const sm=t=>t<=0?0:t>=1?1:t*t*(3-2*t),lerp=(a,b,t)=>a+(b-a)*t,L3=(a,b,t)=>[lerp(a[0],b[0],t),lerp(a[1],b[1],t),lerp(a[2],b[2],t)];
-const K=[[0.9,[0.05,-0.25,3.4],[0.05,0.15,0]],[2.7,[-0.35,-2.05,1.15],[0.0,0.15,0.2]],[4.9,[0.25,-1.05,0.95],[0.12,0.55,0.5]]];
+const K=[[0.0,[0.05,-0.25,3.4],[0.05,0.15,0]],[2.2,[-0.35,-2.05,1.15],[0.0,0.15,0.2]],[4.6,[0.2,-0.85,0.95],[0.12,0.5,0.5]]];
 function cam(t){if(t<=K[0][0])return [K[0][1],K[0][2]];for(let i=0;i<K.length-1;i++){const a=K[i],b=K[i+1];if(t<=b[0]){const u=sm((t-a[0])/(b[0]-a[0]));return [L3(a[1],b[1],u),L3(a[2],b[2],u)];}}return [K[K.length-1][1],K[K.length-1][2]];}
 function proj(C,Tg){const f=[Tg[0]-C[0],Tg[1]-C[1],Tg[2]-C[2]],fl=Math.hypot(...f);f[0]/=fl;f[1]/=fl;f[2]/=fl;
   let r=[f[1],-f[0],0];const rl=Math.hypot(r[0],r[1])||1;r[0]/=rl;r[1]/=rl;const u=[r[1]*f[2]-0,-(r[0]*f[2]),r[0]*f[1]-r[1]*f[0]];
@@ -61,29 +62,32 @@ function proj(C,Tg){const f=[Tg[0]-C[0],Tg[1]-C[1],Tg[2]-C[2]],fl=Math.hypot(...
     return [W/2+F*(dx*r[0]+dy*r[1])/zc,H*0.46-F*(dx*u[0]+dy*u[1]+dz*u[2])/zc,zc];};}
 const ease=(t,a,b)=>sm((t-a)/(b-a));
 let t0=0,speed=1,raf=0;
-function frame(now){const t=(now-t0)/1000*speed;draw(Math.min(t,6.2));if(t<6.2)raf=requestAnimationFrame(frame);}
+function frame(now){const t=(now-t0)/1000*speed;draw(Math.min(t,6.4));if(t<6.4)raf=requestAnimationFrame(frame);}
 function draw(t){
   /* logo : fixe, puis zoom et fondu (0,8 → 1,6 s) ; retour 4,8 → 5,4 s */
-  const zo=ease(t,0.8,1.6),back=ease(t,4.75,5.35);
-  const s=back>0?lerp(0.82,1,back):1+zo*1.6;lg.style.transform='scale('+s+')';lg.style.opacity=back>0?back:1-zo;
-  tx.style.opacity=ease(t,5.0,5.5);
+  const em=ease(t,4.5,5.3);
+  tx.style.opacity=ease(t,5.25,5.9);
   /* relief */
-  const ta=ease(t,0.9,1.6)*(1-ease(t,4.6,5.2));cx.clearRect(0,0,W,H);
+  const ta=ease(t,0.0,0.7)*(1-ease(t,4.7,5.3));cx.clearRect(0,0,W,H);
   if(ta>0){const [C,Tg]=cam(t),pr=proj(C,Tg);cx.lineWidth=1;
     const B=[[],[],[],[]];for(let k=0;k<S.length;k+=5){const a=pr(S[k],S[k+1],S[k+4]),b=pr(S[k+2],S[k+3],S[k+4]);if(!a||!b)continue;
       if((a[0]<-50&&b[0]<-50)||(a[0]>W+50&&b[0]>W+50)||(a[1]<-50&&b[1]<-50)||(a[1]>H+50&&b[1]>H+50))continue;
       const dz=(a[2]+b[2])/2,bi=dz<1.2?0:dz<1.9?1:dz<2.8?2:3;B[bi].push(a[0],a[1],b[0],b[1]);}
     const al=[0.85,0.6,0.38,0.2];B.forEach((arr,bi)=>{cx.strokeStyle='rgba(214,240,226,'+(al[bi]*ta)+')';cx.beginPath();for(let k=0;k<arr.length;k+=4){cx.moveTo(arr[k],arr[k+1]);cx.lineTo(arr[k+2],arr[k+3]);}cx.stroke();});
     /* chemin doré qui grimpe (1,6 → 4,6 s) */
-    const pg=ease(t,1.6,4.6),n=Math.max(2,Math.floor(pg*path.length));
+    const pg=ease(t,0.6,4.2),n=Math.max(2,Math.floor(pg*path.length));
     cx.save();cx.globalAlpha=ta;cx.strokeStyle='#e9c46a';cx.lineWidth=3.2;cx.lineJoin=cx.lineCap='round';cx.shadowColor='rgba(233,196,106,.9)';cx.shadowBlur=10;
     cx.beginPath();let st=false,last=null;for(let k=0;k<n;k++){const q=pr(...path[k]);if(!q){st=false;continue;}if(!st){cx.moveTo(q[0],q[1]);st=true;}else cx.lineTo(q[0],q[1]);last=q;}cx.stroke();
-    if(last&&pg>0&&pg<1){cx.fillStyle='#fff7df';cx.beginPath();cx.arc(last[0],last[1],4.2,0,7);cx.fill();}cx.restore();}
+    if(last&&pg>0&&pg<1){cx.fillStyle='#fff7df';cx.beginPath();cx.arc(last[0],last[1],4.2,0,7);cx.fill();}
+    if(pg>=1&&last){const pu=ease(t,4.2,4.7);cx.fillStyle='rgba(255,247,223,'+(1-pu*.6)+')';cx.beginPath();cx.arc(last[0],last[1],4.2+pu*10,0,7);cx.fill();}cx.restore();}
+  /* le logo naît au sommet et prend sa place (4,5 → 5,3 s) */
+  {const [C,Tg]=cam(t),q=proj(C,Tg)(SX,SY,hgt(SX,SY)*HS),r=lg.getBoundingClientRect(),cy=236+126.667,dx=q?q[0]-W/2:0,dy=q?q[1]-cy:0;
+   lg.style.transform='translate('+(dx*(1-em))+'px,'+(dy*(1-em))+'px) scale('+lerp(0.08,1,em)+')';lg.style.opacity=em<=0?0:Math.min(1,em*1.6);}
   /* sortie vers l'appli (5,6 → 6,0 s) */
-  app.style.opacity=ease(t,5.6,6.0);
+  app.style.opacity=ease(t,6.0,6.35);
 }
 function play(sp){cancelAnimationFrame(raf);speed=sp;t0=performance.now();raf=requestAnimationFrame(frame);}
 document.getElementById('rp').onclick=()=>play(1);document.getElementById('sl').onclick=()=>play(1/3);
-if(matchMedia('(prefers-reduced-motion: reduce)').matches)draw(5.5);else play(1);
+if(matchMedia('(prefers-reduced-motion: reduce)').matches)draw(5.95);else play(1);
 })();
 </script>
