@@ -15,3 +15,5 @@ v3 (05/11) : deux variantes (A relief d'abord, B départ du logo qui s'ouvre sur
 v4 (05/11) : variante C, sans logo final : départ du logo comme B, « Reach your peak » en haut pendant la montée, puis un cercle part du sommet et révèle Aujourd'hui (environ 5,2 s, écran d'Android compris). B validée par Antoine ; C proposée pour comparaison.
 
 v5 (05/11) : le cercle de C est jugé « pas très moderne » par Antoine. Deux sorties ajoutées : D (le point du sommet grandit en carte blanche et devient la carte de la séance d'Aujourd'hui, transformation de conteneur) et E (la lumière du sommet envahit l'écran, Aujourd'hui apparaît en sortant du flou). A retirée des boutons.
+
+v6 (05/11) : retour « un peu rapide, il se passe beaucoup de choses ». Variante F : même déroulé que D sans la phrase pendant la montée, caméra qui avance doucement sans grand mouvement, tout 1,25 fois plus lent (environ 7,5 s écran d'Android compris).
