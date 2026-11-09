@@ -15,7 +15,7 @@ Lis ce fichier en entier avant de toucher au code. Il vaut pour tout assistant d
 | `tests/engine.js` | **source unique du moteur de plan** (fonctions pures : profil + séances réalisées + date → plan) |
 | `tools/build.py` | injecte `tests/engine.js` dans `index.html` (repères `ENGINE:BEGIN` / `ENGINE:END`) et recopie la version de `sw.js` |
 | `tools/test.py` | lance toute la batterie de tests |
-| `tests/` | `parity.py` (le moteur en règles v1 doit égaler `sim8.py`, 0 écart), `t_profils.js` (propriétés sur 9 profils), `t_steps.js` (déroulé = durée), `t_react3.js` (réaction au ressenti et aux séances manquées), `t_decal.js` (décalage dans la semaine), `t_prof.json` (profil de test) |
+| `tests/` | `parity.py` (le moteur en règles v1 doit égaler `sim8.py`, 0 écart), `t_profils.js` (propriétés sur 9 profils), `t_steps.js` (déroulé = durée), `t_react3.js` (réaction au ressenti et aux séances manquées), `t_decal.js` (décalage dans la semaine), `t_reprise.js` (repère de reprise sans effet de seuil, D-94), `t_prof.json` (profil de test) |
 | `sim8.py`, `sim3.py`, `serie11.py` | simulateur de référence des règles v1 et séries historiques |
 | `docs/` | décisions et doctrine (voir plus bas) |
 | Hébergement | GitHub Pages ; connexion et synchronisation par **Supabase** (obligatoires) |
@@ -65,4 +65,4 @@ La ligne « Ascend vNN » en bas de Profil sert à vérifier qu'un déploiement 
 - Bilan de phase : ne lit pas encore les commentaires de séance.
 - Lecture de photo : fonction Supabase à déployer ; retirée du formulaire de renforcement (D-74), à reprendre avec le journal de progression.
 - Idées reportées : `docs/BACKLOG.md`.
-- `H-38` à `H-40` sont cités dans le moteur mais leur texte est introuvable dans `docs/` (à réintégrer depuis `MOTEUR-V0.md` s'il existe encore).
+- `H-38` et `H-39` sont cités dans le moteur mais leur texte est introuvable dans `docs/` (à réintégrer depuis `MOTEUR-V0.md` s'il existe encore). H-40 réécrite le 09/11/2026 (D-94).

@@ -13,6 +13,7 @@ ETAPES = [
     ("Déroulé = durée de chaque séance", ['node', 't_steps.js'], T, None),
     ("Réaction au ressenti (gel de la sortie longue, séances manquées)", ['node', 't_react3.js'], T, None),
     ("Décalage d'une séance dans la semaine", ['node', 't_decal.js'], T, None),
+    ("Repère de reprise sans effet de seuil (D-94)", ['node', 't_reprise.js'], T, None),
 ]
 echecs = 0
 for nom, cmd, cwd, verdict in ETAPES:

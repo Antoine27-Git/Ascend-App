@@ -15,6 +15,6 @@ Ce ne sont pas des décisions. Chaque idée sera rouverte, challengée et tranch
 - Signal de fatigue option C (RPE attendu vs RPE réel), qui dépend du modèle allure-effort.
 - Lecture des commentaires de séance dans le bilan de phase.
 - Déploiement de la fonction Supabase analyze-wod.
-- Rétablir les textes de H-38, H-39 et H-40 dans HYPOTHESES.md.
+- Rétablir les textes de H-38 et H-39 dans HYPOTHESES.md (H-40 réécrite le 09/11/2026, D-94).
 - Liaison du Project avec GitHub.
 - Option « malade ou douleur » pour une séance manquée, le jour où le moteur y réagit autrement que « fatigue » (D-72).
