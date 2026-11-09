@@ -3232,3 +3232,11 @@ Effet mesuré (1re sortie longue) :
 | 1 h 16 faite (sortie suivante) | 1 h 23 | 1 h 23 |
 Coût assumé : le coureur expérimenté qui reprend après plus de 30 jours repart d'1 h au lieu d'un repère proche de son ancien niveau (perte du gain de D-63k5).
 Profils de `t_profils.js` : un seul écart, dû à la correction de la déclaration (« 1 × 2 h par semaine » : sortie longue 1 h 50 → 2 h 00, semaine allégée 1 h 10 → 1 h 20). Parité v1 : 0 écart (règles v1 inchangées). Test ajouté : `tests/t_reprise.js`.
+
+### D-95 — Arrondi des durées prescrites vers le bas aux 5 min : écarté (09/11/2026)
+Proposition étudiée : arrondir aux 5 min inférieures toute séance qui bute sur la limite de +10 % (1 h 23 → 1 h 20), dans le moteur.
+Constat :
+- la sécurité est déjà tenue : au plafond, le moteur coupe à la minute inférieure (D-65d), la séance ne dépasse jamais +10 % de la plus longue des 30 jours (S-BLE-004) ;
+- sous 50 min, des pas de 5 min bloquent la progression (30 min × 1,1 = 33 → 30, sans fin) ;
+- dès 50 min, la progression ralentit : pas de 5 min = +5 à +8 % entre 1 h et 1 h 40. Sur le profil d'Antoine (1 h 16 faite le 08/11) : 2 h atteintes le 10/01 au lieu du 27/12, 4 h le 18/04 au lieu du 21/03 ; 5 h et 6 h inchangées, aucune alerte d'écart. Sur les 9 profils de test : objectif atteint la même semaine, volume total -1 %.
+Décision (Antoine) : progresser le plus vite possible dans la limite de +10 % ; l'arrondi actuel (D-65d) est conservé. Des durées comme 1 h 23 restent possibles.
