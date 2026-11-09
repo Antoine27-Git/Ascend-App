@@ -202,6 +202,7 @@ Ajoutées le 29/09/2026 (D-66 à D-71). Priorité 1 = à tester en premier (port
 
 | # | Hypothèse | Décision | Portée | Détectabilité | Priorité |
 |---|---|---|---|---|---|
+| H-40 | Reprise : une séance sortie de la fenêtre des 30 jours garde un repère qui baisse de 1 % par jour dès le 31e jour (nul au 130e), calculé au jour de la séance ; ce repère n'autorise pas de séance de plus d'1 h (2 × le plancher de 30 min) — au-delà, règle des 30 jours stricte. Après une pause déclarée, le volume de départ est réduit à 65 % (moins de 2 semaines) ou 50 %. Convention : la pente est plus rapide que la baisse de VO2max (S-COU-005) car elle vise la tolérance des tissus, non mesurée ; Frandsen 2025 (S-BLE-004) ne dit rien de la durée de la première séance après une coupure. Réécrite le 09/11/2026 (D-94), remplace le repère dégressif de 7 % par semaine (plancher 65 %) | D-94, D-63k5 | forte : première sortie après une coupure | faible — une blessure évitée ne se voit pas | **1** |
 | H-41 | La densité de D+ de départ vaut au plus la moitié de celle de la course, puis monte linéairement jusqu'à la fin du fond | D-66, D-65e | moyenne | bonne (D+ ressenti dès les premières semaines) | 3 |
 | H-42 | Samedi d'un week-end de choc : au plus 2/3 de la sortie longue et 3 h (4 h si la course dure 20 h ou plus) ; la fatigue de deux jours consécutifs se lit dans le ressenti | D-68, D-70 | moyenne | moyenne — le RPE des endurances ne voit pas la fatigue d'une sortie longue | **2** |
 | H-43 | Récupération après un objectif secondaire à 35 / 55 / 75 % ; semaine allégée à 65 % du niveau de sortie longue ; sortie longue d'une semaine « moyenne » ≤ 3 h | D-67, D-70 | faible | bonne | 3 |
@@ -209,7 +210,7 @@ Ajoutées le 29/09/2026 (D-66 à D-71). Priorité 1 = à tester en premier (port
 | H-45 | Un écart est signalé sous 90 % de la cible ; un palier de +10 % prend environ 1,5 semaine (allègements et alternance compris) | D-69 | faible (information) | bonne | 3 |
 | H-46 | Le RPE d'une sortie longue dépend de sa durée et de son D+ : seul celui des endurances signale une fatigue anormale | D-70 | moyenne | faible — à 2 jours de course, une endurance par semaine, parfois aucune : le signal peut rester muet | **1** |
 | H-47 | Après un signal de fatigue, la sortie longue ne progresse pas pendant 2 semaines (1 après un ressenti « maintien ») | D-67 | moyenne | bonne | 2 |
-| H-48 | Une sortie longue déclarée, sortie de la fenêtre des 30 jours depuis moins de 8 semaines, sert de repère de reprise dégressif (même formule que H-40) | D-67 | moyenne | faible — sans historique importé, rien ne la contredit | **1** |
+| H-48 | La sortie longue déclarée au départ compte comme une séance à sa date, avec la même mémoire que H-40 (plus de condition « aucune course dans les 30 jours » ni de limite à 8 semaines). Réécrite le 09/11/2026 (D-94) | D-94, D-67 | moyenne | faible — sans historique importé, rien ne la contredit | **1** |
 
 **Ce qui les testerait** : tes propres séances. H-44 et H-46 sont les plus fragiles : si tu
 te sens « cuit » après un week-end de choc alors que le RPE de tes endurances reste bas, le
@@ -219,9 +220,9 @@ inscrire dans SOURCES.md.
 
 | H-49 | Une séance manquée sans réponse est un empêchement, pas une fatigue | D-72 | moyenne | moyenne — une fatigue réelle se lit aussi dans le RPE des endurances, mais celui-ci peut rester muet (H-46) | 2 |
 
-**À réintégrer** : H-38 (échelle RPE → dérive du simulateur) et H-40 (reprise après une
-interruption) sont cités dans le moteur, mais leur texte est introuvable dans ce dossier au
-29/09/2026 (probablement dans MOTEUR-V0.md, retiré des Connaissances). H-39 : non retrouvée.
+**À réintégrer** : H-38 (échelle RPE → dérive du simulateur) est citée dans le moteur, mais son
+texte est introuvable dans ce dossier au 29/09/2026 (probablement dans MOTEUR-V0.md, retiré des
+Connaissances). H-39 : non retrouvée. H-40 : réécrite le 09/11/2026 (D-94).
 
 ## Hypothèses du chantier interface (octobre 2026)
 

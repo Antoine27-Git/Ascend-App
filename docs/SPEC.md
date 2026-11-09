@@ -3201,3 +3201,34 @@ Amendement v52 (03/11/2026), après essai de la v49 par Antoine (« la forme est
 - La cible est expliquée dans le détail : pourquoi la plus longue sortie visée est de 5 à 6 h et pas la durée de la course.
 - L'écart du moteur (cible inatteignable à ce rythme) reste affiché dans le détail de la sortie longue, avec sa cause et ses leviers.
 - « Tu suis le plan ? » : « Rien de manqué », « 1 sortie longue manquée », ou le nombre de séances manquées ; « Tu encaisses ? » : « Repère en cours : n endurances notées sur 4 ».
+
+### D-94 — Repère de reprise sans effet de seuil (09/11/2026, v53 ; amende D-67 h et D-63k5, règles v2 seulement)
+Constat (simulations du 08/11/2026 sur le moteur v52) : le repère de reprise dégressif (D-67 h, H-48) et celui des semaines « arrêt » (D-63k5, H-40) créaient des sauts :
+- une seule course réelle dans les 30 jours avant le départ annulait le repère : 1re sortie longue de 1 h 16 → 33 min pour une course de 30 min ;
+- le repère tombait à zéro au-delà de 8 semaines : sortie déclarée de 2 h vieille de 85 jours → 1 h 20, de 87 jours → 33 min ;
+- le repère était figé au départ (ou à la reprise) pendant 30 jours, sans vieillir avec la date de la séance : 1 h 49 prescrite le 18/10/2026 contre 30 min réelles dans le mois (+263 %).
+
+Données : Frandsen et coll. 2025 (S-BLE-004) — au-delà de +10 % de la plus longue des 30 jours, risque de blessure accru (HR 1,64 / 1,52 / 2,28 selon le dépassement) ; aucun surrisque observé sans course dans les 30 jours (HR 0,82, non significatif). Lue à la lettre, l'étude a elle-même un seuil (30 min puis 1 h 16 = « grand pic », rien puis 1 h 16 = pas de surrisque) et ne dit rien de la durée de la première séance après une coupure (elle ne distingue pas reprise et débutant). Une règle continue relève donc de la **convention**.
+
+Règle (v2) — la référence d'une séance est le plus grand de :
+- la plus longue séance (réelle, prévue ou déclarée) des 30 jours précédents (inchangé, S-BLE-004) ;
+- la **mémoire** des séances plus anciennes : durée × (1 − 1 % par jour au-delà du 30e jour), nulle au 130e jour, calculée au jour de la séance (H-40) ; plafonnée pour que la séance prescrite (+10 %) ne dépasse pas **1 h** (`CONV.memSeance`, soit 2 × le plancher de 30 min de H-21).
+Propriétés : continue (0 ou 30 min de course dans le mois donnent la même référence), monotone (une course de plus ne baisse jamais la référence). Au-delà d'1 h, seule la règle des 30 jours compte : l'entraînement normal est inchangé.
+La sortie longue déclarée au départ est une séance à sa date, soumise à la même mémoire (H-48) ; le repère de l'écart n° 5 de D-67 (h) est supprimé. En v2, le repère des semaines « arrêt » et de la reprise après un objectif secondaire n'agit plus sur la référence ; la réduction du volume après une interruption (H-40) est conservée.
+
+Variante écartée (proposée le 08/11, validée puis retirée) : plafond à 1,82 × la plus longue des 30 jours (30 min au moins). Elle assouplissait aussi la règle des 30 jours en plein entraînement (sortie clé de 6 h après 4 h 50 dans le mois, +24 % ; 4 h 10 en affûtage après 3 h, +39 %) et donnait des résultats différents selon que le mois était déclaré ou réel (1 h 18 contre 1 h 00).
+
+Correction liée : la déclaration « n sorties par semaine de durée moyenne d » se traduisait par de fausses séances (sortie longue = 32,5 % du volume : 39 min pour « 1 × 2 h »). En v2, la plus longue déclarée du mois vaut au moins la durée moyenne déclarée (la moyenne ne peut dépasser le maximum).
+
+Effet mesuré (1re sortie longue) :
+| Cas | v52 | v53 |
+|---|---|---|
+| sortie déclarée 1 h 47 le 6/09, départ le 2/11, rien couru depuis | 1 h 16 | 1 h 00 |
+| idem + 30 min le 20/10 | 0 h 33 | 1 h 00 |
+| départ le 21/09, 30 min le 27/09, sortie longue du 18/10 | 1 h 49 | 1 h 00 |
+| 2 h il y a 6 semaines + 2 × 40 min par semaine | 0 h 44 | 1 h 00 |
+| 2 h il y a 85 jours / 87 jours | 1 h 20 / 0 h 33 | 0 h 50 / 0 h 49 |
+| 3 h il y a 5 semaines, rien depuis | 2 h 35 | 1 h 00 |
+| 1 h 16 faite (sortie suivante) | 1 h 23 | 1 h 23 |
+Coût assumé : le coureur expérimenté qui reprend après plus de 30 jours repart d'1 h au lieu d'un repère proche de son ancien niveau (perte du gain de D-63k5).
+Profils de `t_profils.js` : un seul écart, dû à la correction de la déclaration (« 1 × 2 h par semaine » : sortie longue 1 h 50 → 2 h 00, semaine allégée 1 h 10 → 1 h 20). Parité v1 : 0 écart (règles v1 inchangées). Test ajouté : `tests/t_reprise.js`.
