@@ -1253,7 +1253,8 @@ const CONV={
   secExigeant:(dur,dist,dplus)=>dur>=240||(dist>0&&dplus/dist>=30),
   efMax:{'4-8h':90,'8-20h':90},
   memPente:0.01,             /* D-94, H-40 : une sortie sortie de la fenêtre des 30 jours garde un repère qui baisse de 1 % par jour (0 au 130e jour) */
-  memSeance:60};             /* D-94 : la mémoire n'autorise pas de séance de plus d'1 h (= 2 × le plancher de 30 min) ; au-delà, règle des 30 jours stricte */   /* D-29 : endurance ≤ 1 h 30 pour les programmes longs (< 4 h : gabarit court non écrit, tranche 4–8 h appliquée) */  /* « beaucoup de dénivelé » : 30 m/km et plus */
+  memSeance:60,              /* D-94 : la mémoire n'autorise pas de séance de plus d'1 h (= 2 × le plancher de 30 min) ; au-delà, règle des 30 jours stricte */
+  arrondiSup:true};          /* D-96, H-58 : la séance de progression qui bute sur la limite de +10 % est arrondie au multiple de 5 min supérieur (dès 50 min), dépassement < 5 min ; false = minute inférieure (D-65d) */
 /* ressenti : RPE moyen des séances faciles → échelle du simulateur. 1 point de RPE = dérive 0,12 (H-38, à calibrer). */
 const RPE_REF=3,RPE_K=0.12;
 const DAY=864e5;
@@ -1267,10 +1268,11 @@ const med=a=>{const b=a.slice().sort((x,y)=>x-y),n=b.length;return n?(n%2?b[(n-1
 /* ---- arrondi (D-65d) : 1-2-3 → 0, 4-5-6 → 5, 7-8-9 → 10 dès 50 min ; minute en dessous ;
    jamais au-dessus du plafond ; la séance de progression qui y bute s'affiche à la minute */
 function regle(m){const mi=Math.floor(m+0.5-1e-9),d=mi%10;return mi-d+(d<=3?0:d<=6?5:10);}
+let SUP=false;   /* D-96 : arrondi supérieur au plafond, règles v2 seulement (fixé dans build) */
 function arrondi(m,plafond,fin){
   if(m<=0)return 0;
   if(m>=50-EPS){let r=regle(m);
-    if(plafond!=null&&r>plafond+EPS)r=fin?Math.floor(plafond+1e-9):(plafond>=50-EPS?5*Math.floor(plafond/5+1e-9):Math.floor(plafond+1e-9));
+    if(plafond!=null&&r>plafond+EPS)r=fin?((SUP&&plafond>=50-EPS)?5*Math.ceil((plafond-1e-9)/5):Math.floor(plafond+1e-9)):(plafond>=50-EPS?5*Math.floor(plafond/5+1e-9):Math.floor(plafond+1e-9));
     return Math.max(r,0);}
   let r=Math.floor(m+0.5-1e-9);
   if(plafond!=null&&r>plafond+EPS)r=Math.floor(plafond+1e-9);
@@ -1452,7 +1454,7 @@ function build(inp){
   let DyW=Dy;const tcap=dow=>{if(inp.regles!=='v1')return null;const t=(DyW.time||{})[dow];return t?+t:null;};   /* D-71 : ignoré en v2 (l'endurance est plafonnée par CONV.efMax, la sortie longue par sa progression) */
   const strength=!!(P.modules&&P.modules.strength);let cfDays=strength?(Dy.cf||[]).slice():[],renfo2=strength&&cfDays.length>=2;
   /* D-68 : organisation par phase (attachée aux phases, pas aux dates) et versions passées (le passé ne se réécrit jamais) */
-  const V2=inp.regles!=='v1',ORD=['F1','F2','F3','F4','bloc','pic','affutage'];
+  const V2=inp.regles!=='v1';SUP=V2&&CONV.arrondiSup;const ORD=['F1','F2','F3','F4','bloc','pic','affutage'];
   const okOrg=o=>o&&ORD.includes(o.from)&&o.days&&(o.days.run||[]).length;
   const cfgNow={days:Dy,orgs:V2&&Array.isArray(P.orgs)?P.orgs.filter(okOrg):[]};
   /* versions passées : {until, days, orgs} ; une semaine antérieure à until garde l'organisation de sa version */
@@ -1685,7 +1687,7 @@ function build(inp){
     /* séances datées */
     const why=x=>{const b=[];
       if(x.kind==='cle')b.push('Sortie clé du bloc spécifique : elle se rapproche de ta course.');
-      else if(x.kind==='long')b.push(ph==='fond'?'Sortie longue : la seule séance qui progresse cette semaine (+10 % au plus sur la plus longue des 30 derniers jours).':'Sortie longue.');
+      else if(x.kind==='long')b.push(ph==='fond'?'Sortie longue : la seule séance qui progresse cette semaine (environ +10 % sur la plus longue des 30 derniers jours, durée arrondie aux 5 min supérieures).':'Sortie longue.');
       else if(x.kind==='qual')b.push({F2:'Base aérobie : travail de force en côte, car ton renforcement ne le couvre pas.',F3:'Endurance musculaire : les jambes, pas le souffle, limitent la montée. C\'est la qualité qui manque le plus en ultra de montagne.',F4:'Intensité en côte : elle relève ton plafond aérobie avant le bloc spécifique.',bloc:'Bloc spécifique : effort de course en montée.',pic:'Pic : effort de course en montée.',affutage:'Affûtage : garder le rythme sans fatigue.'}[aff?'affutage':(sp||ph)]||'Séance de qualité.');
       else if(x.moyen)b.push('Week-end de choc : sortie moyenne la veille de ta sortie longue, pour courir le lendemain sur des jambes déjà fatiguées. Il y en a peu dans la préparation : c\'est l\'un d\'eux.');
       else if(x.kind==='ef')b.push('Endurance facile : elle construit le volume sans fatigue.');
@@ -1724,7 +1726,7 @@ function build(inp){
   out.ok=true;out.model={volume:m.volume,casse:m.casse,base:m.base};
   return out;
 }
-return {build,arrondi,Calendrier,dureeCourse,tranche_de,_t:{Modele,ajuste,atteint,max30,ref30,relachesPrevues}};
+return {build,CONV,arrondi,Calendrier,dureeCourse,tranche_de,_t:{Modele,ajuste,atteint,max30,ref30,relachesPrevues}};
 })();
 /* ENGINE:END */
 
@@ -2818,7 +2820,7 @@ function vGate(){
     +authFormHTML('Un compte garde ton plan et tes séances en sécurité, et te permet de les retrouver sur un autre téléphone. Ton prénom personnalise l\'app.')
     +syncLineHTML()+versionLineHTML()+'</div></main>';
 }
-const APP_VERSION='v53';   /* généré depuis sw.js par tools/build.py */
+const APP_VERSION='v54';   /* généré depuis sw.js par tools/build.py */
 function versionLineHTML(){return '<div class="mini" id="ver" style="margin-top:12px;text-align:center;opacity:.7">Ascend '+APP_VERSION+' · moteur de plan v2</div>';}
 /* compare la page chargée au cache du service worker : signale un déploiement pas encore actif */
 function checkVersion(){if(!('caches' in window))return;caches.keys().then(ks=>{const c=ks.filter(k=>/^ascend-v\d+$/.test(k)).map(k=>+k.slice(8)).sort((a,b)=>b-a)[0],el=document.getElementById('ver');

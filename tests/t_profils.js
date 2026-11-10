@@ -1,4 +1,4 @@
-/* D-67/D-68 : propriétés du moteur v2 sur 8 profils (lancer : node t_profils.js [v1] [détail <profil>]) */
+/* D-67/D-68 : propriétés du moteur v2 sur 8 profils (règle des 30 jours : +10 %, ou multiple de 5 min supérieur dès 50 min, D-96) (lancer : node t_profils.js [v1] [détail <profil>]) */
 const E=require('./engine.js'),base=require('./t_prof.json');
 const regles=process.argv[2]==='v1'?'v1':undefined,detail=process.argv[3]==='detail'?process.argv[4]:null;
 const isRun=s=>['ef','long','qual','desc'].includes(s.type);
@@ -29,7 +29,7 @@ for(const [nom,mod] of Object.entries(PROFILS)){
     if(L&&k.type==='relache'&&prevL&&L.dur>prevL)pb.push('S'+k.w+' semaine allégée : sortie longue '+L.dur+' > '+prevL);
     s.forEach(x=>{const j=(new Date(x.date)-new Date(o.info.start))/864e5;
       /* repère de reprise (H-40) : sortie déclarée sortie de la fenêtre depuis moins de 8 semaines, dégressive */
-      const m=Math.max(0,...hist.filter(h=>h.j>=j-30&&h.j<j).map(h=>h.d),...hist.filter(h=>h.repr&&j<30&&-h.j<86).map(h=>h.d*Math.max(0.65,1-0.07*Math.max(0,Math.ceil((-h.j-23)/7)))));if(x.type!=='race'&&m&&x.dur>1.1*m+1&&x.type==='long')pb.push('S'+k.w+' règle des 30 j : '+x.dur+' > 1,1 × '+m);hist.push({j,d:x.dur});});
+      const m=Math.max(0,...hist.filter(h=>h.j>=j-30&&h.j<j).map(h=>h.d),...hist.filter(h=>h.repr&&j<30&&-h.j<86).map(h=>h.d*Math.max(0.65,1-0.07*Math.max(0,Math.ceil((-h.j-23)/7)))));if(x.type!=='race'&&m&&x.dur>(!regles&&1.1*m>=50?Math.max(1.1*m+1,5*Math.ceil((1.1*m-1e-9)/5)):1.1*m+1)&&x.type==='long')pb.push('S'+k.w+' règle des 30 j : '+x.dur+' > 1,1 × '+m);hist.push({j,d:x.dur});});
     if(L){if(secW.length&&k.w<secW[0]-2)maxAvantSec=Math.max(maxAvantSec,L.dur);if(k.phase==='bloc'||k.phase==='pic')maxBloc=Math.max(maxBloc,L.dur);if(k.type==='charge')prevL=L.dur;}
     if(detail===nom)console.log('S'+k.w,(k.sous||k.phase).padEnd(8),k.type.padEnd(9),(k.jours||[]).join(''),s.map(x=>(x.title==='Week-end de choc'?'m':x.type[0])+x.dur).join(' '));});
   const dS=o.sessions.find(x=>x.type==='race'&&x.date!==p.goalDate)?.dur||0,plaf=dS>=480?300:dS>=240?210:180,cibleSec=secW.length?Math.round(regles?Math.min(dS,plaf*1.1)/1.1:Math.min(0.5*dS,270)):null;
@@ -44,9 +44,9 @@ if(!regles){const sig=t=>{const p=JSON.parse(JSON.stringify(base));p.days={run:[
   const ok=sig({})===sig({3:60});console.log(ok?'temps disponible ignoré : ✓':'temps disponible ignoré : ✗');if(!ok)process.exitCode=1;
   /* endurance ≤ 1 h 30 sur toute la durée du plan */
   const p=JSON.parse(JSON.stringify(base));const o=E.build({profile:p,today:'2026-09-27',sessions:[],isRun});const m=Math.max(...o.sessions.filter(x=>x.type==='ef'&&x.title!=='Week-end de choc').map(x=>x.dur));console.log('endurance max : '+m+' min '+(m<=90?'✓':'✗'));}
-/* D-69 : écarts de projection — aucun pour les profils avec historique, deux pour « sans historique » */
+/* D-69, D-96 : écarts de projection — aucun pour les profils avec historique, un seul (secondaire) pour « sans historique » */
 if(!regles){const ec=m=>{const p=JSON.parse(JSON.stringify(base));m(p);return E.build({profile:p,today:'2026-09-27',sessions:[],isRun}).ecarts.map(e=>e.obj).join(',');};
-  const a=ec(p=>{}),b=ec(p=>{p.start={};});const ok=a===''&&b==='secondaire,principal';
+  const a=ec(p=>{}),b=ec(p=>{p.start={};});const ok=a===''&&b==='secondaire';   /* D-96 : l'arrondi supérieur (+36 min sur la sortie longue max) rend l'objectif principal atteignable sans historique ; avant : 'secondaire,principal' */
   console.log('écarts : avec historique ['+a+'] · sans historique ['+b+'] '+(ok?'✓':'✗'));if(!ok)process.exitCode=1;}
 
 /* D-75 : le D+ de départ ne se nourrit pas des endurances plates prescrites par le plan (densité en m/h de la semaine en cours) */
