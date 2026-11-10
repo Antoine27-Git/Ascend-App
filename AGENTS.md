@@ -15,7 +15,7 @@ Lis ce fichier en entier avant de toucher au code. Il vaut pour tout assistant d
 | `tests/engine.js` | **source unique du moteur de plan** (fonctions pures : profil + séances réalisées + date → plan) |
 | `tools/build.py` | injecte `tests/engine.js` dans `index.html` (repères `ENGINE:BEGIN` / `ENGINE:END`) et recopie la version de `sw.js` |
 | `tools/test.py` | lance toute la batterie de tests |
-| `tests/` | `parity.py` (le moteur en règles v1 doit égaler `sim8.py`, 0 écart), `t_profils.js` (propriétés sur 9 profils), `t_steps.js` (déroulé = durée), `t_react3.js` (réaction au ressenti et aux séances manquées), `t_decal.js` (décalage dans la semaine), `t_reprise.js` (repère de reprise sans effet de seuil, D-94), `t_prof.json` (profil de test) |
+| `tests/` | `parity.py` (le moteur en règles v1 doit égaler `sim8.py`, 0 écart), `t_profils.js` (propriétés sur 9 profils), `t_steps.js` (déroulé = durée), `t_react3.js` (réaction au ressenti et aux séances manquées), `t_decal.js` (décalage dans la semaine), `t_reprise.js` (repère de reprise sans effet de seuil, D-94), `t_arrondi.js` (arrondi supérieur, D-96), `t_prof.json` (profil de test) |
 | `sim8.py`, `sim3.py`, `serie11.py` | simulateur de référence des règles v1 et séries historiques |
 | `docs/` | décisions et doctrine (voir plus bas) |
 | Hébergement | GitHub Pages ; connexion et synchronisation par **Supabase** (obligatoires) |
@@ -43,7 +43,7 @@ La ligne « Ascend vNN » en bas de Profil sert à vérifier qu'un déploiement 
 ## Décisions et documentation (sources de vérité)
 - `docs/SPEC.md` : registre des décisions `D-xx` (dernières : D-66 à D-92). `docs/HYPOTHESES.md` : hypothèses `H-xx` avec portée, détectabilité, priorité. `docs/GABARIT-TRAIL.md` : doctrine d'entraînement (Uphill Athlete, Koop, 80/20, Roche). `docs/MOTEUR-V1.md` : journal de la refonte de septembre 2026. `docs/SOURCES.md`, `REGLES.md`, `SCHEMA.md`, `LEXIQUE.md`, `TESTS.md`, `ALLEGEMENT.md`, `PHOTO-WOD.md` : références.
 - Toute nouvelle règle : une entrée `D-xx` dans SPEC.md (avec date et motif) ; si elle repose sur une extrapolation ou une convention de coach, une entrée `H-xx` et la mention « convention » ou « extrapolation » dans le message affiché. **Ne présente jamais une convention comme un résultat scientifique.**
-- Preuve la plus solide du projet : règle des 30 jours (Frandsen et al., BJSM 2025 — une séance ne dépasse pas de plus de 10 % la plus longue des 30 derniers jours). Elle prime sur toute progression plus rapide.
+- Preuve la plus solide du projet : règle des 30 jours (Frandsen et al., BJSM 2025 — une séance ne dépasse pas de plus de 10 % la plus longue des 30 derniers jours). Elle prime sur toute progression plus rapide. **Tolérance D-96 (convention, v2)** : la séance de sortie longue qui bute sur cette limite est arrondie au multiple de 5 min supérieur dès 50 min (dépassement < 5 min, réglage `CONV.arrondiSup`) ; à dire comme une convention, jamais comme un résultat de l'étude.
 - Ne renumérote jamais un identifiant existant. Vérifie qu'un `H-xx` n'est pas déjà utilisé (grep dans `docs/` et dans le moteur) avant d'en créer un.
 
 ## Principes produit

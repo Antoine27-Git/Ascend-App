@@ -3239,4 +3239,18 @@ Constat :
 - la sécurité est déjà tenue : au plafond, le moteur coupe à la minute inférieure (D-65d), la séance ne dépasse jamais +10 % de la plus longue des 30 jours (S-BLE-004) ;
 - sous 50 min, des pas de 5 min bloquent la progression (30 min × 1,1 = 33 → 30, sans fin) ;
 - dès 50 min, la progression ralentit : pas de 5 min = +5 à +8 % entre 1 h et 1 h 40. Sur le profil d'Antoine (1 h 16 faite le 08/11) : 2 h atteintes le 10/01 au lieu du 27/12, 4 h le 18/04 au lieu du 21/03 ; 5 h et 6 h inchangées, aucune alerte d'écart. Sur les 9 profils de test : objectif atteint la même semaine, volume total -1 %.
-Décision (Antoine) : progresser le plus vite possible dans la limite de +10 % ; l'arrondi actuel (D-65d) est conservé. Des durées comme 1 h 23 restent possibles.
+Décision (Antoine, 09/11/2026) : écarté dans un premier temps (l'arrondi vers le bas ralentit) ; **remplacé le soir même par D-96** (arrondi vers le haut).
+
+### D-96 — Arrondi supérieur de la séance qui bute sur la limite de +10 % (10/11/2026, v54 ; remplace D-95, amende D-65d et la règle des 30 jours en v2)
+Demande d'Antoine : « progresser un peu plus vite tout en respectant le risque de blessure » ; dépasser de quelques points la limite de +10 % lui paraît négligeable.
+Règle (v2) : quand la durée prescrite d'une sortie longue est limitée par +10 % de la plus longue des 30 jours (S-BLE-004), elle est arrondie au **multiple de 5 min supérieur** dès que la limite atteint 50 min (au lieu de la minute inférieure). Sous 50 min, la minute inférieure est conservée (le pas de 5 min serait un bond de +10 à +17 %). Les autres séances (endurances, week-end de choc, plafonds de temps) gardent leur arrondi (D-65d). Réglage : `CONV.arrondiSup` (`false` = D-65d). Règles v1 inchangées.
+**Convention, pas un résultat scientifique** : Frandsen et coll. 2025 (S-BLE-004) compare des catégories (≤ 10 % référence ; 10 à 30 % : HR 1,64 ; 30 à 100 % : 1,52 ; > 100 % : 2,28). Rien ne montre un seuil net à 10,0 % ni que +12 % soit sans risque. Le dépassement est pris en connaissance de cause, mesuré ci-dessous. La règle des 30 jours reste la référence : au-delà du dépassement toléré (< 5 min), aucune séance ne la franchit.
+Dépassement maximal par rapport à la limite de +10 % (juste sous 5 min) : jusqu'à +19,8 % à 50 min de référence, +17,7 % vers 1 h 05, +15,4 % vers 1 h 30, +14,0 % vers 2 h 00, +12,7 % vers 3 h ; en moyenne la moitié. Le dépassement relatif est donc le plus grand pour les sorties courtes.
+Effet mesuré :
+| Cas (1re sortie longue = 1 h 16 faite le 08/11) | v53 | v54 |
+|---|---|---|
+| 3 prochaines sorties longues | 1 h 23, 1 h 30, 1 h 39 | 1 h 25, 1 h 30, 1 h 40 |
+| 2 h atteintes | 27/12 | 20/12 |
+| 3 h, 4 h, 5 h atteintes | 07/02, 21/03, 11/07 | identiques |
+Profil « sans historique » (`t_profils.js`) : sortie longue maximale 264 → 300 min ; l'écart « objectif principal inatteignable » disparaît (il en reste un, secondaire). L'effet se cumule : un petit dépassement à chaque étape pèse plusieurs dizaines de minutes à la fin d'une année.
+Parité v1 : 0 écart. Tests : `t_arrondi.js` (nouveau), `t_profils.js` (règle des 30 jours : +10 % ou multiple de 5 min supérieur ; écarts attendus : un seul pour « sans historique »).
