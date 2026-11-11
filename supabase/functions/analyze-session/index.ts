@@ -47,7 +47,7 @@ Deno.serve(async (req: Request) => {
       method: "POST",
       headers: { "x-api-key": key, "anthropic-version": "2023-06-01", "content-type": "application/json" },
       body: JSON.stringify({
-        model, max_tokens: 600, system: CONSIGNES,
+        model, max_tokens: 2500, system: CONSIGNES, // marge : un modèle qui réfléchit avant de répondre consomme aussi ces jetons (v57b)
         messages: [{ role: "user", content: "Bilan de la séance (JSON) :\n" + data }],
       }),
     });
@@ -61,6 +61,9 @@ Deno.serve(async (req: Request) => {
   }
   const out = await r.json();
   const texte = Array.isArray(out?.content) ? out.content.filter((c: { type: string }) => c.type === "text").map((c: { text: string }) => c.text).join("\n").trim() : "";
-  if (!texte) return json({ error: "Réponse vide" }, 502);
+  if (!texte) {
+    const types = Array.isArray(out?.content) ? out.content.map((c: { type: string }) => c.type).join(",") : "aucun";
+    return json({ error: "Réponse vide", detail: "arrêt : " + (out?.stop_reason ?? "?") + " · blocs : " + types }, 502);
+  }
   return json({ texte, model });
 });
