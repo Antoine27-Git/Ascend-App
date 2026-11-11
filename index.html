@@ -1648,9 +1648,14 @@ function build(inp){
       days.forEach(d=>{const dt=add(monW,off(d));if([...raceDates].some(r=>r===dt||add(r,-1)===dt))return;
         const near=gap(d,longDow)<=1;rf.push({dow:d,near});});}
     /* D-73 : séance décalée par l'utilisateur dans la même semaine, vers un jour sans autre course */
-    if(V2&&P.decal)rx.forEach(x=>{if(x.kind==='race'||x.kind==='goal')return;const o0=add(monW,off(x.dow)),t=P.decal[o0];
-      if(!t||t===o0||t<monW||t>add(monW,6))return;const td=D(t).getDay();if(rx.some(y=>y!==x&&y.dow===td))return;
-      x.orig=o0;x.dow=td;x.jour=jourOf(t);});
+    /* D-97 : les décalages de la semaine sont appliqués ensemble ; deux séances qui prennent chacune le jour de l'autre s'échangent.
+       Un décalage est refusé si, une fois tous appliqués, deux courses tombent le même jour (on retire les décalages en conflit jusqu'à stabilité). */
+    if(V2&&P.decal){
+      const mv=new Map();rx.forEach(x=>{if(x.kind==='race'||x.kind==='goal')return;const o0=add(monW,off(x.dow)),t=P.decal[o0];
+        if(!t||t===o0||t<monW||t>add(monW,6))return;mv.set(x,{o0,t,td:D(t).getDay()});});
+      for(let k=0;k<8;k++){const fin=x=>mv.has(x)?mv.get(x).td:x.dow,bad=[...mv.keys()].filter(x=>rx.some(y=>y!==x&&fin(y)===fin(x)));
+        if(!bad.length)break;bad.forEach(x=>mv.delete(x));}
+      mv.forEach((m,x)=>{x.orig=m.o0;x.dow=m.td;x.jour=jourOf(m.t);});}
     /* D+ */
     const dz=dens(w);
     rx.forEach(x=>{if(x.kind==='race'||x.kind==='goal')return;const f=x.kind==='long'||x.kind==='cle'?1:x.kind==='qual'?0.8:0.5;
@@ -1829,15 +1834,17 @@ const manqueDe=ps=>((S.profile.manques||{})[ps.decale||ps.date])||null;
 /* jours où une séance de course peut aller : semaine en cours, à partir d'aujourd'hui, sans autre course ce jour-là */
 function joursLibres(ps){const t=todayISO(),m0=monday(t);if(!ps.gen||!isRun(ps)||ps.type==='race'||monday(ps.date)!==m0&&monday(ps.decale||ps.date)!==m0)return [];
   const runs=allPlan().filter(p=>isRun(p)&&p.id!==ps.id),out=[];
-  for(let i=0;i<7;i++){const d=addDays(m0,i);if(d<t||d===ps.date||runs.some(p=>p.date===d))continue;
-    const veille=runs.some(p=>p.type==='long'&&p.date===addDays(d,1));out.push({d,veille});}return out;}
+  for(let i=0;i<7;i++){const d=addDays(m0,i);if(d<t||d===ps.date)continue;const o=runs.filter(p=>p.date===d);
+    /* D-97 : un jour déjà couru se propose en échange si sa séance est générée, à venir et pas une course */
+    let ech=null;if(o.length){if(o.length>1||ps.date<t||!o[0].gen||o[0].type==='race')continue;ech=o[0];}
+    const veille=runs.some(p=>p.type==='long'&&p.date===addDays(d,1)&&p!==ech);out.push({d,veille,ech});}return out;}
 function reprogHTML(ps){const L=joursLibres(ps);if(!L.length)return '<div class="mini" style="margin-top:8px">Aucun jour libre d\'ici dimanche : on ne rattrape pas, le plan continue.</div>';
-  return '<div class="mini" style="margin-top:10px">Choisis un jour sans autre course :</div><div class="row" style="gap:8px;flex-wrap:wrap;margin-top:6px">'
-    +L.map(x=>'<button class="btn s" onclick="event.stopPropagation();app.decaler(\''+(ps.decale||ps.date)+'\',\''+x.d+'\')">'+DOWS[parseISO(x.d).getDay()]+' '+parseISO(x.d).getDate()+(x.veille?' · veille de SL':'')+'</button>').join('')+'</div>'
+  return '<div class="mini" style="margin-top:10px">Choisis un jour. Un jour déjà couru échange les deux séances :</div><div class="row" style="gap:8px;flex-wrap:wrap;margin-top:6px">'
+    +L.map(x=>'<button class="btn s" onclick="event.stopPropagation();app.decaler(\''+(ps.decale||ps.date)+'\',\''+x.d+'\''+(x.ech?',\''+(x.ech.decale||x.ech.date)+'\',\''+ps.date+'\'':'')+')">'+DOWS[parseISO(x.d).getDay()]+' '+parseISO(x.d).getDate()+(x.ech?' · échange':'')+(x.veille?' · veille de SL':'')+'</button>').join('')+'</div>'
     +(L.some(x=>x.veille)?'<div class="mini" style="margin-top:6px">La veille de ta sortie longue, tu l\'aborderas les jambes un peu entamées.</div>':'');}
 /* fenêtre « Séance manquée » : une question, un choix, on ferme */
 let MQS=null;
-function vManque(){const ps=findPlan(MQS.id);if(!ps)return '';const k=manqueDe(ps),L=joursLibres(ps);
+function vManque(){const ps=findPlan(MQS.id);if(!ps)return '';const k=manqueDe(ps),L=joursLibres(ps).filter(x=>!x.ech);
   const opt=(kk,t,d)=>'<button class="opt'+(k===kk?' on':'')+'" onclick="app.manqueChoix(\''+kk+'\')"><b>'+t+'</b><span>'+d+'</span></button>';
   return '<div class="pad"><div class="row sbtw"><h3>Séance manquée</h3><button class="btn x" onclick="app.close()" aria-label="fermer">×</button></div>'
     +'<div class="mini" style="margin-top:4px">'+fmtD(ps.date)+' · '+esc(planTitle(ps))+'</div>'
@@ -2820,7 +2827,7 @@ function vGate(){
     +authFormHTML('Un compte garde ton plan et tes séances en sécurité, et te permet de les retrouver sur un autre téléphone. Ton prénom personnalise l\'app.')
     +syncLineHTML()+versionLineHTML()+'</div></main>';
 }
-const APP_VERSION='v54';   /* généré depuis sw.js par tools/build.py */
+const APP_VERSION='v55';   /* généré depuis sw.js par tools/build.py */
 function versionLineHTML(){return '<div class="mini" id="ver" style="margin-top:12px;text-align:center;opacity:.7">Ascend '+APP_VERSION+' · moteur de plan v2</div>';}
 /* compare la page chargée au cache du service worker : signale un déploiement pas encore actif */
 function checkVersion(){if(!('caches' in window))return;caches.keys().then(ks=>{const c=ks.filter(k=>/^ascend-v\d+$/.test(k)).map(k=>+k.slice(8)).sort((a,b)=>b-a)[0],el=document.getElementById('ver');
@@ -3063,7 +3070,9 @@ const app=window.app={
   manque(d,k){const P=S.profile;P.manques=Object.assign({},P.manques);if(P.manques[d]===k)delete P.manques[d];else P.manques[d]=k;REPROG=null;save();
     flash(P.manques[d]==='fatigue'?'Noté : fatigue':P.manques[d]?'Noté : agenda':'Réponse retirée');render();refreshPE();},
   reprog(id){PM=false;REPROG=REPROG===id?null:id;render();refreshPE();},
-  decaler(o,t){const P=S.profile;P.decal=Object.assign({},P.decal,{[o]:t});if(P.manques)delete P.manques[o];REPROG=null;save();flash('Séance déplacée au '+DOWN[parseISO(t).getDay()].toLowerCase());render();refreshPE();},
+  decaler(o,t,o2,t2){const P=S.profile;P.decal=Object.assign({},P.decal,{[o]:t});if(o2)P.decal[o2]=t2;   /* D-97 : échange */
+    [o,o2].forEach(k=>{if(k&&P.decal[k]===k)delete P.decal[k];if(k&&P.manques)delete P.manques[k];});REPROG=null;save();
+    flash(o2?'Séances échangées':'Séance déplacée au '+DOWN[parseISO(t).getDay()].toLowerCase());render();refreshPE();},
   annulerDecal(o){PM=false;const P=S.profile;P.decal=Object.assign({},P.decal);delete P.decal[o];REPROG=null;save();flash('Séance remise à son jour');render();refreshPE();},
   fmenu(v){PM=v===undefined?!PM:!!v;openPlanSheet();},
   openSess(id){const ps=findPlan(id);if(!ps)return;PM=false;PE=JSON.parse(JSON.stringify(ps));openPlanSheet(true);},

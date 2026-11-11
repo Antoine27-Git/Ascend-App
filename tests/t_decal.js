@@ -20,6 +20,14 @@ const bad1=E.build({profile:Object.assign({},prof,{decal:{[src.date]:autreRun.da
 chk(bad1.sessions.find(s=>s.id===src.id).date===src.date,'refusé vers un jour qui a déjà une course');
 const bad2=E.build({profile:Object.assign({},prof,{decal:{[src.date]:add(mon,8)}}),today,sessions:[],isRun});
 chk(bad2.sessions.find(s=>s.id===src.id).date===src.date,'refusé hors de la semaine');
+/* D-97 : échange de deux séances (chaque séance prend le jour de l'autre) */
+const lg=runs.find(s=>s.type==='long'),co=runs.find(s=>s.type!=='long'&&s.id!==lg.id);
+const ex=E.build({profile:Object.assign({},prof,{decal:{[lg.date]:co.date,[co.date]:lg.date}}),today,sessions:[],isRun});
+const L2=ex.sessions.find(s=>s.id===lg.id),C2=ex.sessions.find(s=>s.id===co.id);
+chk(L2.date===co.date&&C2.date===lg.date&&L2.dur===lg.dur&&C2.dur===co.dur,'échange : chaque séance prend le jour de l\'autre, durées inchangées');
+const r3=ex.sessions.filter(s=>dans(s)&&isRun(s));chk(new Set(r3.map(s=>s.date)).size===r3.length&&r3.length===runs.length,'échange : jamais deux courses le même jour, aucune perdue');
+const demi=E.build({profile:Object.assign({},prof,{decal:{[lg.date]:co.date}}),today,sessions:[],isRun});
+chk(demi.sessions.find(s=>s.id===lg.id).date===lg.date,'un seul sens vers un jour couru : toujours refusé');
 const v1=E.build({profile:Object.assign({},prof,{decal:{[src.date]:libre}}),today,sessions:[],isRun,regles:'v1'});
 chk(!v1.sessions.some(s=>s.decale),'règles v1 inchangées');
 console.log(ok?'décalage de séance : ✓':'décalage de séance : ✗');if(!ok)process.exitCode=1;
