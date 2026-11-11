@@ -3348,6 +3348,7 @@ f. **Comparaison avec tes séances comparables** (même type, durée à ±20 %) 
 - v62 : bilan épuré (résumé, 4 chiffres clés, sections discrètes, FC en gras, Terrain en tableau à colonnes) ; « FC de croisière » renommée « FC stabilisée » (médiane après les 10 premières minutes).
 - v63 : cadres fins au lieu des fonds gris, flèches en virage, colonnes Terrain de même taille.
 - v64 : 5 catégories de pente (montée, faux plat montant, plat, faux plat descendant, descente ; fenêtre ~150–200 m), allure équivalente plat (Minetti 2002), FC début contre fin à pente corrigée.
+  Mise en œuvre (v64) : `flux()` renvoie `v:2`, `terrain.{montee,fpm,plat,fpd,descente}` avec `{min,kmh,allure,eq,fc}` (`eq` nul en descente) et `derive:{fc1,fc2,eq1,eq2,pct}` ; constat `derive` (stable ✓, dérive cardiaque ▲, fatigue des jambes ▲, meilleure efficacité ○). Un résumé v1 déjà enregistré est relu automatiquement. Tableau Terrain : allure réelle et équivalente plat en min/km (plutôt que km/h, pour comparer les deux). Sur le 11/11 : écart montée/descente 4 bpm (6 avec l'ancienne fenêtre de 30 s), d'où le constat « descente ». H-63.
 - v65 : LLM sur les nouvelles données (deux champs courts).
 - Plus tard : comparaisons (3 séances comparables), bilan de bloc.
 
