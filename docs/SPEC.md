@@ -3350,3 +3350,11 @@ f. **Comparaison avec tes séances comparables** (même type, durée à ±20 %) 
 **Tests prévus.** Flux synthétiques à réponse connue (FC constante sur le plat : écart nul ; pente imposée : coût attendu) ; trace réelle du 11/11/2026 allégée (sans position) comme jeu d'essai : 76 % au-dessus de 155, tranches du km 1 à 8 ; vérification que ni position ni nom de lieu ne sortent.
 
 **Hors périmètre.** Sommeil, VFC, poids (D-77). Trace brute stockée. Allure prédite par terrain (chantier du modèle allure-effort, séparé).
+
+**D-100, mise en œuvre (v60, 11/11/2026)**
+- Moteur : `zonesKarvonen(fcMax,fcRepos)` (bornes hautes des zones 1 à 4, arrondies à l'entier inférieur) et `flux(st,zones)` (temps en mouvement hors pauses > 10 s, zones, FC de croisière, tranches par km ou par 5 km au-delà de 15 km, profil de terrain sur fenêtre de 30 s et 20 m, vitesse de montée). Constantes dans `FLUX` (H-60, H-62). `bilan()` utilise le résumé du flux en priorité ; constats `croisiere` et `descente` (FC en descente à moins de 5 bpm de la montée, convention) ; chaque constat porte un symbole (▲ à noter, ○ information).
+- Fonction `supabase/functions/intervals-streams` : demande `time, heartrate, distance, altitude, fixed_altitude` (jamais `latlng`), renvoie l'altitude corrigée si intervals.icu la fournit.
+- Appli : lecture automatique à l'ouverture d'une séance importée de la montre, une seule fois (relancée si la FC max ou la FC repos change) ; résumé gardé avec la séance (~1 Ko), pas la trace. Profil > Toi : carte « Ton cœur ». Bilan en blocs : Ta séance (prévu / fait, détail par km replié, terrain), Ce que ça dit, Pour la suite, Pour comprendre.
+- Premier constat réel : sur la sortie du 11/11, la FC en descente est 6 bpm sous la montée (pas de constat « descente ») ; sur le trail de 42 km, elle est au-dessus (165 contre 161).
+- Tests : `tests/t_flux.js` (synthétique + traces réelles sans position `tests/data/flux_20261111.json`, `flux_42km.json`), `tests/ui/test_v60.py`.
+- v61 : analyse IA sur ces données (deux champs courts), FC début contre fin à pente corrigée.

@@ -22,7 +22,7 @@ with sync_playwright() as p:
     pg.clock.set_fixed_time('2026-11-11T15:00:00+01:00');pg.goto('file://'+ROOT+'/index.html');pg.wait_for_timeout(5000)
     pg.locator('nav').get_by_text('Semaine').click();pg.wait_for_timeout(500);pg.locator('.wd:not(.rest)').filter(has_text='Sortie longue').first.click();pg.wait_for_timeout(700);print(pg.locator('#sheet').inner_text()[-900:].replace('\n',' | '))
     txt=pg.locator('#sheet').inner_text()
-    chk('Temps au-dessus de ta zone de base' in txt and '81 %' in txt,'étage A : temps au-dessus de la zone de base')
+    chk('Hors allure facile' in txt and '81' in txt,'étage A : temps au-dessus de la zone de base')
     chk('CrossFit la veille' in txt,'étage A : CrossFit la veille')
     chk('Prochaine sortie longue' in txt,'étage A : effet sur le plan')
     pg.screenshot(path=OUT+'/bilan.png',full_page=True)

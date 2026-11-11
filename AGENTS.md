@@ -22,6 +22,7 @@ Lis ce fichier en entier avant de toucher au code. Il vaut pour tout assistant d
 | Fonction `intervals-activities` (`supabase/functions/intervals-activities/index.ts`) | lit les activités d'intervals.icu (lecture seule, D-77) ; secret `INTERVALS_API_KEY` dans Supabase ; collée à la main dans l'éditeur du tableau de bord (pas de CLI) |
 | Fonction `intervals-event` (`supabase/functions/intervals-event/index.ts`) | envoie / retire une séance prévue dans le calendrier intervals.icu (D-78) ; même secret, `external_id` = `ascend:<id>` |
 | Fonction `analyze-session` (`supabase/functions/analyze-session/index.ts`) | rédige l'analyse d'une séance (D-99) à partir du bilan calculé par le moteur (`bilan`) ; secret `ANTHROPIC_API_KEY` ; ne modifie jamais le plan |
+| Fonction `intervals-streams` (`supabase/functions/intervals-streams/index.ts`) | lit les données seconde par seconde d'une activité (temps, FC, distance, altitude ; jamais la position) pour `flux()` (D-100) ; secret `INTERVALS_API_KEY` |
 | Fonction `analyze-wod` | lecture de photo de WOD, **pas déployée à ce jour** ; la clé API Anthropic ne doit exister que comme secret Supabase |
 
 Écrans (v28, D-80) : Aujourd'hui (`vHome`), Semaine (`vSeances`), Suivi, Profil ; Journal (`vJour`, les autres jours) n'est plus un onglet.
