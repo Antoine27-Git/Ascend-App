@@ -33,7 +33,7 @@ with sync_playwright() as p:
     chk(sent and 'Marcilly' not in sent[0] and 'sortie facile' in sent[0],'envoyé sans nom de lieu, avec la lecture d\'Antoine')
     pg.get_by_text('Pas vraiment').click();pg.wait_for_timeout(400)
     chk(pg.locator('#sheet input[placeholder^="Qu\'est-ce"]').count()==1,'« Pas vraiment » ouvre le champ de commentaire')
-    pg.locator('#sheet h3',has_text='Ta séance').scroll_into_view_if_needed();pg.wait_for_timeout(300);pg.screenshot(path=OUT+'/analyse.png')
+    pg.locator('#sheet div',has_text='Hors allure facile').last.scroll_into_view_if_needed();pg.wait_for_timeout(300);pg.screenshot(path=OUT+'/analyse.png')
     s=json.loads(pg.evaluate('localStorage.getItem("trail-state-v1")'))
     x=[z for z in s['sessions'] if z['id']=='x1'][0]
     chk(x.get('ia',{}).get('retour')=='non' and x['ia'].get('txt'),'analyse et retour enregistrés avec la séance')

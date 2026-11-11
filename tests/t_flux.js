@@ -35,7 +35,7 @@ const P=Object.assign({},base,{planStart:'2026-11-02',planFrom:'2026-11-02',race
 const ses=[{id:'x',date:'2026-11-11',type:'long',dur:60,rpe:3,dplus:164,hrAvg:158,hrZ:{t:[1110,1969,524,0,0,0,0],b:[157,166,175,185,190,196,205]},flux:r}];
 const b=E.bilan({profile:P,today:'2026-11-12',sessions:ses,isRun},'x');
 t('bilan : zones de l\'appli malgré les zones figées',b.dessusBase===76&&!b.msgs.some(m=>m.code==='zones-decalees'),b.dessusBase);
-t('bilan 11/11 : constat croisière (162, 7 au-dessus de 155), pas de constat descente',b.msgs.some(m=>m.code==='croisiere'&&/162/.test(m.txt)&&/7 au-dessus/.test(m.txt))&&!b.msgs.some(m=>m.code==='descente'));
+t('bilan 11/11 : constat croisière (162, 7 au-dessus de 155), pas de constat descente',b.msgs.some(m=>m.code==='croisiere'&&/162/.test(m.txt)&&/7 bpm au-dessus/.test(m.txt))&&!b.msgs.some(m=>m.code==='descente'));
 const b42=E.bilan({profile:P,today:'2026-11-12',sessions:[Object.assign({},ses[0],{flux:q0()})],isRun},'x');
 t('bilan 42 km : constat descente, symbole ▲',b42.msgs.some(m=>m.code==='descente'&&m.sym==='▲'));
 t('bilan : RPE 3 et 76 % au-dessus → « FC plus haute que le ressenti »',b.msgs.some(m=>m.code==='fc-haute'));

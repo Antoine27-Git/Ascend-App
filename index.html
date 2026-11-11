@@ -815,37 +815,42 @@ function fluxAFaire(r){if(!r.ext||!/^icu:/.test(r.ext)||!isRun(r))return false;c
 function bilanSeanceHTML(r){
   if(fluxAFaire(r)){const k=r.id+':'+(S.profile.fcMax||'')+':'+(S.profile.fcRepos||'');if(!FLUX_TRY[k]){FLUX_TRY[k]=1;setTimeout(()=>app.fluxLire(r.id),0);}}
   const b=bilanOf(r);if(!b)return '';const ia=r.ia||{},F=b.flux,Fz=r.flux&&r.flux.zones;
-  const cel=(x,st)=>'<td style="padding:5px 4px;text-align:left;'+(st||'')+'">'+x+'</td>',th=x=>'<th style="font-weight:600;color:var(--mut);font-size:12px;text-align:left;padding:2px 4px">'+x+'</th>';
-  const pv=b.prevu||{},lig=(l,p,f)=>'<tr>'+cel(l,'color:var(--mut)')+cel(p==null?'':p,'color:var(--mut)')+cel('<b>'+(f==null?'–':f)+'</b>')+'</tr>';
-  /* ① Ta séance */
-  let h='<div style="border:1px solid var(--line,#e3e8e5);border-radius:14px;padding:12px 14px;margin-top:12px"><h3 style="font-size:16px;margin:0 0 6px">Ta séance</h3><table style="width:100%;border-collapse:collapse;font-size:14px;table-layout:fixed"><colgroup><col style="width:38%"><col style="width:24%"><col style="width:38%"></colgroup><tr>'+th('')+th('Prévu')+th('Fait')+'</tr>'
-    +lig('Durée',pv.dur?durTxt(pv.dur):null,b.dur?durTxt(b.dur):null)+lig('D+',pv.dplus!=null?pv.dplus+' m':null,b.dplus!=null?b.dplus+' m':null)
-    +lig('D−',null,b.dminus?b.dminus+' m':null)+lig('Effort',null,b.rpe!=null?b.rpe+'/10':null)
-    +lig('FC',null,F&&F.croisiere?F.croisiere.fc+' bpm<span class="mini"> croisière</span>':b.hrAvg?b.hrAvg+' bpm<span class="mini"> moyenne</span>':null)
-    +(b.zones?lig('Hors allure facile',null,b.dessusBase+'&nbsp;%'):'')+'</table>';
-  if(F&&F.tranches&&F.tranches.length){const tr=F.tranches,ex=tr.slice().sort((x,y)=>x.allure-y.allure),hb=b.hautBase;
-    h+='<details style="margin-top:8px"><summary class="mini" style="font-size:14px"><span><b>Détail par '+(tr.length>1&&tr[1].de-tr[0].de===5?'5 km':'km')+'</b> · de '+allureTxt(ex[0].allure)+' à '+allureTxt(ex[ex.length-1].allure)+'/km</span></summary>'
-      +'<table style="width:100%;border-collapse:collapse;font-size:13.5px;margin-top:6px"><tr>'+th('km')+th('Allure')+th('FC')+th('D+')+th('D−')+'</tr>'
-      +tr.map(x=>'<tr style="border-top:1px solid var(--line,#e3e8e5)">'+cel(x.de+'–'+String(x.a).replace('.',','))+cel(allureTxt(x.allure))
-        +cel(x.fc==null?'–':'<span style="padding:1px 6px;border-radius:6px;background:'+(x.fc>hb?'#fbeed7':'#e3f2ea')+';color:'+(x.fc>hb?'#7a4b06':'#1d5a3a')+'">'+x.fc+'</span>')
-        +cel(x.dp==null?'–':'<span style="display:inline-block;height:6px;border-radius:3px;background:#8fb8a3;vertical-align:middle;margin-right:5px;width:'+Math.max(2,Math.round(28*x.dp/Math.max(1,...tr.map(y=>y.dp||0))))+'px"></span>'+x.dp)+cel(x.dm==null?'–':x.dm,'color:var(--mut)')+'</tr>').join('')+'</table>'
-      +'<div class="mini" style="margin-top:4px">Vert : FC dans ton allure facile (≤ '+hb+'). Orange : au-dessus.</div></details>';}
-  if(F&&F.terrain){const T=F.terrain,box=(l,x,v)=>'<div style="background:var(--bg2,#f1f3f2);border-radius:10px;padding:8px 10px"><div class="mini">'+l+(x?' · '+x.min+' min':'')+'</div><div style="font-size:15px;font-weight:700">'+v+'</div>'+(x&&x.fc?'<div class="mini">FC '+x.fc+'</div>':'')+'</div>';
-    h+='<div class="mini" style="font-size:14px;margin:12px 0 6px"><b>Terrain</b></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'
-      +box('Montée',T.montee,T.montee?String(T.montee.kmh).replace('.',',')+' km/h':'–')+box('Plat',T.plat,T.plat?String(T.plat.kmh).replace('.',',')+' km/h':'–')
-      +box('Descente',T.descente,T.descente?String(T.descente.kmh).replace('.',',')+' km/h':'–')+box('Vitesse de montée',null,F.vam?F.vam+' m/h':'–')+'</div>';}
+  /* v62 : bilan épuré (D-100) */
+  const SEC=t=>'<h3 class="mini" style="font-size:13px;font-weight:500;margin:18px 0 8px">'+t+'</h3>',BOX='background:var(--bg);border-radius:12px;padding:4px 12px';
+  const OK='background:#e1f5ee;color:#085041',HI='background:#faeeda;color:#633806';
+  const pill=(v,hb)=>v==null?'–':'<span style="display:inline-block;min-width:38px;text-align:center;border-radius:6px;padding:1px 4px;font-weight:700;'+(v>hb?HI:OK)+'">'+v+'</span>';
+  const hb=b.hautBase||159,ROW='display:grid;gap:6px;align-items:center;font-size:14px;padding:8px 0';
+  const tile=(l,v,u,sub,col)=>'<div style="background:var(--bg);border-radius:12px;padding:10px 12px"><div class="mini">'+l+'</div><div style="font-size:21px;font-weight:600;margin-top:2px'+(col?';color:'+col:'')+'">'+v+(u?'<span class="mini" style="font-size:13px;font-weight:400"> '+u+'</span>':'')+'</div><div class="mini" style="font-size:12px">'+(sub||'&nbsp;')+'</div></div>';
+  const tl=TYPES[b.type]?TYPES[b.type].l:'Séance';
+  let h='<div class="mini" style="font-size:13px;margin-top:14px">'+tl+' · '+fmtD(b.date)+'</div>'
+    +'<div style="font-size:18px;font-weight:600;margin:2px 0 12px">'+[b.dur?durTxt(b.dur):null,b.dist?String(Math.round(b.dist*10)/10).replace('.',',')+' km':null,b.dplus!=null?b.dplus+' m D+':null].filter(Boolean).join(' · ')+'</div>';
+  const pv=b.prevu||{},prev=[pv.dur?'prévu '+durTxt(pv.dur):null,pv.dplus!=null?pv.dplus+' m D+':null].filter(Boolean).join(' · ');
+  if(prev)h+='<div class="mini" style="margin:-8px 0 12px">'+prev+(b.dminus?' · D− fait '+b.dminus+' m':'')+'</div>';
+  const fcS=F&&F.croisiere&&F.croisiere.fc?F.croisiere.fc:null;
+  h+='<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px">'
+    +tile(fcS?'FC stabilisée':'FC moyenne',fcS||b.hrAvg||'–',(fcS||b.hrAvg)?'bpm':'',hb?'facile ≤ '+hb:'')
+    +tile('Hors allure facile',b.zones?b.dessusBase+' %':'–','',b.zones?'du temps':'',b.zones&&b.dessusBase>40?'#854f0b':null)
+    +tile('Effort ressenti',b.rpe!=null?b.rpe:'–',b.rpe!=null?'/10':'',b.rpe==null?'':b.rpe<=3?'facile':b.rpe>=7?'dur':'modéré')
+    +tile('Vitesse de montée',F&&F.vam?F.vam:'–',F&&F.vam?'m/h':'','sur les montées')+'</div>';
+  if(F&&F.tranches&&F.tranches.length){const tr=F.tranches,ex=tr.slice().sort((x,y)=>x.allure-y.allure),cinq=tr.length>1&&tr[1].de-tr[0].de===5,mx=Math.max(1,...tr.map(y=>y.dp||0));
+    const G='grid-template-columns:30px 50px 54px minmax(0,1fr) 30px';
+    h+='<details style="margin-top:18px"><summary class="mini" style="font-size:13px;font-weight:500"><span>Par '+(cinq?'tranche de 5 km':'km')+'</span><span style="font-weight:400"> · '+allureTxt(ex[0].allure)+' à '+allureTxt(ex[ex.length-1].allure)+' /km</span></summary>'
+      +'<div style="'+BOX+';margin-top:8px"><div class="mini" style="'+ROW+';'+G+';font-size:12px"><span>'+(cinq?'Km':'km')+'</span><span>Allure</span><span>FC</span><span>D+</span><span>D−</span></div>'
+      +tr.map(x=>'<div style="'+ROW+';'+G+';border-top:1px solid var(--line,#e3e8e5)"><span>'+(cinq?Math.ceil(x.a):Math.ceil(x.a))+'</span><span>'+allureTxt(x.allure)+'</span><span>'+pill(x.fc,hb)+'</span><span>'
+        +(x.dp==null?'–':'<i style="display:inline-block;height:5px;border-radius:3px;background:#b5d4f4;vertical-align:middle;margin-right:6px;width:'+Math.max(2,Math.round(48*x.dp/mx))+'px"></i>'+x.dp)+'</span><span class="mini">'+(x.dm==null?'–':x.dm)+'</span></div>').join('')
+      +'<div class="mini" style="font-size:12px;display:flex;gap:14px;padding:8px 0 6px"><span><span style="border-radius:6px;padding:0 6px;font-weight:700;'+OK+'">≤ '+hb+'</span> facile</span><span><span style="border-radius:6px;padding:0 6px;font-weight:700;'+HI+'">'+(hb+1)+'+</span> au-dessus</span></div></div></details>';}
+  if(F&&F.terrain){const T=F.terrain,G='grid-template-columns:minmax(0,1fr) 46px 80px 48px;column-gap:4px',kmh=x=>String(x.kmh).replace('.',',');
+    const lg=(ic,l,x)=>x?'<div style="'+ROW+';'+G+';border-top:1px solid var(--line,#e3e8e5)"><span style="white-space:nowrap">'+ic+' '+l+'</span><span class="mini">'+x.min+' min</span><span>'+kmh(x)+' km/h</span><span>'+pill(x.fc,hb)+'</span></div>':'';
+    h+=SEC('Terrain')+'<div style="'+BOX+'"><div class="mini" style="'+ROW+';'+G+';font-size:11.5px;white-space:nowrap"><span></span><span>Durée</span><span>Vitesse moy.</span><span>FC moy.</span></div>'
+      +lg('↗','Montée',T.montee)+lg('→','Plat',T.plat)+lg('↘','Descente',T.descente)+'</div>';}
   else if(r.fluxErr)h+='<div class="mini" style="margin-top:8px">Détail de la montre indisponible : '+esc(r.fluxErr)+'</div>';
   else if(FLUX_BUSY===r.id)h+='<div class="mini" style="margin-top:8px">Lecture du détail de ta montre…</div>';
-  h+='</div>';
-  /* ② Ce que ça dit */
-  if(b.msgs.length)h+='<div style="border:1px solid var(--line,#e3e8e5);border-radius:14px;padding:12px 14px;margin-top:12px"><h3 style="font-size:16px;margin:0 0 6px">Ce que ça dit</h3>'+b.msgs.map(m=>'<div style="font-size:14px;line-height:1.45;margin-top:5px;display:flex;gap:8px"><span style="font-weight:700;color:'+(m.sym==='▲'?'#a8670c':m.sym==='✓'?'#1d7a4a':'var(--mut)')+'">'+m.sym+'</span><span>'+esc(m.txt)+'</span></div>').join('')+'</div>';
+  if(b.msgs.length)h+=SEC('Ce que ça dit')+'<div style="'+BOX+'">'+b.msgs.map((m,i)=>'<div style="display:flex;gap:10px;font-size:14px;line-height:1.5;padding:9px 0'+(i?';border-top:1px solid var(--line,#e3e8e5)':'')+'"><span style="flex:none;width:18px;text-align:center;font-weight:700;color:'+(m.sym==='▲'?'#ba7517':m.sym==='✓'?'#0f6e56':'var(--mut)')+'">'+(m.sym==='▲'?'!':m.sym==='✓'?'✓':'i')+'</span><span>'+esc(m.txt)+'</span></div>').join('')+'</div>';
   if(!S.profile.fcMax||!S.profile.fcRepos)h+='<div class="mini" style="margin-top:6px">Renseigne ta FC max et ta FC repos (Profil, « Toi ») pour calculer tes zones.</div>';
-  /* ③ Pour la suite */
-  const e=b.effet;if(e.prochaine)h+='<h3 style="font-size:16px;margin:18px 0 6px">Pour la suite</h3><div style="font-size:14px">Prochaine sortie longue : <b>'+durTxt(e.prochaine.dur)+'</b> le '+fmtD(e.prochaine.date)+(e.change?' (sans cette séance : '+durTxt(e.sans.dur)+')':' — inchangée par cette séance')+'</div>';
-  /* ④ Pour comprendre */
-  const ind=INDIC[b.indicateur];if(ind)h+='<details style="margin-top:12px"><summary class="mini" style="font-size:14px"><b>Pour comprendre : '+ind[0]+'</b></summary><div class="mini" style="margin-top:6px">'+ind[1]+'</div></details>';
+  const e=b.effet;if(e.prochaine)h+=SEC('Pour la suite')+'<div style="font-size:14px">Prochaine sortie longue : <b>'+durTxt(e.prochaine.dur)+'</b> le '+fmtD(e.prochaine.date)+(e.change?' (sans cette séance : '+durTxt(e.sans.dur)+')':' — inchangée par cette séance')+'</div>';
+  const ind=INDIC[b.indicateur];if(ind)h+='<details style="margin-top:14px"><summary class="mini" style="font-size:13px">Pour comprendre : '+ind[0]+'</summary><div class="mini" style="margin-top:6px">'+ind[1]+'</div></details>';
   return h
-    +'<h3 style="font-size:16px;margin:18px 0 6px">Analyse</h3>'
+    +SEC('Analyse')
     +(ia.txt?'<div style="font-size:14.5px;line-height:1.5;white-space:pre-wrap'+(IA_BUSY===r.id?';opacity:.45':'')+'">'+esc(ia.txt)+'</div>'
       +'<div class="mini" style="margin-top:10px">Cette analyse colle à ta séance ?</div><div class="row" style="gap:8px;margin-top:6px">'
       +['oui','non'].map(v=>'<button class="btn s'+(ia.retour===v?' dark':'')+'" onclick="app.iaRetour(\''+r.id+'\',\''+v+'\')">'+(v==='oui'?'Oui':'Pas vraiment')+'</button>').join('')+'</div>'
@@ -1878,7 +1883,7 @@ function bilan(inp,sid){
   if(dessus!=null&&s.rpe!=null&&s.rpe>=BILAN.rpeHaut&&dessus<BILAN.bas&&s.type!=='qual')m('fc-basse','Ressenti dur mais FC basse : fatigue des jambes ou fatigue générale probable.');
   if(prevu&&prevu.dur&&s.dur){const e=s.dur/prevu.dur-1;if(e>BILAN.ecart)m('plus-long','Plus long que prévu (+'+Math.round(e*100)+' %).');else if(e<-BILAN.ecart)m('plus-court','Plus court que prévu ('+Math.round(e*100)+' %).');}
   if(F&&F.croisiere&&F.croisiere.fc){const c=F.croisiere,ec=c.fc-hautBase;
-    m('croisiere','FC de croisière : '+c.fc+' bpm'+(c.depart?' (départ à '+c.depart+')':'')+(c.montee_s!=null?', atteint en '+Math.max(1,Math.round(c.montee_s/60))+' min':'')+' — '+(ec>0?ec+' au-dessus':ec<0?(-ec)+' en dessous':'pile à la limite')+' de ton allure facile ('+hautBase+').');}
+    m('croisiere','FC stabilisée : '+c.fc+' bpm'+(c.depart?' (départ à '+c.depart+')':'')+(c.montee_s!=null?', atteint en '+Math.max(1,Math.round(c.montee_s/60))+' min':'')+' — '+(ec>0?ec+' bpm au-dessus':ec<0?(-ec)+' bpm en dessous':'pile à la limite')+' de ton allure facile ('+hautBase+').');}
   if(F&&F.terrain&&F.terrain.montee&&F.terrain.descente&&F.terrain.montee.fc&&F.terrain.descente.fc&&F.terrain.descente.fc>=F.terrain.montee.fc-FLUX.ecartTerrain)
     m('descente','FC presque aussi haute en descente ('+F.terrain.descente.fc+') qu\'en montée ('+F.terrain.montee.fc+') : peu de récupération dans les descentes.');
   if(veille&&isR(s)&&veille.cfJ&&veille.cfJ!=='non')m('veille-cf','CrossFit la veille ('+(veille.cfJ==='fort'?'jambes très sollicitées':'jambes un peu sollicitées')+') : jambes déjà entamées au départ.');
@@ -2992,7 +2997,7 @@ function vGate(){
     +authFormHTML('Un compte garde ton plan et tes séances en sécurité, et te permet de les retrouver sur un autre téléphone. Ton prénom personnalise l\'app.')
     +syncLineHTML()+versionLineHTML()+'</div></main>';
 }
-const APP_VERSION='v61';   /* généré depuis sw.js par tools/build.py */
+const APP_VERSION='v62';   /* généré depuis sw.js par tools/build.py */
 function versionLineHTML(){return '<div class="mini" id="ver" style="margin-top:12px;text-align:center;opacity:.7">Ascend '+APP_VERSION+' · moteur de plan v2</div>';}
 /* compare la page chargée au cache du service worker : signale un déploiement pas encore actif */
 function checkVersion(){if(!('caches' in window))return;caches.keys().then(ks=>{const c=ks.filter(k=>/^ascend-v\d+$/.test(k)).map(k=>+k.slice(8)).sort((a,b)=>b-a)[0],el=document.getElementById('ver');
