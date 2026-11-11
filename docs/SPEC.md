@@ -3305,3 +3305,46 @@ Préalables : compte sur la console Anthropic avec crédit, clé en secret Supab
 - **Garde-fou (v58, 11/11/2026).** intervals.icu fige les zones à l'import de l'activité : changer les zones ensuite ne recalcule pas les activités déjà importées. Premier cas réel : la sortie du 11/11 affichait 15 % au-dessus de la base (zone 2 jusqu'à 166) alors que la trace donne 76 % au-dessus de 155. Règle : si la borne haute de la zone 2 de l'activité diffère de 155 bpm (réglage `fcBase` du profil, à venir), le temps par zone n'est pas affiché ni envoyé à l'analyse ; un message l'explique. Cette règle était prévue en v57 mais n'avait pas été codée. Suite : D-100 (indicateurs calculés depuis les données seconde par seconde, zones appliquées par l'appli et non par intervals.icu).
 - Étage B : fonction `supabase/functions/analyze-session` (Sonnet 5.5 par défaut, `profile.iaModele` pour Opus 5.5). Note envoyée seulement si Antoine l'a écrite (jamais le nom d'activité de la montre, `nomMontre`). Lecture d'Antoine envoyée pour qu'il ait un retour sur sa propre lecture.
 - Tests : `tests/t_bilan.js`, `tests/ui/test_v57.py`.
+
+### D-100 — Données de séance seconde par seconde : indicateurs calculés par l'appli (proposée le 11/11/2026, à valider ; suite de D-99)
+**Pourquoi.** Le bilan v57 se limite à des moyennes et à des temps par zone fournis par intervals.icu. Deux limites, vues le 11/11/2026 sur la sortie de 1 h : (1) intervals.icu fige les zones à l'import (15 % « au-dessus » affiché, 76 % réels, voir garde-fou v58) ; (2) une moyenne cache l'essentiel d'une sortie de trail (départ calme puis FC à 160 dès la première côte, FC quasi identique en montée et en descente, dénivelé concentré sur quelques kilomètres). Besoin d'Antoine : de l'analyse de données, pas un résumé de ce qu'il connaît déjà.
+
+**1. Source des données.**
+- Une fonction Supabase lecture seule (`intervals-streams`, « Verify JWT » activé) relaie les flux de l'activité depuis intervals.icu : temps, FC, distance, altitude (et cadence si disponible). **Jamais la position GPS** (le lieu ne sort pas de intervals.icu).
+- L'appli calcule tout, puis **ne garde qu'un résumé compact** avec la séance (quelques centaines d'octets), pas la trace brute. Le TCX/GPX reste facultatif (D-98).
+- Sans flux (activité manuelle, flux absent) : le bilan v57 s'affiche comme aujourd'hui. Rien ne casse.
+- À vérifier au premier essai : le nom exact du point d'accès des flux d'intervals.icu et la présence de l'altitude corrigée.
+
+**2. Zones appliquées par l'appli, pas par intervals.icu.**
+- Profil > « Mes zones de FC » : bornes hautes des zones (valeurs d'Antoine : 140 / 155 / 175 / 185 / 190 / 196 / 205), modifiables. Le temps par zone est recalculé à partir de la FC seconde par seconde. Cela règle définitivement le problème des zones figées, et répond à sa préférence de tout paramétrer dans l'appli. Le garde-fou v58 devient inutile pour les séances avec flux, il reste pour les autres.
+- « Allure facile » = jusqu'à la borne haute de la zone 2 (155).
+
+**3. Indicateurs calculés (sans LLM).**
+a. **Tranches** : allure, FC moyenne, D+ et D− par km (regroupés par 5 km au-delà de 15 km), affichés en tableau court.
+b. **Profil de terrain** : temps, allure et FC en montée (pente > +3 %), plat, descente (< −3 %). Seuils = convention (H-60) ; la relation entre pente et coût énergétique de la course est, elle, établie (Minetti et al., 2002 ; à ajouter à SOURCES.md au codage).
+c. **Vitesse ascensionnelle en montée** (m de D+ par heure, sur les seules montées) : indicateur de capacité de grimpe, pertinent pour 80 km / 3 000 à 6 000 m D+. Convention d'entraîneur.
+d. **Début contre fin de séance** : FC à effort équivalent, avec l'allure corrigée de la pente (pente → coût selon Minetti), tiers initial contre tiers final. Affiché seulement pour les séances d'au moins 60 min. Le « découplage » brut (allure/FC par moitiés) est **écarté** : sur terrain vallonné il ne mesure que la répartition du dénivelé (−5 % sur la sortie du 11/11, sans signification). La dérive cardiaque en effort prolongé est établie (Coyle & González-Alonso, 2001) ; le seuil de 5 % souvent cité est une convention, donc **aucun verdict** tant que l'indicateur n'est pas validé sur plusieurs de ses séances (H-62).
+e. **Cohérence FC / ressenti** : règles existantes (H-59), calculées avec les zones de l'appli.
+f. **Comparaison avec tes séances comparables** (même type, durée à ±20 %) : écart de FC à allure corrigée égale. **Affichée à partir de 3 séances comparables**, sinon « pas encore assez d'historique ». C'est la passerelle vers le bilan de bloc (étape 2 de D-99).
+- Limite à afficher dans « Comprendre » : la FC au poignet est moins précise qu'une ceinture, surtout en effort irrégulier (Gillinov et al., 2017 ; à confirmer au codage).
+
+**4. Affichage : 4 blocs, toujours dans le même ordre.**
+- **① Ta séance** : prévu / fait (durée, D+, effort, FC), tranches.
+- **② Ce que ça dit** : 2 à 4 constats calculés, un symbole chacun (✓ conforme, ▲ à noter, ○ information).
+- **③ Pour la suite** : prochaine sortie longue et effet sur le plan (inchangé, calculé par le moteur) + une phrase de conseil.
+- **④ Pour comprendre** (replié) : un indicateur expliqué, vocabulaire simple (« allure facile », « cœur »).
+- Les blocs ① et ② sont calculés et s'affichent sans le LLM.
+
+**5. Étage LLM.**
+- Reçoit le résumé calculé (tranches, terrain, début contre fin, comparaisons, zones), pas la trace. Taille attendue : 2 à 3 Ko.
+- Sortie : **deux champs courts** (interprétation, conseil), 2 phrases chacun, qui alimentent les blocs ② et ③. Le LLM n'invente aucun chiffre, ne crée aucune règle absente des données, ne modifie jamais le plan (D-12 : la FC ne pilote pas le plan).
+- Coût inchangé à l'ordre de grandeur (≈ 1,5 à 2 centimes avec Sonnet 5.5).
+
+**6. Découpage en versions.**
+- v60 : fonction `intervals-streams`, zones de l'appli, tranches, profil de terrain, vitesse ascensionnelle, 4 blocs.
+- v61 : LLM sur les nouvelles données (deux champs), début contre fin de séance.
+- Plus tard : comparaisons (3 séances comparables), bilan de bloc.
+
+**Tests prévus.** Flux synthétiques à réponse connue (FC constante sur le plat : écart nul ; pente imposée : coût attendu) ; trace réelle du 11/11/2026 allégée (sans position) comme jeu d'essai : 76 % au-dessus de 155, tranches du km 1 à 8 ; vérification que ni position ni nom de lieu ne sortent.
+
+**Hors périmètre.** Sommeil, VFC, poids (D-77). Trace brute stockée. Allure prédite par terrain (chantier du modèle allure-effort, séparé).
