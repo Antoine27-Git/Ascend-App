@@ -504,6 +504,56 @@ function build(inp){
 /* ---- D-99 : bilan de séance, étage A (calculé, déterministe ; ne modifie pas le plan) ----
    Seuils des messages : conventions (H-59), réglables ici. */
 const BILAN={baseZ:2,baseHaut:155,haut:0.40,bas:0.20,rpeBas:3,rpeHaut:7,ecart:0.25};
+
+/* ---------- D-100 : zones de Karvonen et indicateurs tirés des données seconde par seconde ---------- */
+const KARV=[0.6,0.7,0.8,0.9];   /* bornes hautes des zones 1 à 4, en part de la FC de réserve (zone 5 au-delà) */
+const FLUX={pente:3,fenetre:30,distMin:20,lissage:7,depart:600,plateau:0.95,ecartTerrain:5};   /* H-60, H-62 */
+function zonesKarvonen(fcMax,fcRepos){
+  if(!(fcMax>0&&fcRepos>0&&fcMax>fcRepos+40))return null;
+  const R=fcMax-fcRepos;return KARV.map(x=>Math.floor(fcRepos+R*x));}
+/* st = {time:[s],hr:[bpm],dist:[m],alt:[m]} (mêmes longueurs) ; zones = bornes hautes (zonesKarvonen) ou null.
+   Renvoie un résumé compact, gardé avec la séance ; la trace brute n'est pas conservée. */
+function flux(st,zones){
+  if(!st||!Array.isArray(st.time)||!Array.isArray(st.hr))return null;
+  const n=st.time.length;if(n<60)return null;
+  const T=st.time,H=st.hr,Dd=st.dist||[],A=st.alt||[];
+  const ok=i=>i>0&&T[i]-T[i-1]>0&&T[i]-T[i-1]<=10;   /* les pauses (écart > 10 s) ne comptent pas */
+  /* altitude lissée (moyenne glissante) */
+  let Al=null;if(A.length===n&&A.some(x=>x!=null)){Al=new Array(n);const L=FLUX.lissage;
+    for(let i=0;i<n;i++){let s=0,c=0;for(let j=Math.max(0,i-L);j<=Math.min(n-1,i+L);j++)if(A[j]!=null){s+=A[j];c++;}Al[i]=c?s/c:null;}}
+  const hasD=Dd.length===n&&Dd[n-1]>0;
+  /* temps en mouvement et zones */
+  let tm=0;const zt=zones?[0,0,0,0,0]:null;
+  for(let i=1;i<n;i++){if(!ok(i))continue;const d=T[i]-T[i-1];tm+=d;if(zt&&H[i]>0)zt[zones.reduce((z,b)=>z+(H[i]>b?1:0),0)]+=d;}
+  if(tm<300)return null;
+  const zTot=zt?zt.reduce((a,b)=>a+b,0):0;
+  const zonesOut=zt&&zTot?{bornes:zones.slice(),pct:zt.map(x=>Math.round(100*x/zTot)),dessusBase:Math.round(100*(zt[2]+zt[3]+zt[4])/zTot)}:null;
+  /* FC de croisière : médiane après le départ ; temps pour l'atteindre */
+  const t0=T[0],apres=[];for(let i=0;i<n;i++)if(T[i]-t0>=FLUX.depart&&H[i]>0)apres.push(H[i]);
+  let crois=null;if(apres.length>=300){apres.sort((a,b)=>a-b);const fc=apres[Math.floor(apres.length/2)];
+    let k=0;while(k<n&&!(H[k]>=fc*FLUX.plateau))k++;
+    let deb=0,c=0;for(let i=0;i<n&&T[i]-t0<FLUX.depart;i++)if(H[i]>0){deb+=H[i];c++;}
+    crois={fc,montee_s:k<n?Math.round(T[k]-t0):null,depart:c?Math.round(deb/c):null};}
+  /* tranches par km (par 5 km au-delà de 15 km) */
+  let tranches=null;
+  if(hasD){const km=Dd[n-1]/1000,pas=km>15?5:1;tranches=[];let a=0;
+    for(let b=pas;a<n;b+=pas){const lim=b*1000;let i=a,t=0,hs=0,hc=0,dp=0,dm=0;
+      for(i=a+1;i<n&&Dd[i]<=lim;i++){if(!ok(i))continue;t+=T[i]-T[i-1];if(H[i]>0){hs+=H[i];hc++;}
+        if(Al&&Al[i]!=null&&Al[i-1]!=null){const dz=Al[i]-Al[i-1];if(dz>0)dp+=dz;else dm-=dz;}}
+      const dist=(Dd[Math.min(i,n-1)]-Dd[a]);
+      if(dist>=(pas*1000)*0.3&&t>0)tranches.push({de:b-pas,a:Math.min(b,Math.round(km*10)/10),allure:Math.round(t/(dist/1000)),fc:hc?Math.round(hs/hc):null,dp:Al?Math.round(dp):null,dm:Al?Math.round(dm):null});
+      if(i>=n-1)break;a=i;}}
+  /* profil de terrain : montée / plat / descente selon la pente sur ~30 s */
+  let terrain=null,vam=null;
+  if(Al&&hasD){const S={montee:{t:0,d:0,h:0,hc:0,dz:0},plat:{t:0,d:0,h:0,hc:0,dz:0},descente:{t:0,d:0,h:0,hc:0,dz:0}};let j=0;
+    for(let i=1;i<n;i++){if(!ok(i))continue;while(j<i&&T[i]-T[j]>FLUX.fenetre)j++;
+      const dd=Dd[i]-Dd[j];if(dd<FLUX.distMin||Al[i]==null||Al[j]==null)continue;
+      const g=(Al[i]-Al[j])/dd*100,c=g>FLUX.pente?'montee':g<-FLUX.pente?'descente':'plat',x=S[c],dt=T[i]-T[i-1];
+      x.t+=dt;x.d+=Math.max(0,Dd[i]-Dd[i-1]);if(H[i]>0){x.h+=H[i];x.hc++;}if(Al[i-1]!=null)x.dz+=Al[i]-Al[i-1];}
+    terrain={};Object.keys(S).forEach(k=>{const x=S[k];terrain[k]=x.t>=60?{min:Math.round(x.t/60),kmh:Math.round(x.d/x.t*36)/10,fc:x.hc?Math.round(x.h/x.hc):null}:null;});
+    if(S.montee.t>=120&&S.montee.dz>0)vam=Math.round(S.montee.dz/(S.montee.t/3600));}
+  return {v:1,min:Math.round(tm/60),zones:zonesOut,croisiere:crois,tranches,terrain,vam};
+}
 function bilan(inp,sid){
   const all=inp.sessions||[],s=all.find(x=>x.id===sid);if(!s)return null;
   const isR=inp.isRun||(x=>['ef','long','qual','desc'].includes(x.type));
@@ -519,29 +569,36 @@ function bilan(inp,sid){
   const veille=all.find(x=>x.type==='cf'&&x.date===add(s.date,-1))||null;
   /* temps par zone (zones d'intervals.icu, D-98) ; « au-dessus de la base » = au-delà de la zone BILAN.baseZ */
   let zones=null,dessus=null,zonesKO=null;
-  /* garde-fou (v58) : intervals.icu fige les zones à l'import de l'activité. Si la borne haute de la zone de base n'est pas celle réglée (155 bpm), les temps par zone ne sont pas fiables : on ne les affiche pas. */
-  const hautBase=(inp.profile&&inp.profile.fcBase)||BILAN.baseHaut,bornes=s.hrZ&&s.hrZ.b,bAct=bornes?bornes[BILAN.baseZ-1]:null;
-  if(s.hrZ&&bAct!=null&&Math.abs(bAct-hautBase)>1)zonesKO={act:bAct,att:hautBase};
-  if(!zonesKO&&s.hrZ&&Array.isArray(s.hrZ.t)){const t=s.hrZ.t.map(x=>+x||0),tot=t.reduce((a,b)=>a+b,0);
+  const PP=inp.profile||{},zk=zonesKarvonen(PP.fcMax,PP.fcRepos),F=s.flux&&s.flux.v?s.flux:null;
+  /* D-100 : zones de l'appli (Karvonen) appliquées aux données seconde par seconde ; prioritaires sur celles d'intervals.icu */
+  if(F&&F.zones){zones=F.zones.pct.map((p,i)=>({z:i+1,haut:F.zones.bornes[i]!=null?F.zones.bornes[i]:null,pct:p}));dessus=F.zones.dessusBase/100;}
+  /* garde-fou (v58) : intervals.icu fige les zones à l'import de l'activité. Si la borne haute de la zone de base n'est pas celle réglée, les temps par zone ne sont pas fiables : on ne les affiche pas. */
+  const hautBase=zk?zk[BILAN.baseZ-1]:(PP.fcBase||BILAN.baseHaut),bornes=s.hrZ&&s.hrZ.b,bAct=bornes?bornes[BILAN.baseZ-1]:null;
+  if(!zones&&s.hrZ&&bAct!=null&&Math.abs(bAct-hautBase)>1)zonesKO={act:bAct,att:hautBase};
+  if(!zones&&!zonesKO&&s.hrZ&&Array.isArray(s.hrZ.t)){const t=s.hrZ.t.map(x=>+x||0),tot=t.reduce((a,b)=>a+b,0);
     if(tot>0){zones=t.map((x,i)=>({z:i+1,haut:s.hrZ.b&&s.hrZ.b[i]!=null?s.hrZ.b[i]:null,pct:Math.round(100*x/tot)}));
       dessus=t.slice(BILAN.baseZ).reduce((a,b)=>a+b,0)/tot;}}
-  const msgs=[],m=(code,txt)=>msgs.push({code,txt});
+  const SYM={'fc-haute':'▲','fc-basse':'▲','30j':'▲','depart':'▲','descente':'▲'},msgs=[],m=(code,txt)=>msgs.push({code,txt,sym:SYM[code]||'○'});
   if(zonesKO)m('zones-decalees','Les zones de FC de cette activité ne sont pas celles que tu as réglées (zone de base jusqu\'à '+zonesKO.act+' bpm au lieu de '+zonesKO.att+') : le temps par zone n\'est pas fiable pour cette séance.');
-  if(dessus!=null&&s.rpe!=null&&s.rpe<=BILAN.rpeBas&&dessus>BILAN.haut)m('fc-haute','Ton cœur a travaillé plus que ton ressenti : '+Math.round(dessus*100)+' % du temps au-dessus de ta zone de base. Ralentis, marche dans les côtes.');
+  if(dessus!=null&&s.rpe!=null&&s.rpe<=BILAN.rpeBas&&dessus>BILAN.haut)m('fc-haute','Ton cœur a travaillé plus que ton ressenti : '+Math.round(dessus*100)+' % du temps au-dessus de ton allure facile.');
   if(dessus!=null&&s.rpe!=null&&s.rpe>=BILAN.rpeHaut&&dessus<BILAN.bas&&s.type!=='qual')m('fc-basse','Ressenti dur mais cardio bas : fatigue des jambes ou fatigue générale probable.');
   if(prevu&&prevu.dur&&s.dur){const e=s.dur/prevu.dur-1;if(e>BILAN.ecart)m('plus-long','Plus long que prévu (+'+Math.round(e*100)+' %).');else if(e<-BILAN.ecart)m('plus-court','Plus court que prévu ('+Math.round(e*100)+' %).');}
+  if(F&&F.croisiere&&F.croisiere.fc){const c=F.croisiere,ec=c.fc-hautBase;
+    m('croisiere','Cœur de croisière : '+c.fc+' bpm'+(c.depart?' (départ à '+c.depart+')':'')+(c.montee_s!=null?', atteint en '+Math.max(1,Math.round(c.montee_s/60))+' min':'')+' — '+(ec>0?ec+' au-dessus':ec<0?(-ec)+' en dessous':'pile à la limite')+' de ton allure facile ('+hautBase+').');}
+  if(F&&F.terrain&&F.terrain.montee&&F.terrain.descente&&F.terrain.montee.fc&&F.terrain.descente.fc&&F.terrain.descente.fc>=F.terrain.montee.fc-FLUX.ecartTerrain)
+    m('descente','Cœur presque aussi haut en descente ('+F.terrain.descente.fc+') qu\'en montée ('+F.terrain.montee.fc+') : peu de récupération dans les descentes.');
   if(veille&&isR(s)&&veille.cfJ&&veille.cfJ!=='non')m('veille-cf','CrossFit la veille ('+(veille.cfJ==='fort'?'jambes très sollicitées':'jambes un peu sollicitées')+') : jambes déjà entamées au départ.');
   if(isR(s)&&ref>0&&s.dur>ref*SEUIL+5)m('30j','Au-delà de +10 % de ta plus longue sortie des 30 jours ('+ref+' min) : la prochaine sortie longue en tiendra compte.');
   /* un indicateur expliqué (texte fixe) */
-  const ind=zones?'zones':(s.dplus&&s.dur)?'dplus-h':'charge';
+  const ind=F&&F.terrain?'terrain':zones?'zones':(s.dplus&&s.dur)?'dplus-h':'charge';
   const effet={prochaine:pA?{date:pA.date,dur:pA.dur,dplus:pA.dplus||null}:null,sans:pS?{date:pS.date,dur:pS.dur}:null,
     change:!!(pA&&pS&&(pA.date!==pS.date||pA.dur!==pS.dur)),ecarts:(avec.ecarts||[]).map(e=>e.obj)};
   return {id:s.id,date:s.date,type:s.type,dur:s.dur||null,durTot:s.durTot||null,dist:s.dist||null,dplus:s.dplus||null,dminus:s.dminus||null,
     hrAvg:s.hrAvg||null,hrMax:s.hrMax||null,rpe:s.rpe!=null?s.rpe:null,zones,dessusBase:dessus!=null?Math.round(dessus*100):null,
     prevu:prevu?{type:prevu.type,dur:prevu.dur,dplus:prevu.dplus||null}:null,ref30:ref||null,
     joursDepuisSL:derSL?Math.round((D(s.date)-D(derSL.date))/864e5):null,veilleCF:veille?(veille.cfJ||'?'):null,
-    dplusH:s.dplus&&s.dur?Math.round(s.dplus/(s.dur/60)):null,msgs,indicateur:ind,effet};
+    dplusH:s.dplus&&s.dur?Math.round(s.dplus/(s.dur/60)):null,hautBase,flux:F?{croisiere:F.croisiere,terrain:F.terrain,vam:F.vam,tranches:F.tranches}:null,msgs,indicateur:ind,effet};
 }
-return {build,bilan,BILAN,CONV,arrondi,Calendrier,dureeCourse,tranche_de,_t:{Modele,ajuste,atteint,max30,ref30,relachesPrevues}};
+return {build,bilan,flux,zonesKarvonen,FLUX,BILAN,CONV,arrondi,Calendrier,dureeCourse,tranche_de,_t:{Modele,ajuste,atteint,max30,ref30,relachesPrevues}};
 })();
 if(typeof module!=='undefined')module.exports=ENGINE;
