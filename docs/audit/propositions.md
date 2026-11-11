@@ -102,3 +102,33 @@ Jamais d'effet sur le plan (affichage seul, comme D-88).
 
 ### P-16 — Tests
 `isRun` unique partagé par l'appli et les tests ; un test qui rejoue une course réelle ; `tests/t_invariants.js` (déjà ajouté, vert) ; `tests/audit/t_audit_heure_ete.js` à basculer dans `tools/test.py` quand P-07 est codée ; `tests/audit/cas.js` à transformer en assertions au fil des corrections.
+
+---
+
+## Mission 3 — charge totale et spécificité trail (rapport `03-charge-specificite.md`)
+
+### P-17 — Ressenti du lendemain de renforcement (complète P-10 ; H-62 provisoire)
+**Constat.** 46 mercredis sur 47 sont un lendemain de CrossFit ; c'est là que le moteur lit ton seul signal de fatigue.
+**Règle proposée.** Une endurance courue moins de 36 h après une séance de renforcement porte une étiquette « lendemain de renfo ». Son ressenti est comparé aux autres séances de la même étiquette, et ne déclenche jamais seul un gel. À l'écran Organisation, un conseil (non imposé) : 48 h entre renforcement des jambes et course, quand la semaine le permet.
+**Nature.** Convention (H-62), appui : Doma et coll. 2017 (fatigue résiduelle de quelques heures à plusieurs jours, délai non fixé).
+**Réfutation.** Si, sur 8 semaines, ton ressenti du mercredi ne diffère pas selon que le mardi a été fait ou non, l'étiquette est inutile.
+
+### P-18 — Texte du renforcement libre (correction de texte)
+« Tu gères ton renforcement : l'app la compte dans ta charge. » → « Tu gères ton renforcement. L'app compte le jour, pas la charge de la séance. »
+
+### P-19 — Descente (D-109 provisoire, H-63 provisoire)
+**Constat.** Aucune séance de descente prescrite ; plus grosse descente d'entraînement = 40 % de celle de la course ; D− saisi mais lu par aucune règle ; après une coupure le D+ revient à la densité de la phase.
+**Règle proposée.** (a) Affichage : D− cumulé des 30 derniers jours et plus grosse descente, face au D− de la course (information). (b) Option de séance « répétitions de descente » en F3 et en bloc, proposée, jamais imposée, volume prudent et croissant. (c) Après une semaine « arrêt », la densité de D+ de la sortie longue repart de la densité de départ et remonte en 3 sorties.
+**Nature.** Convention (H-63) ; mécanisme : S-TRA-012. Aucune dose validée en ultra-trail.
+
+### P-20 — Nutrition : un seuil, une fonction (révise D-30 ; D-110 provisoire)
+**Constat.** Quatre seuils (60 min, 1 h, 1 h 30, 2 h) et deux jeux de chiffres (35 g/h de départ sur la carte ; 40 ou 60 g/h et 500 ml/h en dur sur la ligne de repli).
+**Règle proposée.** Paliers dans `CONV.nutri` : de 60 à 90 min, ligne sans cible ; à partir de 90 min, carte avec la cible de progression ; plafonds 60 g/h sous 2 h 30, 90 au-delà (alignés sur la position de 2016, à relire dans le texte original). Une seule fonction pour la carte, la note de séance et le Suivi. Boisson : le réglage du profil, présenté comme repère personnel. Corriger dans D-30 la phrase « en deçà l'apport à l'effort n'a pas d'objet ».
+**Nature.** Paliers 1 h / 2 h 30 : position d'experts (2016). Seuil de 90 min pour la carte : convention.
+
+### P-21 — Charge hors course : enregistrer d'abord (prépare G-CHG-001)
+**Règle proposée.** Rien dans le moteur pour l'instant. Rendre rapide la saisie de trois valeurs après chaque séance de renforcement : durée, ressenti, « jambes au réveil le lendemain » (le champ `legs` existe). Décision de brancher G-CHG-001 après 8 semaines de données (audit 06).
+
+### P-22 — Bloc spécifique à 3 jours et liste de contrôle
+**Règle proposée.** À l'entrée en F3, l'appli propose (bilan de phase) de passer à mercredi + samedi + dimanche avec un seul renforcement, en montrant ce que cela change ; l'utilisateur décide. En bloc, une liste de contrôle hors moteur : nuit, bâtons, sac et matériel obligatoire, ravitaillement testé.
+**Nature.** Convention (S-TRA-009, niveau faible). Simulé : 79 % contre 75 % à 25 % de semaines perturbées, donc sans pénalité de robustesse.
