@@ -1767,7 +1767,7 @@ function build(inp){
 }
 /* ---- D-99 : bilan de séance, étage A (calculé, déterministe ; ne modifie pas le plan) ----
    Seuils des messages : conventions (H-59), réglables ici. */
-const BILAN={baseZ:2,haut:0.40,bas:0.20,rpeBas:3,rpeHaut:7,ecart:0.25};
+const BILAN={baseZ:2,baseHaut:155,haut:0.40,bas:0.20,rpeBas:3,rpeHaut:7,ecart:0.25};
 function bilan(inp,sid){
   const all=inp.sessions||[],s=all.find(x=>x.id===sid);if(!s)return null;
   const isR=inp.isRun||(x=>['ef','long','qual','desc'].includes(x.type));
@@ -1782,11 +1782,15 @@ function bilan(inp,sid){
   const derSL=all.filter(x=>x.id!==sid&&x.type==='long'&&x.date<s.date).sort((a,b)=>a.date<b.date?1:-1)[0]||null;
   const veille=all.find(x=>x.type==='cf'&&x.date===add(s.date,-1))||null;
   /* temps par zone (zones d'intervals.icu, D-98) ; « au-dessus de la base » = au-delà de la zone BILAN.baseZ */
-  let zones=null,dessus=null;
-  if(s.hrZ&&Array.isArray(s.hrZ.t)){const t=s.hrZ.t.map(x=>+x||0),tot=t.reduce((a,b)=>a+b,0);
+  let zones=null,dessus=null,zonesKO=null;
+  /* garde-fou (v58) : intervals.icu fige les zones à l'import de l'activité. Si la borne haute de la zone de base n'est pas celle réglée (155 bpm), les temps par zone ne sont pas fiables : on ne les affiche pas. */
+  const hautBase=(inp.profile&&inp.profile.fcBase)||BILAN.baseHaut,bornes=s.hrZ&&s.hrZ.b,bAct=bornes?bornes[BILAN.baseZ-1]:null;
+  if(s.hrZ&&bAct!=null&&Math.abs(bAct-hautBase)>1)zonesKO={act:bAct,att:hautBase};
+  if(!zonesKO&&s.hrZ&&Array.isArray(s.hrZ.t)){const t=s.hrZ.t.map(x=>+x||0),tot=t.reduce((a,b)=>a+b,0);
     if(tot>0){zones=t.map((x,i)=>({z:i+1,haut:s.hrZ.b&&s.hrZ.b[i]!=null?s.hrZ.b[i]:null,pct:Math.round(100*x/tot)}));
       dessus=t.slice(BILAN.baseZ).reduce((a,b)=>a+b,0)/tot;}}
   const msgs=[],m=(code,txt)=>msgs.push({code,txt});
+  if(zonesKO)m('zones-decalees','Les zones de FC de cette activité ne sont pas celles que tu as réglées (zone de base jusqu\'à '+zonesKO.act+' bpm au lieu de '+zonesKO.att+') : le temps par zone n\'est pas fiable pour cette séance.');
   if(dessus!=null&&s.rpe!=null&&s.rpe<=BILAN.rpeBas&&dessus>BILAN.haut)m('fc-haute','Ton cœur a travaillé plus que ton ressenti : '+Math.round(dessus*100)+' % du temps au-dessus de ta zone de base. Ralentis, marche dans les côtes.');
   if(dessus!=null&&s.rpe!=null&&s.rpe>=BILAN.rpeHaut&&dessus<BILAN.bas&&s.type!=='qual')m('fc-basse','Ressenti dur mais cardio bas : fatigue des jambes ou fatigue générale probable.');
   if(prevu&&prevu.dur&&s.dur){const e=s.dur/prevu.dur-1;if(e>BILAN.ecart)m('plus-long','Plus long que prévu (+'+Math.round(e*100)+' %).');else if(e<-BILAN.ecart)m('plus-court','Plus court que prévu ('+Math.round(e*100)+' %).');}
@@ -2898,7 +2902,7 @@ function vGate(){
     +authFormHTML('Un compte garde ton plan et tes séances en sécurité, et te permet de les retrouver sur un autre téléphone. Ton prénom personnalise l\'app.')
     +syncLineHTML()+versionLineHTML()+'</div></main>';
 }
-const APP_VERSION='v57';   /* généré depuis sw.js par tools/build.py */
+const APP_VERSION='v58';   /* généré depuis sw.js par tools/build.py */
 function versionLineHTML(){return '<div class="mini" id="ver" style="margin-top:12px;text-align:center;opacity:.7">Ascend '+APP_VERSION+' · moteur de plan v2</div>';}
 /* compare la page chargée au cache du service worker : signale un déploiement pas encore actif */
 function checkVersion(){if(!('caches' in window))return;caches.keys().then(ks=>{const c=ks.filter(k=>/^ascend-v\d+$/.test(k)).map(k=>+k.slice(8)).sort((a,b)=>b-a)[0],el=document.getElementById('ver');

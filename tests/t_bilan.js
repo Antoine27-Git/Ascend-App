@@ -14,6 +14,11 @@ t('CrossFit la veille : message',b.msgs.some(m=>m.code==='veille-cf'));
 t('effet sur le plan : prochaine sortie longue donnée',b.effet.prochaine&&b.effet.prochaine.dur>0,JSON.stringify(b.effet.prochaine));
 const avant=JSON.stringify(E.build({profile:P,today:'2026-11-12',sessions:ses,isRun}).sessions);E.bilan({profile:P,today:'2026-11-12',sessions:ses,isRun},'x');
 t('le bilan ne modifie pas le plan',JSON.stringify(E.build({profile:P,today:'2026-11-12',sessions:ses,isRun}).sessions)===avant);
+/* v58 : zones figées par intervals.icu à l'import (zone de base jusqu'à 166 au lieu de 155) : temps par zone refusé, message explicite */
+const vieux=mk({hrZ:{t:[1110,1969,524,0,0,0,0],b:[157,166,175,185,190,196,205]}}).b;
+t('zones périmées : pas de « temps au-dessus de la base »',vieux.dessusBase===null&&!vieux.zones,String(vieux.dessusBase));
+t('zones périmées : message explicite',vieux.msgs.some(m=>m.code==='zones-decalees'&&/166/.test(m.txt)&&/155/.test(m.txt)));
+t('zones périmées : pas de faux message « cœur haut »',!vieux.msgs.some(m=>m.code==='fc-haute'));
 const sansZ=mk({hrZ:null}).b;t('sans zones : pas de message FC, indicateur de repli',!sansZ.msgs.some(m=>m.code==='fc-haute')&&sansZ.indicateur!=='zones');
 const fort=mk({rpe:8,hrZ:{t:[2000,1500,100,0,0,0,0],b:Z.b}}).b;t('RPE haut et FC basse : message',fort.msgs.some(m=>m.code==='fc-basse'));
 t('séance inconnue : null',E.bilan({profile:P,today:'2026-11-12',sessions:ses,isRun},'zz')===null);
