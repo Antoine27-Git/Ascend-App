@@ -38,7 +38,7 @@ t('bilan : zones de l\'appli malgré les zones figées',b.dessusBase===76&&!b.ms
 t('bilan 11/11 : constat croisière (162, 7 au-dessus de 155), pas de constat descente',b.msgs.some(m=>m.code==='croisiere'&&/162/.test(m.txt)&&/7 au-dessus/.test(m.txt))&&!b.msgs.some(m=>m.code==='descente'));
 const b42=E.bilan({profile:P,today:'2026-11-12',sessions:[Object.assign({},ses[0],{flux:q0()})],isRun},'x');
 t('bilan 42 km : constat descente, symbole ▲',b42.msgs.some(m=>m.code==='descente'&&m.sym==='▲'));
-t('bilan : RPE 3 et 76 % au-dessus → « cœur plus haut que le ressenti »',b.msgs.some(m=>m.code==='fc-haute'));
+t('bilan : RPE 3 et 76 % au-dessus → « FC plus haute que le ressenti »',b.msgs.some(m=>m.code==='fc-haute'));
 t('bilan : résumé du flux transmis (sans trace brute)',b.flux&&b.flux.terrain&&!b.flux.time,JSON.stringify(b.flux).length+' o');
 const b2=E.bilan({profile:Object.assign({},P,{fcMax:205}),today:'2026-11-12',sessions:[Object.assign({},ses[0],{flux:null})],isRun},'x');
 t('sans flux, FC max 205 : garde-fou sur la borne 158',b2.msgs.some(m=>m.code==='zones-decalees'&&/158/.test(m.txt)));
