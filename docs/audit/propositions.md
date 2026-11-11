@@ -180,3 +180,20 @@ Jamais d'effet sur le plan (affichage seul, comme D-88).
 
 ### P-32 — Hypothèses à réécrire dans `HYPOTHESES.md`
 H-38 et H-39 (texte à réintégrer) ; H-58 (mention « pari : catégorie +10 à +30 % de S-BLE-004 ») ; H-46 (limite à 2 jours : une note par semaine, lendemain de renforcement) ; H-22 (ne produit pas de baisse de volume à 2 jours) ; H-26 (non robuste sous adhérence imparfaite) ; H-37 (non tenue : le ressenti de la sortie longue n'est pas lu). Colonne « classe » (science / extrapolation / convention) à ajouter au registre.
+
+---
+
+## Mission 6 — coach personnalisé (note `06-coach-personnalise.md`)
+
+### P-33 — Plan figé de la semaine (reprend le point 3 de CHANTIER-MOTEUR ; D-118 provisoire)
+Chaque semaine, les séances prévues telles qu'affichées (type, durée, D+ visé), la version du moteur, la phase, le niveau de sortie longue et les limites en vigueur sont enregistrés une fois et jamais réécrits. Sert au Suivi (prévu à cette date), au fil de raisons et à toute réfutation.
+
+### P-34 — Neuf données à enregistrer (D-119 provisoire)
+Liste et coût de saisie au § 5 de la note. Raison d'un manque étendue à quatre choix (agenda, fatigue, maladie, blessure) ; « jambes au réveil » en un geste ; ressenti de la sortie longue stocké sans être lu.
+
+### P-35 — Cadre de réglage (D-120 provisoire, H-66 provisoire)
+Paramètres réglables dans un intervalle écrit dans `CONV` ; garde-fous jamais réglés ; au plus un changement par phase, accepté par l'utilisateur, journalisé et réversible ; nombre minimal d'observations par paramètre (16 endurances notées, 8 sorties longues) en dessous duquel aucun réglage n'est proposé. Premier paramètre : la régularité (P-01, P-30).
+**Nature.** Convention (H-66) ; le seuil de 16 vient d'un calcul de taille d'échantillon (bruit d'un point, écart d'un point).
+
+### P-36 — LLM en lecture seule (D-121 provisoire)
+Explication, résumé, traduction ; jamais de prescription ni de réglage ; tout nombre vérifié contre le plan ; chaque affirmation étiquetée (règle de sécurité, convention, non vérifié) ; préalables : P-33 et le fil de raisons. D-77 reste fermée jusqu'à la fin de F2.
