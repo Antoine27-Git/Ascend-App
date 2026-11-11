@@ -812,15 +812,16 @@ function allureTxt(sec){if(!sec)return '–';const m=Math.floor(sec/60),x=Math.r
 const FLUX_TRY={};
 function fluxAFaire(r){if(!r.ext||!/^icu:/.test(r.ext)||!isRun(r))return false;const z=ENGINE.zonesKarvonen(S.profile.fcMax,S.profile.fcRepos);
   if(!r.flux)return !r.fluxKO;return !!(z&&(!r.flux.zones||r.flux.zones.bornes.join()!==z.join()));}
+const ICO={up:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--mut);flex:none;margin-right:-1px"><path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/></svg>',flat:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--mut);flex:none;margin-right:-1px"><path d="M5 12h14"/><path d="M15 16l4-4-4-4"/></svg>',down:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--mut);flex:none;margin-right:-1px"><path d="M3 7l6 6 4-4 8 8"/><path d="M21 10v7h-7"/></svg>'};
 function bilanSeanceHTML(r){
   if(fluxAFaire(r)){const k=r.id+':'+(S.profile.fcMax||'')+':'+(S.profile.fcRepos||'');if(!FLUX_TRY[k]){FLUX_TRY[k]=1;setTimeout(()=>app.fluxLire(r.id),0);}}
   const b=bilanOf(r);if(!b)return '';const ia=r.ia||{},F=b.flux,Fz=r.flux&&r.flux.zones;
   /* v62 : bilan épuré (D-100) */
-  const SEC=t=>'<h3 class="mini" style="font-size:13px;font-weight:500;margin:18px 0 8px">'+t+'</h3>',BOX='background:var(--bg);border-radius:12px;padding:4px 12px';
+  const SEC=t=>'<h3 class="mini" style="font-size:13px;font-weight:500;margin:18px 0 8px">'+t+'</h3>',BOX='border:1px solid var(--line);border-radius:14px;padding:4px 12px';
   const OK='background:#e1f5ee;color:#085041',HI='background:#faeeda;color:#633806';
   const pill=(v,hb)=>v==null?'–':'<span style="display:inline-block;min-width:38px;text-align:center;border-radius:6px;padding:1px 4px;font-weight:700;'+(v>hb?HI:OK)+'">'+v+'</span>';
   const hb=b.hautBase||159,ROW='display:grid;gap:6px;align-items:center;font-size:14px;padding:8px 0';
-  const tile=(l,v,u,sub,col)=>'<div style="background:var(--bg);border-radius:12px;padding:10px 12px"><div class="mini">'+l+'</div><div style="font-size:21px;font-weight:600;margin-top:2px'+(col?';color:'+col:'')+'">'+v+(u?'<span class="mini" style="font-size:13px;font-weight:400"> '+u+'</span>':'')+'</div><div class="mini" style="font-size:12px">'+(sub||'&nbsp;')+'</div></div>';
+  const tile=(l,v,u,sub,col)=>'<div style="border:1px solid var(--line);border-radius:14px;padding:10px 12px"><div class="mini">'+l+'</div><div style="font-size:21px;font-weight:600;margin-top:2px'+(col?';color:'+col:'')+'">'+v+(u?'<span class="mini" style="font-size:13px;font-weight:400"> '+u+'</span>':'')+'</div><div class="mini" style="font-size:12px">'+(sub||'&nbsp;')+'</div></div>';
   const tl=TYPES[b.type]?TYPES[b.type].l:'Séance';
   let h='<div class="mini" style="font-size:13px;margin-top:14px">'+tl+' · '+fmtD(b.date)+'</div>'
     +'<div style="font-size:18px;font-weight:600;margin:2px 0 12px">'+[b.dur?durTxt(b.dur):null,b.dist?String(Math.round(b.dist*10)/10).replace('.',',')+' km':null,b.dplus!=null?b.dplus+' m D+':null].filter(Boolean).join(' · ')+'</div>';
@@ -839,10 +840,10 @@ function bilanSeanceHTML(r){
       +tr.map(x=>'<div style="'+ROW+';'+G+';border-top:1px solid var(--line,#e3e8e5)"><span>'+(cinq?Math.ceil(x.a):Math.ceil(x.a))+'</span><span>'+allureTxt(x.allure)+'</span><span>'+pill(x.fc,hb)+'</span><span>'
         +(x.dp==null?'–':'<i style="display:inline-block;height:5px;border-radius:3px;background:#b5d4f4;vertical-align:middle;margin-right:6px;width:'+Math.max(2,Math.round(48*x.dp/mx))+'px"></i>'+x.dp)+'</span><span class="mini">'+(x.dm==null?'–':x.dm)+'</span></div>').join('')
       +'<div class="mini" style="font-size:12px;display:flex;gap:14px;padding:8px 0 6px"><span><span style="border-radius:6px;padding:0 6px;font-weight:700;'+OK+'">≤ '+hb+'</span> facile</span><span><span style="border-radius:6px;padding:0 6px;font-weight:700;'+HI+'">'+(hb+1)+'+</span> au-dessus</span></div></div></details>';}
-  if(F&&F.terrain){const T=F.terrain,G='grid-template-columns:minmax(0,1fr) 46px 80px 48px;column-gap:4px',kmh=x=>String(x.kmh).replace('.',',');
-    const lg=(ic,l,x)=>x?'<div style="'+ROW+';'+G+';border-top:1px solid var(--line,#e3e8e5)"><span style="white-space:nowrap">'+ic+' '+l+'</span><span class="mini">'+x.min+' min</span><span>'+kmh(x)+' km/h</span><span>'+pill(x.fc,hb)+'</span></div>':'';
-    h+=SEC('Terrain')+'<div style="'+BOX+'"><div class="mini" style="'+ROW+';'+G+';font-size:11.5px;white-space:nowrap"><span></span><span>Durée</span><span>Vitesse moy.</span><span>FC moy.</span></div>'
-      +lg('↗','Montée',T.montee)+lg('→','Plat',T.plat)+lg('↘','Descente',T.descente)+'</div>';}
+  if(F&&F.terrain){const T=F.terrain,G='grid-template-columns:minmax(0,1fr) 46px 62px 44px;column-gap:6px',kmh=x=>String(x.kmh).replace('.',',');
+    const lg=(ic,l,x)=>x?'<div style="'+ROW+';'+G+';border-top:1px solid var(--line,#e3e8e5)"><span style="white-space:nowrap;display:flex;align-items:center;gap:6px">'+ic+l+'</span><span>'+x.min+' min</span><span style="white-space:nowrap">'+kmh(x)+'<span class="mini" style="font-size:11.5px"> km/h</span></span><span>'+pill(x.fc,hb)+'</span></div>':'';
+    h+=SEC('Terrain')+'<div style="'+BOX+'"><div class="mini" style="'+ROW+';'+G+';font-size:11.5px;white-space:nowrap"><span></span><span>Durée</span><span>Vit. moy.</span><span>FC moy.</span></div>'
+      +lg(ICO.up,'Montée',T.montee)+lg(ICO.flat,'Plat',T.plat)+lg(ICO.down,'Descente',T.descente)+'</div>';}
   else if(r.fluxErr)h+='<div class="mini" style="margin-top:8px">Détail de la montre indisponible : '+esc(r.fluxErr)+'</div>';
   else if(FLUX_BUSY===r.id)h+='<div class="mini" style="margin-top:8px">Lecture du détail de ta montre…</div>';
   if(b.msgs.length)h+=SEC('Ce que ça dit')+'<div style="'+BOX+'">'+b.msgs.map((m,i)=>'<div style="display:flex;gap:10px;font-size:14px;line-height:1.5;padding:9px 0'+(i?';border-top:1px solid var(--line,#e3e8e5)':'')+'"><span style="flex:none;width:18px;text-align:center;font-weight:700;color:'+(m.sym==='▲'?'#ba7517':m.sym==='✓'?'#0f6e56':'var(--mut)')+'">'+(m.sym==='▲'?'!':m.sym==='✓'?'✓':'i')+'</span><span>'+esc(m.txt)+'</span></div>').join('')+'</div>';
@@ -2997,7 +2998,7 @@ function vGate(){
     +authFormHTML('Un compte garde ton plan et tes séances en sécurité, et te permet de les retrouver sur un autre téléphone. Ton prénom personnalise l\'app.')
     +syncLineHTML()+versionLineHTML()+'</div></main>';
 }
-const APP_VERSION='v62';   /* généré depuis sw.js par tools/build.py */
+const APP_VERSION='v63';   /* généré depuis sw.js par tools/build.py */
 function versionLineHTML(){return '<div class="mini" id="ver" style="margin-top:12px;text-align:center;opacity:.7">Ascend '+APP_VERSION+' · moteur de plan v2</div>';}
 /* compare la page chargée au cache du service worker : signale un déploiement pas encore actif */
 function checkVersion(){if(!('caches' in window))return;caches.keys().then(ks=>{const c=ks.filter(k=>/^ascend-v\d+$/.test(k)).map(k=>+k.slice(8)).sort((a,b)=>b-a)[0],el=document.getElementById('ver');
