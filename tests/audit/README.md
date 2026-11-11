@@ -15,6 +15,7 @@ certains reproduisent un défaut connu et sont donc rouges tant que le défaut e
 | `corrections.js` | texte des corrections P-08 et P-09, appliquées à une copie du moteur par `variante.js` | sans objet |
 | `parite_etendue.py` | parité v1 sur 60 cas tirés au hasard | vert |
 | `../t_invariants.js` | sous-ensemble vert de `fuzz.js` (120 scénarios, UTC) — **dans `tools/test.py`** | vert |
+| `sync_scenarios.py` | mission 4 : 5 scénarios de synchro sur la vraie appli (Chrome sans écran + faux serveur Supabase en mémoire) | **rouge attendu** (4 sur 5) |
 
 Reproduire la mission 1 (environ 30 min sur 2 cœurs, graine fixe) :
 `node tests/audit/sim_adherence.js 400 1 "" 0/2` et `… 1/2`, puis `node tests/audit/sim_coupure.js "2 jours"`.

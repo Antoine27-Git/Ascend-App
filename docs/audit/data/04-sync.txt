@@ -1,0 +1,25 @@
+✗ 1. Données du navigateur effacées puis connexion : le profil du compte est conservé
+     local : objectif , 5 séances ; serveur : objectif  (attendu 2027-09-25)
+✗ 2. Séance saisie hors ligne sur B (9 h), synchronisée après une saisie de A (10 h) : A la reçoit
+     A voit 6 séances (sB ABSENTE) ; B voit 6 séances ; serveur : 7 lignes
+✗ 2b. Horloge de B en retard de 3 h : A reçoit quand même la séance de B
+     A voit 5 séances (sB ABSENTE, sans message)
+✗ 3. Profil modifié sur deux appareils (réglages différents) : les deux changements survivent
+     A après synchro : prénom « Test », manques ['2026-11-04'] ; serveur : prénom « Test », manques ['2026-11-04']
+✗ 4. Restaurer une sauvegarde de 2 séances sur un compte de 5 : les 3 autres restent sur le serveur
+     3 séances marquées supprimées sur le serveur, contenu effacé : True
+
+0 scénario(s) sur 5 conformes à l'attendu — horodatage du téléphone conservé (hypothèse)
+
+✗ 1. Données du navigateur effacées puis connexion : le profil du compte est conservé
+     local : objectif , 5 séances ; serveur : objectif  (attendu 2027-09-25)
+✓ 2. Séance saisie hors ligne sur B (9 h), synchronisée après une saisie de A (10 h) : A la reçoit
+     A voit 7 séances (sB présente) ; B voit 7 séances ; serveur : 8 lignes
+✓ 2b. Horloge de B en retard de 3 h : A reçoit quand même la séance de B
+     A voit 7 séances (sB présente)
+✗ 3. Profil modifié sur deux appareils (réglages différents) : les deux changements survivent
+     A après synchro : prénom « Test », manques ['2026-11-04'] ; serveur : prénom « Test », manques ['2026-11-04']
+✗ 4. Restaurer une sauvegarde de 2 séances sur un compte de 5 : les 3 autres restent sur le serveur
+     3 séances marquées supprimées sur le serveur, contenu effacé : True
+
+2 scénario(s) sur 5 conformes à l'attendu — serveur horodateur

@@ -132,3 +132,33 @@ Jamais d'effet sur le plan (affichage seul, comme D-88).
 ### P-22 — Bloc spécifique à 3 jours et liste de contrôle
 **Règle proposée.** À l'entrée en F3, l'appli propose (bilan de phase) de passer à mercredi + samedi + dimanche avec un seul renforcement, en montrant ce que cela change ; l'utilisateur décide. En bloc, une liste de contrôle hors moteur : nuit, bâtons, sac et matériel obligatoire, ravitaillement testé.
 **Nature.** Convention (S-TRA-009, niveau faible). Simulé : 79 % contre 75 % à 25 % de semaines perturbées, donc sans pénalité de robustesse.
+
+---
+
+## Mission 4 — fiabilité des données (rapport `04-donnees.md`)
+
+### P-23 — Connexion sur un état local vierge : le serveur d'abord (correction ; D-111 provisoire)
+**Constat.** Navigateur vidé puis connexion : le profil vide local, marqué « modifié maintenant » par `boot()`, écrase le profil du serveur (scénario 1).
+**Règle proposée.** (a) `markChanges()` ne marque jamais un profil non démarré (`onboarded` faux, pas de date d'objectif) ; (b) à la connexion, si l'état de synchro local est vide (`lastPull` nul), lecture complète du serveur **avant** tout marquage, et le serveur gagne pour toute clé qu'il contient ; (c) même garde quand l'état de synchro est illisible.
+**Test.** Scénario 1 de `tests/audit/sync_scenarios.py` au vert.
+
+### P-24 — Restauration sûre (D-112 provisoire)
+**Règle proposée.** Avant de restaurer : résumé chiffré (« ce fichier contient 2 séances ; ton compte en a 5 ; 3 seront supprimées partout ») et confirmation ; téléchargement automatique de l'état courant ; mode par défaut « fusionner » (ajoute et met à jour, ne supprime rien), mode « remplacer » en option explicite.
+
+### P-25 — Profil fusionné par rubrique (D-113 provisoire)
+**Constat.** Le dernier appareil à synchroniser écrase tout le profil (scénario 3).
+**Règle proposée.** Une ligne de synchro par rubrique du profil (objectif, jours, organisations et historique, départ, manques, décalages, bilans, réglages) ; `manques` et `decal`, qui sont des dictionnaires par date, fusionnés clé par clé. L'horodatage d'une modification est celui de la modification et n'est plus rafraîchi par `markChanges()`.
+
+### P-26 — Serveur : horodatage, historique, schéma versionné (D-114 provisoire)
+**Règle proposée.** Déclencheur qui écrit `updated_at = now()` à chaque écriture (corrige le scénario 2b) ; table `trail_items_history` alimentée par déclencheur, limitée aux 30 dernières versions par clé ; fichier `supabase/schema.sql` (table, index, politiques d'accès par `auth.uid()`) dans le dépôt, appliqué à la main comme les fonctions.
+**Attention.** Avec un horodatage serveur, la comparaison locale « ma modification est plus récente » doit se faire sur un compteur de version, pas sur l'heure du téléphone : à écrire dans la spec avant de coder.
+
+### P-27 — Rappel de sauvegarde (D-115 provisoire)
+**Règle proposée.** Date du dernier export affichée dans Profil ; rappel discret si plus de 30 jours ou à chaque bilan de phase ; l'export reste un geste de l'utilisateur.
+
+### P-28 — Fonctions intervals : vérifier l'utilisateur (sécurité)
+**Constat.** Les fonctions servent ta clé intervals.icu à tout compte connecté au projet.
+**Règle proposée.** La fonction lit l'utilisateur du jeton et refuse tout autre que le propriétaire (identifiant en secret), ou lit une clé par utilisateur. Tant que l'appli est personnelle : inscription fermée dans Supabase.
+
+### P-29 — Test de synchro dans la batterie
+`tests/audit/sync_scenarios.py` rejoint `tools/test.py` (étape facultative si Playwright ou Chrome manquent) quand P-23 à P-25 sont codées.
