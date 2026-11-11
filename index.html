@@ -801,7 +801,7 @@ function watchSendBlock(ps){
 const IA_MODELE='claude-sonnet-5-5',IA_MAX_JOUR=20;
 const INDIC={
   'zones':['Temps par zone de FC','Ta FC est rangée en zones (réglées dans intervals.icu). En endurance, l\'essentiel du temps devrait rester dans les deux premières : c\'est là que se construit le fond, sans fatigue inutile. Un temps élevé au-dessus signale un départ trop rapide, des côtes courues ou une fatigue. Une séance isolée ne suffit pas : regarde la tendance sur plusieurs semaines.'],
-  'terrain':['Montée, plat, descente','Chaque tranche de 30 s est classée selon la pente : montée au-delà de +3 %, descente en deçà de −3 % (seuils de convention, pour regrouper). La pente change le coût de la course : en montée, on dépense bien plus d\'énergie à vitesse égale (Minetti et al., 2002). Compare donc ton cœur à terrain égal, pas sur la moyenne. La vitesse de montée (mètres montés par heure, sur les seules montées) mesure ta capacité à grimper ; elle se compare d\'une sortie à l\'autre. La FC au poignet est moins fiable qu\'une ceinture, surtout au départ et en terrain irrégulier.'],
+  'terrain':['Montée, plat, descente','Chaque tranche de 30 s est classée selon la pente : montée au-delà de +3 %, descente en deçà de −3 % (seuils de convention, pour regrouper). La pente change le coût de la course : en montée, on dépense bien plus d\'énergie à vitesse égale (Minetti et al., 2002). Compare donc ta FC à terrain égal, pas sur la moyenne. La vitesse de montée (mètres montés par heure, sur les seules montées) mesure ta capacité à grimper ; elle se compare d\'une sortie à l\'autre. La FC au poignet est moins fiable qu\'une ceinture, surtout au départ et en terrain irrégulier.'],
   'dplus-h':['D+ par heure','Les mètres montés divisés par le temps : ça dit à quel point la sortie était vallonnée. Utile pour comparer deux sorties de même durée : à D+ par heure égal, une FC plus basse signale un progrès.'],
   'charge':['Charge de séance','Durée × effort ressenti (RPE). Une mesure simple et validée de la charge interne (méthode de Foster) ; elle compare des séances de natures différentes.']};
 /* note envoyée à l'analyse : jamais le nom d'activité de la montre (souvent la commune), seulement ce qu'Antoine a écrit */
@@ -818,26 +818,27 @@ function bilanSeanceHTML(r){
   const cel=(x,st)=>'<td style="padding:5px 4px;text-align:left;'+(st||'')+'">'+x+'</td>',th=x=>'<th style="font-weight:600;color:var(--mut);font-size:12px;text-align:left;padding:2px 4px">'+x+'</th>';
   const pv=b.prevu||{},lig=(l,p,f)=>'<tr>'+cel(l,'color:var(--mut)')+cel(p==null?'':p,'color:var(--mut)')+cel('<b>'+(f==null?'–':f)+'</b>')+'</tr>';
   /* ① Ta séance */
-  let h='<h3 style="font-size:16px;margin:18px 0 6px">Ta séance</h3><table style="width:100%;border-collapse:collapse;font-size:14px;table-layout:fixed"><colgroup><col style="width:38%"><col style="width:24%"><col style="width:38%"></colgroup><tr>'+th('')+th('Prévu')+th('Fait')+'</tr>'
+  let h='<div style="border:1px solid var(--line,#e3e8e5);border-radius:14px;padding:12px 14px;margin-top:12px"><h3 style="font-size:16px;margin:0 0 6px">Ta séance</h3><table style="width:100%;border-collapse:collapse;font-size:14px;table-layout:fixed"><colgroup><col style="width:38%"><col style="width:24%"><col style="width:38%"></colgroup><tr>'+th('')+th('Prévu')+th('Fait')+'</tr>'
     +lig('Durée',pv.dur?durTxt(pv.dur):null,b.dur?durTxt(b.dur):null)+lig('D+',pv.dplus!=null?pv.dplus+' m':null,b.dplus!=null?b.dplus+' m':null)
     +lig('D−',null,b.dminus?b.dminus+' m':null)+lig('Effort',null,b.rpe!=null?b.rpe+'/10':null)
-    +lig('Cœur',null,F&&F.croisiere?F.croisiere.fc+' bpm<span class="mini"> croisière</span>':b.hrAvg?b.hrAvg+' bpm<span class="mini"> moyenne</span>':null)
+    +lig('FC',null,F&&F.croisiere?F.croisiere.fc+' bpm<span class="mini"> croisière</span>':b.hrAvg?b.hrAvg+' bpm<span class="mini"> moyenne</span>':null)
     +(b.zones?lig('Hors allure facile',null,b.dessusBase+'&nbsp;%'):'')+'</table>';
   if(F&&F.tranches&&F.tranches.length){const tr=F.tranches,ex=tr.slice().sort((x,y)=>x.allure-y.allure),hb=b.hautBase;
     h+='<details style="margin-top:8px"><summary class="mini" style="font-size:14px"><span><b>Détail par '+(tr.length>1&&tr[1].de-tr[0].de===5?'5 km':'km')+'</b> · de '+allureTxt(ex[0].allure)+' à '+allureTxt(ex[ex.length-1].allure)+'/km</span></summary>'
-      +'<table style="width:100%;border-collapse:collapse;font-size:13.5px;margin-top:6px"><tr>'+th('km')+th('Allure')+th('Cœur')+th('D+')+th('D−')+'</tr>'
+      +'<table style="width:100%;border-collapse:collapse;font-size:13.5px;margin-top:6px"><tr>'+th('km')+th('Allure')+th('FC')+th('D+')+th('D−')+'</tr>'
       +tr.map(x=>'<tr style="border-top:1px solid var(--line,#e3e8e5)">'+cel(x.de+'–'+String(x.a).replace('.',','))+cel(allureTxt(x.allure))
         +cel(x.fc==null?'–':'<span style="padding:1px 6px;border-radius:6px;background:'+(x.fc>hb?'#fbeed7':'#e3f2ea')+';color:'+(x.fc>hb?'#7a4b06':'#1d5a3a')+'">'+x.fc+'</span>')
-        +cel(x.dp==null?'–':x.dp)+cel(x.dm==null?'–':x.dm,'color:var(--mut)')+'</tr>').join('')+'</table>'
-      +'<div class="mini" style="margin-top:4px">Vert : cœur dans ton allure facile (≤ '+hb+'). Orange : au-dessus.</div></details>';}
-  if(F&&F.terrain){const T=F.terrain,box=(l,x,v)=>'<div style="background:var(--bg2,#f1f3f2);border-radius:10px;padding:8px 10px"><div class="mini">'+l+(x?' · '+x.min+' min':'')+'</div><div style="font-size:15px;font-weight:700">'+v+'</div>'+(x&&x.fc?'<div class="mini">cœur '+x.fc+'</div>':'')+'</div>';
+        +cel(x.dp==null?'–':'<span style="display:inline-block;height:6px;border-radius:3px;background:#8fb8a3;vertical-align:middle;margin-right:5px;width:'+Math.max(2,Math.round(28*x.dp/Math.max(1,...tr.map(y=>y.dp||0))))+'px"></span>'+x.dp)+cel(x.dm==null?'–':x.dm,'color:var(--mut)')+'</tr>').join('')+'</table>'
+      +'<div class="mini" style="margin-top:4px">Vert : FC dans ton allure facile (≤ '+hb+'). Orange : au-dessus.</div></details>';}
+  if(F&&F.terrain){const T=F.terrain,box=(l,x,v)=>'<div style="background:var(--bg2,#f1f3f2);border-radius:10px;padding:8px 10px"><div class="mini">'+l+(x?' · '+x.min+' min':'')+'</div><div style="font-size:15px;font-weight:700">'+v+'</div>'+(x&&x.fc?'<div class="mini">FC '+x.fc+'</div>':'')+'</div>';
     h+='<div class="mini" style="font-size:14px;margin:12px 0 6px"><b>Terrain</b></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'
       +box('Montée',T.montee,T.montee?String(T.montee.kmh).replace('.',',')+' km/h':'–')+box('Plat',T.plat,T.plat?String(T.plat.kmh).replace('.',',')+' km/h':'–')
       +box('Descente',T.descente,T.descente?String(T.descente.kmh).replace('.',',')+' km/h':'–')+box('Vitesse de montée',null,F.vam?F.vam+' m/h':'–')+'</div>';}
   else if(r.fluxErr)h+='<div class="mini" style="margin-top:8px">Détail de la montre indisponible : '+esc(r.fluxErr)+'</div>';
   else if(FLUX_BUSY===r.id)h+='<div class="mini" style="margin-top:8px">Lecture du détail de ta montre…</div>';
+  h+='</div>';
   /* ② Ce que ça dit */
-  if(b.msgs.length)h+='<h3 style="font-size:16px;margin:18px 0 6px">Ce que ça dit</h3>'+b.msgs.map(m=>'<div style="font-size:14px;line-height:1.45;margin-top:5px;display:flex;gap:8px"><span style="font-weight:700;color:'+(m.sym==='▲'?'#a8670c':m.sym==='✓'?'#1d7a4a':'var(--mut)')+'">'+m.sym+'</span><span>'+esc(m.txt)+'</span></div>').join('');
+  if(b.msgs.length)h+='<div style="border:1px solid var(--line,#e3e8e5);border-radius:14px;padding:12px 14px;margin-top:12px"><h3 style="font-size:16px;margin:0 0 6px">Ce que ça dit</h3>'+b.msgs.map(m=>'<div style="font-size:14px;line-height:1.45;margin-top:5px;display:flex;gap:8px"><span style="font-weight:700;color:'+(m.sym==='▲'?'#a8670c':m.sym==='✓'?'#1d7a4a':'var(--mut)')+'">'+m.sym+'</span><span>'+esc(m.txt)+'</span></div>').join('')+'</div>';
   if(!S.profile.fcMax||!S.profile.fcRepos)h+='<div class="mini" style="margin-top:6px">Renseigne ta FC max et ta FC repos (Profil, « Toi ») pour calculer tes zones.</div>';
   /* ③ Pour la suite */
   const e=b.effet;if(e.prochaine)h+='<h3 style="font-size:16px;margin:18px 0 6px">Pour la suite</h3><div style="font-size:14px">Prochaine sortie longue : <b>'+durTxt(e.prochaine.dur)+'</b> le '+fmtD(e.prochaine.date)+(e.change?' (sans cette séance : '+durTxt(e.sans.dur)+')':' — inchangée par cette séance')+'</div>';
@@ -1873,13 +1874,13 @@ function bilan(inp,sid){
       dessus=t.slice(BILAN.baseZ).reduce((a,b)=>a+b,0)/tot;}}
   const SYM={'fc-haute':'▲','fc-basse':'▲','30j':'▲','depart':'▲','descente':'▲'},msgs=[],m=(code,txt)=>msgs.push({code,txt,sym:SYM[code]||'○'});
   if(zonesKO)m('zones-decalees','Les zones de FC de cette activité ne sont pas celles que tu as réglées (zone de base jusqu\'à '+zonesKO.act+' bpm au lieu de '+zonesKO.att+') : le temps par zone n\'est pas fiable pour cette séance.');
-  if(dessus!=null&&s.rpe!=null&&s.rpe<=BILAN.rpeBas&&dessus>BILAN.haut)m('fc-haute','Ton cœur a travaillé plus que ton ressenti : '+Math.round(dessus*100)+' % du temps au-dessus de ton allure facile.');
-  if(dessus!=null&&s.rpe!=null&&s.rpe>=BILAN.rpeHaut&&dessus<BILAN.bas&&s.type!=='qual')m('fc-basse','Ressenti dur mais cardio bas : fatigue des jambes ou fatigue générale probable.');
+  if(dessus!=null&&s.rpe!=null&&s.rpe<=BILAN.rpeBas&&dessus>BILAN.haut)m('fc-haute','Ta FC a travaillé plus que ton ressenti : '+Math.round(dessus*100)+' % du temps au-dessus de ton allure facile.');
+  if(dessus!=null&&s.rpe!=null&&s.rpe>=BILAN.rpeHaut&&dessus<BILAN.bas&&s.type!=='qual')m('fc-basse','Ressenti dur mais FC basse : fatigue des jambes ou fatigue générale probable.');
   if(prevu&&prevu.dur&&s.dur){const e=s.dur/prevu.dur-1;if(e>BILAN.ecart)m('plus-long','Plus long que prévu (+'+Math.round(e*100)+' %).');else if(e<-BILAN.ecart)m('plus-court','Plus court que prévu ('+Math.round(e*100)+' %).');}
   if(F&&F.croisiere&&F.croisiere.fc){const c=F.croisiere,ec=c.fc-hautBase;
-    m('croisiere','Cœur de croisière : '+c.fc+' bpm'+(c.depart?' (départ à '+c.depart+')':'')+(c.montee_s!=null?', atteint en '+Math.max(1,Math.round(c.montee_s/60))+' min':'')+' — '+(ec>0?ec+' au-dessus':ec<0?(-ec)+' en dessous':'pile à la limite')+' de ton allure facile ('+hautBase+').');}
+    m('croisiere','FC de croisière : '+c.fc+' bpm'+(c.depart?' (départ à '+c.depart+')':'')+(c.montee_s!=null?', atteint en '+Math.max(1,Math.round(c.montee_s/60))+' min':'')+' — '+(ec>0?ec+' au-dessus':ec<0?(-ec)+' en dessous':'pile à la limite')+' de ton allure facile ('+hautBase+').');}
   if(F&&F.terrain&&F.terrain.montee&&F.terrain.descente&&F.terrain.montee.fc&&F.terrain.descente.fc&&F.terrain.descente.fc>=F.terrain.montee.fc-FLUX.ecartTerrain)
-    m('descente','Cœur presque aussi haut en descente ('+F.terrain.descente.fc+') qu\'en montée ('+F.terrain.montee.fc+') : peu de récupération dans les descentes.');
+    m('descente','FC presque aussi haute en descente ('+F.terrain.descente.fc+') qu\'en montée ('+F.terrain.montee.fc+') : peu de récupération dans les descentes.');
   if(veille&&isR(s)&&veille.cfJ&&veille.cfJ!=='non')m('veille-cf','CrossFit la veille ('+(veille.cfJ==='fort'?'jambes très sollicitées':'jambes un peu sollicitées')+') : jambes déjà entamées au départ.');
   if(isR(s)&&ref>0&&s.dur>ref*SEUIL+5)m('30j','Au-delà de +10 % de ta plus longue sortie des 30 jours ('+ref+' min) : la prochaine sortie longue en tiendra compte.');
   /* un indicateur expliqué (texte fixe) */
@@ -2653,7 +2654,7 @@ function vPToi(){const P=S.profile,St=P.start||{},races=St.pastRaces||[],ref=ref
     pCard('Ton identité','Ton poids sert à doser la charge des montées lestées.',rTxt('Prénom','name')+rNum('Poids','weight','kg','0.1'))
     +pCard('Ton historique','Tes 4 dernières semaines avant le plan. Elles calent tes premières semaines ; ensuite, l\'appli se base sur les séances que tu enregistres.',hist)
     +pCard('Tes courses passées','Le plan prend comme référence la course la plus proche de ton objectif pour estimer ta durée de course.',(races.length?rc:'<div class="pr"><span class="pl" style="color:var(--mut)">Aucune course pour l\'instant.</span></div>')+rLink('+ Ajouter une course','app.paddRace()'))
-    +pCard('Ton cœur','Tes zones de FC sont calculées par la méthode de Karvonen (part de ta FC de réserve). Ta FC max vient de ta montre : un test d\'effort la confirmerait.',
+    +pCard('Ta fréquence cardiaque','Tes zones de FC sont calculées par la méthode de Karvonen (part de ta FC de réserve). Ta FC max vient de ta montre : un test d\'effort la confirmerait.',
       rNum('FC max','fcMax','bpm')+rNum('FC repos','fcRepos','bpm')
       +(z=>z?'<div class="mini" style="margin:6px 2px 2px">Allure facile : jusqu\'à <b>'+z[1]+' bpm</b> · zones '+[0].concat(z).map((b,i)=>'Z'+(i+1)+' '+(i===0?'≤ '+z[0]:i<4?(b+1)+'–'+z[i]:(b+1)+'+')).join(' · ')+'</div>':'<div class="mini" style="margin:6px 2px 2px">Renseigne les deux pour calculer tes zones.</div>')(ENGINE.zonesKarvonen(P.fcMax,P.fcRepos)))
     +pCard('Ton terrain','Ce qui compte, c\'est la longueur de tes montées, pas le dénivelé total.',
@@ -2991,7 +2992,7 @@ function vGate(){
     +authFormHTML('Un compte garde ton plan et tes séances en sécurité, et te permet de les retrouver sur un autre téléphone. Ton prénom personnalise l\'app.')
     +syncLineHTML()+versionLineHTML()+'</div></main>';
 }
-const APP_VERSION='v60';   /* généré depuis sw.js par tools/build.py */
+const APP_VERSION='v61';   /* généré depuis sw.js par tools/build.py */
 function versionLineHTML(){return '<div class="mini" id="ver" style="margin-top:12px;text-align:center;opacity:.7">Ascend '+APP_VERSION+' · moteur de plan v2</div>';}
 /* compare la page chargée au cache du service worker : signale un déploiement pas encore actif */
 function checkVersion(){if(!('caches' in window))return;caches.keys().then(ks=>{const c=ks.filter(k=>/^ascend-v\d+$/.test(k)).map(k=>+k.slice(8)).sort((a,b)=>b-a)[0],el=document.getElementById('ver');

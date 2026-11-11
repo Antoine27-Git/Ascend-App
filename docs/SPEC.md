@@ -3344,7 +3344,9 @@ f. **Comparaison avec tes séances comparables** (même type, durée à ±20 %) 
 
 **6. Découpage en versions.**
 - v60 : fonction `intervals-streams`, zones de l'appli, tranches, profil de terrain, vitesse ascensionnelle, 4 blocs.
-- v61 : LLM sur les nouvelles données (deux champs), début contre fin de séance.
+- v61 : habillage du bilan (cartes, barres de D+) et vocabulaire « FC » / « fréquence cardiaque » (plus de « cœur »).
+- v62 : 5 catégories de pente (montée, faux plat montant, plat, faux plat descendant, descente ; fenêtre ~150–200 m), allure équivalente plat (Minetti 2002), FC début contre fin à pente corrigée.
+- v63 : LLM sur les nouvelles données (deux champs courts).
 - Plus tard : comparaisons (3 séances comparables), bilan de bloc.
 
 **Tests prévus.** Flux synthétiques à réponse connue (FC constante sur le plat : écart nul ; pente imposée : coût attendu) ; trace réelle du 11/11/2026 allégée (sans position) comme jeu d'essai : 76 % au-dessus de 155, tranches du km 1 à 8 ; vérification que ni position ni nom de lieu ne sortent.
@@ -3357,4 +3359,4 @@ f. **Comparaison avec tes séances comparables** (même type, durée à ±20 %) 
 - Appli : lecture automatique à l'ouverture d'une séance importée de la montre, une seule fois (relancée si la FC max ou la FC repos change) ; résumé gardé avec la séance (~1 Ko), pas la trace. Profil > Toi : carte « Ton cœur ». Bilan en blocs : Ta séance (prévu / fait, détail par km replié, terrain), Ce que ça dit, Pour la suite, Pour comprendre.
 - Premier constat réel : sur la sortie du 11/11, la FC en descente est 6 bpm sous la montée (pas de constat « descente ») ; sur le trail de 42 km, elle est au-dessus (165 contre 161).
 - Tests : `tests/t_flux.js` (synthétique + traces réelles sans position `tests/data/flux_20261111.json`, `flux_42km.json`), `tests/ui/test_v60.py`.
-- v61 : analyse IA sur ces données (deux champs courts), FC début contre fin à pente corrigée.
+- v62–v63 : voir ci-dessus (pentes, Minetti, puis analyse IA).

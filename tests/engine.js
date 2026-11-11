@@ -580,13 +580,13 @@ function bilan(inp,sid){
       dessus=t.slice(BILAN.baseZ).reduce((a,b)=>a+b,0)/tot;}}
   const SYM={'fc-haute':'▲','fc-basse':'▲','30j':'▲','depart':'▲','descente':'▲'},msgs=[],m=(code,txt)=>msgs.push({code,txt,sym:SYM[code]||'○'});
   if(zonesKO)m('zones-decalees','Les zones de FC de cette activité ne sont pas celles que tu as réglées (zone de base jusqu\'à '+zonesKO.act+' bpm au lieu de '+zonesKO.att+') : le temps par zone n\'est pas fiable pour cette séance.');
-  if(dessus!=null&&s.rpe!=null&&s.rpe<=BILAN.rpeBas&&dessus>BILAN.haut)m('fc-haute','Ton cœur a travaillé plus que ton ressenti : '+Math.round(dessus*100)+' % du temps au-dessus de ton allure facile.');
-  if(dessus!=null&&s.rpe!=null&&s.rpe>=BILAN.rpeHaut&&dessus<BILAN.bas&&s.type!=='qual')m('fc-basse','Ressenti dur mais cardio bas : fatigue des jambes ou fatigue générale probable.');
+  if(dessus!=null&&s.rpe!=null&&s.rpe<=BILAN.rpeBas&&dessus>BILAN.haut)m('fc-haute','Ta FC a travaillé plus que ton ressenti : '+Math.round(dessus*100)+' % du temps au-dessus de ton allure facile.');
+  if(dessus!=null&&s.rpe!=null&&s.rpe>=BILAN.rpeHaut&&dessus<BILAN.bas&&s.type!=='qual')m('fc-basse','Ressenti dur mais FC basse : fatigue des jambes ou fatigue générale probable.');
   if(prevu&&prevu.dur&&s.dur){const e=s.dur/prevu.dur-1;if(e>BILAN.ecart)m('plus-long','Plus long que prévu (+'+Math.round(e*100)+' %).');else if(e<-BILAN.ecart)m('plus-court','Plus court que prévu ('+Math.round(e*100)+' %).');}
   if(F&&F.croisiere&&F.croisiere.fc){const c=F.croisiere,ec=c.fc-hautBase;
-    m('croisiere','Cœur de croisière : '+c.fc+' bpm'+(c.depart?' (départ à '+c.depart+')':'')+(c.montee_s!=null?', atteint en '+Math.max(1,Math.round(c.montee_s/60))+' min':'')+' — '+(ec>0?ec+' au-dessus':ec<0?(-ec)+' en dessous':'pile à la limite')+' de ton allure facile ('+hautBase+').');}
+    m('croisiere','FC de croisière : '+c.fc+' bpm'+(c.depart?' (départ à '+c.depart+')':'')+(c.montee_s!=null?', atteint en '+Math.max(1,Math.round(c.montee_s/60))+' min':'')+' — '+(ec>0?ec+' au-dessus':ec<0?(-ec)+' en dessous':'pile à la limite')+' de ton allure facile ('+hautBase+').');}
   if(F&&F.terrain&&F.terrain.montee&&F.terrain.descente&&F.terrain.montee.fc&&F.terrain.descente.fc&&F.terrain.descente.fc>=F.terrain.montee.fc-FLUX.ecartTerrain)
-    m('descente','Cœur presque aussi haut en descente ('+F.terrain.descente.fc+') qu\'en montée ('+F.terrain.montee.fc+') : peu de récupération dans les descentes.');
+    m('descente','FC presque aussi haute en descente ('+F.terrain.descente.fc+') qu\'en montée ('+F.terrain.montee.fc+') : peu de récupération dans les descentes.');
   if(veille&&isR(s)&&veille.cfJ&&veille.cfJ!=='non')m('veille-cf','CrossFit la veille ('+(veille.cfJ==='fort'?'jambes très sollicitées':'jambes un peu sollicitées')+') : jambes déjà entamées au départ.');
   if(isR(s)&&ref>0&&s.dur>ref*SEUIL+5)m('30j','Au-delà de +10 % de ta plus longue sortie des 30 jours ('+ref+' min) : la prochaine sortie longue en tiendra compte.');
   /* un indicateur expliqué (texte fixe) */
