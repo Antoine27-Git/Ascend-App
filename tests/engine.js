@@ -418,9 +418,14 @@ function build(inp){
       days.forEach(d=>{const dt=add(monW,off(d));if([...raceDates].some(r=>r===dt||add(r,-1)===dt))return;
         const near=gap(d,longDow)<=1;rf.push({dow:d,near});});}
     /* D-73 : séance décalée par l'utilisateur dans la même semaine, vers un jour sans autre course */
-    if(V2&&P.decal)rx.forEach(x=>{if(x.kind==='race'||x.kind==='goal')return;const o0=add(monW,off(x.dow)),t=P.decal[o0];
-      if(!t||t===o0||t<monW||t>add(monW,6))return;const td=D(t).getDay();if(rx.some(y=>y!==x&&y.dow===td))return;
-      x.orig=o0;x.dow=td;x.jour=jourOf(t);});
+    /* D-97 : les décalages de la semaine sont appliqués ensemble ; deux séances qui prennent chacune le jour de l'autre s'échangent.
+       Un décalage est refusé si, une fois tous appliqués, deux courses tombent le même jour (on retire les décalages en conflit jusqu'à stabilité). */
+    if(V2&&P.decal){
+      const mv=new Map();rx.forEach(x=>{if(x.kind==='race'||x.kind==='goal')return;const o0=add(monW,off(x.dow)),t=P.decal[o0];
+        if(!t||t===o0||t<monW||t>add(monW,6))return;mv.set(x,{o0,t,td:D(t).getDay()});});
+      for(let k=0;k<8;k++){const fin=x=>mv.has(x)?mv.get(x).td:x.dow,bad=[...mv.keys()].filter(x=>rx.some(y=>y!==x&&fin(y)===fin(x)));
+        if(!bad.length)break;bad.forEach(x=>mv.delete(x));}
+      mv.forEach((m,x)=>{x.orig=m.o0;x.dow=m.td;x.jour=jourOf(m.t);});}
     /* D+ */
     const dz=dens(w);
     rx.forEach(x=>{if(x.kind==='race'||x.kind==='goal')return;const f=x.kind==='long'||x.kind==='cle'?1:x.kind==='qual'?0.8:0.5;

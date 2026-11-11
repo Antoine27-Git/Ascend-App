@@ -37,7 +37,7 @@ La ligne « Ascend vNN » en bas de Profil sert à vérifier qu'un déploiement 
 ## Moteur : ce qu'il faut savoir
 - `build({profile, today, sessions, isRun, ...})` → `{weeks, sessions, garde, info, ecarts}`. Règles **v2** par défaut ; `regles:'v1'` rejoue l'ancien comportement (prouvé par `parity.py`). **Ne modifie pas le comportement v1** sans mettre à jour la parité et le dire.
 - `CONV` (début du moteur) regroupe toutes les conventions réglables : sortie longue « moyenne » ≤ 3 h, samedi de week-end de choc, cibles d'objectif secondaire, nombre de week-ends de choc, seuil « course exigeante », plafond d'endurance par tranche d'objectif. Ajoute un paramètre là plutôt qu'un chiffre dans le code.
-- Profil : `days` (jours de course, sortie longue, renforcement), `orgs` (organisation par phase), `orgHist` (versions passées : le passé ne se réécrit jamais), `phaseAck` (bilans acquittés), `manques` (raison d'une séance manquée : seule « fatigue » est un signal, D-72), `decal` (séance déplacée dans la semaine, D-73). Le champ `days.time` (temps disponible) est **ignoré en v2** (D-71) ; il n'existe plus dans l'interface.
+- Profil : `days` (jours de course, sortie longue, renforcement), `orgs` (organisation par phase), `orgHist` (versions passées : le passé ne se réécrit jamais), `phaseAck` (bilans acquittés), `manques` (raison d'une séance manquée : seule « fatigue » est un signal, D-72), `decal` (séance déplacée dans la semaine, D-73 ; échange de deux séances, D-97). Le champ `days.time` (temps disponible) est **ignoré en v2** (D-71) ; il n'existe plus dans l'interface.
 - Le RPE pilote la fatigue, sur les **endurances seules** ; la FC est une observation secondaire (D-12).
 
 ## Décisions et documentation (sources de vérité)
