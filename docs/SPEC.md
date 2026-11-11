@@ -3273,3 +3273,27 @@ Règle :
 - Sans import montre (saisie manuelle), la trace remplace durée, distance et D+ comme avant.
 Déploiement : la fonction Supabase est à recoller dans l'éditeur du tableau de bord (pas de déploiement depuis GitHub). Tant qu'elle ne l'est pas, l'appli fonctionne comme avant pour le D− et les zones (champs absents).
 Test : `tests/ui/test_v56.py` (type « Sortie longue » pour une sortie de 60 min rattachée ; D− lu ; trace qui ne remplace pas). Moteur inchangé.
+
+### D-99 — Bilan de séance et assistant d'interprétation (proposée le 11/11/2026, à valider)
+Besoin (Antoine) : « je ne sais pas lire mes données de course ». Il veut un assistant qui interprète ses séances, dit leur effet (par séance, en fin de bloc) et lui apprend à lire les indicateurs.
+Principe directeur (Lacroix) : une séance isolée dit peu de choses (fatigue, terrain, capteur au poignet). Le bilan de séance reste court et prudent ; les conclusions solides se font sur les tendances (bilan de bloc, étape 2).
+
+**Étage A — calculé dans l'appli, sans LLM, déterministe**
+- Réalisé face au prévu : durée (temps en mouvement), D+, D−.
+- FC : moyenne, maximum, **temps par zone** (zones réglées dans intervals.icu, lues avec l'activité, D-98 ; la base d'Antoine : 140–155). Pas de courbe de FC complète (complexité sans gain).
+- Cohérence RPE / FC : règles écrites (convention), ex. « RPE ≤ 3 et plus de 40 % du temps au-dessus de la zone de base » → « effort cardiaque plus élevé que ton ressenti ».
+- Contexte : CrossFit la veille (jambes déclarées), jours depuis la dernière sortie longue, durée face à la plus longue des 30 jours.
+- **Effet sur le plan** : le moteur calcule le plan avec et sans la séance ; l'appli affiche la différence (prochaine sortie longue, gel éventuel, alerte). C'est la seule source de l'effet sur le plan.
+- Un **indicateur expliqué** par bilan (culture des données), choisi selon la séance : temps par zone, dérive cardiaque, D+ par heure, km-effort, etc. Texte fixe, écrit à l'avance, sourcé ou marqué « convention ».
+
+**Étage B — bouton « Analyser la séance » (LLM)**
+- Fonction Supabase `analyze-session` ; secret `ANTHROPIC_API_KEY` ; « Verify JWT » activé ; modèle réglable (Sonnet 5.5 par défaut, Opus 5.5 pour comparer à l'aveugle).
+- Entrée : **uniquement le JSON de l'étage A** (pas de trace brute) + le profil utile (objectif, phase, zones). La note libre est envoyée **sans nom de lieu** (le nom d'activité de la montre, souvent la commune, n'est pas envoyé).
+- Sortie : français, ≤ 120 mots, trois parties — ce qui s'est passé · ce que ça veut dire · pour la prochaine séance. Le LLM **ne modifie jamais le plan** : il cite l'effet calculé à l'étage A, distingue science et convention, et dit quand une donnée ne permet pas de conclure.
+- Le texte est enregistré avec la séance (payé une fois) ; bouton « Refaire ». Plafond : 20 analyses par jour et par utilisateur (garde-fou de coût). Sans réseau ou en erreur : l'étage A reste affiché.
+- Retour d'Antoine : « juste / à côté » en un geste + commentaire facultatif, enregistrés avec la séance (sert à corriger les consignes et les règles, pas à « entraîner » le modèle). Option d'apprentissage : écrire sa propre lecture en une phrase avant d'ouvrir l'analyse.
+- Coût estimé (11/11/2026, ~4 000 tokens en entrée, ~600 en sortie) : ≈ 1,4 centime par analyse avec Sonnet 5.5, ≈ 3 centimes avec Opus 5.5.
+
+**Étape 2 (spec à part)** : bilan de bloc (tendances : FC à allure égale, D+ tenu, régularité), qui s'appuie sur l'historique du plan figé.
+
+Préalables : compte sur la console Anthropic avec crédit, clé en secret Supabase ; zones de FC réglées dans intervals.icu. Déploiement des fonctions : intégration GitHub de Supabase (déploiement à la fusion sur `main`, tous plans) à activer après ajout de `supabase/config.toml` ; sinon copier-coller dans l'éditeur.
