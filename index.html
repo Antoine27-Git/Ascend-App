@@ -845,11 +845,12 @@ function bilanSeanceHTML(r){
   const ind=INDIC[b.indicateur];if(ind)h+='<details style="margin-top:12px"><summary class="mini" style="font-size:14px"><b>Pour comprendre : '+ind[0]+'</b></summary><div class="mini" style="margin-top:6px">'+ind[1]+'</div></details>';
   return h
     +'<h3 style="font-size:16px;margin:18px 0 6px">Analyse</h3>'
-    +(ia.txt?'<div style="font-size:14.5px;line-height:1.5;white-space:pre-wrap">'+esc(ia.txt)+'</div>'
+    +(ia.txt?'<div style="font-size:14.5px;line-height:1.5;white-space:pre-wrap'+(IA_BUSY===r.id?';opacity:.45':'')+'">'+esc(ia.txt)+'</div>'
       +'<div class="mini" style="margin-top:10px">Cette analyse colle à ta séance ?</div><div class="row" style="gap:8px;margin-top:6px">'
       +['oui','non'].map(v=>'<button class="btn s'+(ia.retour===v?' dark':'')+'" onclick="app.iaRetour(\''+r.id+'\',\''+v+'\')">'+(v==='oui'?'Oui':'Pas vraiment')+'</button>').join('')+'</div>'
       +(ia.retour==='non'?'<input style="margin-top:8px" placeholder="Qu\'est-ce qui ne colle pas ?" value="'+esc(ia.com||'')+'" onchange="app.iaCom(\''+r.id+'\',this.value)">':'')
-      +'<button class="btn full" style="margin-top:10px;background:transparent;color:var(--mut)" onclick="app.analyser(\''+r.id+'\',true)">Refaire l\'analyse</button>'
+      +'<button class="btn full" style="margin-top:10px;background:transparent;color:var(--mut)" '+(IA_BUSY===r.id?'disabled':'')+' onclick="app.analyser(\''+r.id+'\',true)">'+(IA_BUSY===r.id?'Analyse en cours…':'Refaire l\'analyse')+'</button>'
+      +(IA_ERR[r.id]?'<div class="note" style="margin-top:8px">'+esc(IA_ERR[r.id])+'</div>':'')
     :'<div class="mini">Facultatif : ta propre lecture en une phrase, avant de lire l\'analyse.</div><input style="margin-top:6px" placeholder="Ex. : sortie facile, jambes lourdes au début" value="'+esc(r.lecture||'')+'" onchange="app.lecture(\''+r.id+'\',this.value)">'
       +'<button class="btn full dark" style="margin-top:10px" '+(IA_BUSY===r.id?'disabled':'')+' onclick="app.analyser(\''+r.id+'\')">'+(IA_BUSY===r.id?'Analyse en cours…':'Analyser la séance')+'</button>'
       +(IA_ERR[r.id]?'<div class="note" style="margin-top:8px">'+esc(IA_ERR[r.id])+'</div>':''));
