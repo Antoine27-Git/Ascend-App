@@ -3,7 +3,8 @@
 // Secret requis (Edge Functions → Secrets) : INTERVALS_API_KEY.
 // « Verify JWT » reste activé : seul un utilisateur connecté à Ascend peut l'appeler.
 // Entrée  (POST, JSON) : { "oldest": "AAAA-MM-JJ", "newest": "AAAA-MM-JJ" }  (400 jours maximum)
-// Sortie  : { "activities": [ { id, date, name, type, dur_s, dist_m, dplus, hr_avg, hr_max, device } ] }
+// Sortie  : { "activities": [ { id, date, name, type, dur_s, elapsed_s, dist_m, dplus, dminus, hr_avg, hr_max, hr_zone_times, hr_zones, device } ] }
+// D-98 (v56) : D−, temps total et temps par zone de FC (zones réglées dans intervals.icu).
 // Seules les activités sont lues : aucune donnée de santé (sommeil, VFC, poids…) ne transite ici.
 
 const CORS = {
@@ -61,10 +62,14 @@ Deno.serve(async (req: Request) => {
       name: typeof a.name === "string" ? a.name : "",
       type: typeof a.type === "string" ? a.type : "",
       dur_s: num(a.moving_time),
+      elapsed_s: num(a.elapsed_time),
       dist_m: num(a.distance),
       dplus: num(a.total_elevation_gain),
+      dminus: num(a.total_elevation_loss),
       hr_avg: num(a.average_heartrate),
       hr_max: num(a.max_heartrate),
+      hr_zone_times: Array.isArray(a.icu_hr_zone_times) ? a.icu_hr_zone_times.map(num) : null, // secondes par zone
+      hr_zones: Array.isArray(a.icu_hr_zones) ? a.icu_hr_zones.map(num) : null, // haut de chaque zone (bpm)
       device: typeof a.device_name === "string" ? a.device_name : "", // modèle de montre (D-86)
     }));
   return json({ activities });
