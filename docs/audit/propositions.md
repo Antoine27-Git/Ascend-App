@@ -162,3 +162,21 @@ Jamais d'effet sur le plan (affichage seul, comme D-88).
 
 ### P-29 — Test de synchro dans la batterie
 `tests/audit/sync_scenarios.py` rejoint `tools/test.py` (étape facultative si Playwright ou Chrome manquent) quand P-23 à P-25 sont codées.
+
+---
+
+## Mission 5 — littérature (rapport `05-litterature.md`)
+
+### P-30 — Rampe robuste de la sortie longue (révise H-26 ; D-116 provisoire, H-64 provisoire)
+**Constat.** « Juste à temps » avec 3 semaines de marge : sans jalon intermédiaire, 71 % de réussite à 25 % de semaines perturbées et 31 % à 40 % ; la sortie longue reste à 1 h 15 pendant 3 mois. Marge de 10 semaines (copie du moteur) : 86 % et 46 %.
+**Règle proposée.** (a) Monter tôt jusqu'à un plateau de 3 h (une sortie par semaine, sans alternance), l'entretenir ; (b) monter ensuite vers les sorties clés avec une marge qui dépend des sorties longues tenues sur 8 semaines : 3 semaines si ≥ 90 %, 6 si environ 80 %, 10 en dessous.
+**Nature.** Convention (H-64) ; rejoint la base d'Uphill Athlete (GABARIT, écart n° 6).
+**À faire avant décision.** Simuler le plateau à 3 h (non fait) et chiffrer le volume ajouté.
+
+### P-31 — Planification « quand, où » de la sortie longue (D-117 provisoire, H-65 provisoire)
+**Règle proposée.** Une question par semaine (jour et heure de la sortie longue, puis créneau de secours) ; envoi à la montre ce jour-là ; aucun compteur de séries, aucune couleur d'échec sur une séance manquée.
+**Nature.** Convention (H-65) ; appui : méta-analyse de 2013 sur les intentions de mise en œuvre (effet petit à moyen) et étude de 2010 sur l'habitude (un manque isolé ne la compromet pas).
+**Réfutation.** Taux de sorties longues tenues sur 8 semaines avec et sans la question (comparaison avant/après, un seul coureur : indicatif).
+
+### P-32 — Hypothèses à réécrire dans `HYPOTHESES.md`
+H-38 et H-39 (texte à réintégrer) ; H-58 (mention « pari : catégorie +10 à +30 % de S-BLE-004 ») ; H-46 (limite à 2 jours : une note par semaine, lendemain de renforcement) ; H-22 (ne produit pas de baisse de volume à 2 jours) ; H-26 (non robuste sous adhérence imparfaite) ; H-37 (non tenue : le ressenti de la sortie longue n'est pas lu). Colonne « classe » (science / extrapolation / convention) à ajouter au registre.
