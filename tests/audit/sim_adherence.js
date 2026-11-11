@@ -35,7 +35,7 @@ function trajectoire(profil,opt,rand){
     /* le plan de la semaine est lu le MARDI : le lundi, en heure d'été, le moteur se croit encore la semaine précédente
        pour un plan démarré en heure d'hiver (défaut de calcul de todayW, voir docs/audit/02 et t_audit_heure_ete.js).
        Le coureur lit son plan le jour de la séance (mercredi, dimanche) : même résultat que le mardi. */
-    const o=E.build({profile:P,today:add(mon,1),sessions:ses,isRun});
+    const o=E.build({profile:P,today:add(mon,opt.lectureLundi?0:1),sessions:ses,isRun});   /* lectureLundi : mesure de l'effet du défaut d'heure d'été */
     const sem=o.sessions.filter(s=>s.date>=mon&&s.date<add(mon,7)&&s.type!=='cf');
     const runs=sem.filter(s=>s.type!=='race'),k=o.weeks.find(x=>x.w===w);
     /* tirage de la perturbation (indépendante, ou en grappes de longueur moyenne L : chaîne de Markov de même fréquence) */
@@ -109,6 +109,7 @@ if(require.main===module){
     SC.push({nom:profil+' | '+Math.round(p*100)+' % | VARIANTE marge de rampe '+mg+' sem.',profil,opt:{p},subs:{MARGE:mg}});
   for(const p of [0.25,0.40])for(const mg of [10,99])SC.push({nom:'2 jours | '+Math.round(p*100)+' % | VARIANTE marge '+mg+' + course décalée de +8 sem.',profil:'2 jours',opt:{p,goalDate:add('2027-09-25',56)},subs:{MARGE:mg}});
   for(const p of [0.25,0.40])SC.push({nom:'2 jours | '+Math.round(p*100)+' % | VARIANTE marge 10 + chargée + repli 90',profil:'2 jours',opt:{p,politique:'chargee',repli:90},subs:{MARGE:10}});
+  for(const p of [0.25,0.40])SC.push({nom:'2 jours | '+Math.round(p*100)+' % | LUNDI : plan lu le lundi (défaut d\'heure d\'été)',profil:'2 jours',opt:{p,lectureLundi:true}});
   const COR=require('./corrections.js');
   for(const p of [0,0.10,0.25,0.40]){
     SC.push({nom:'2 jours | '+Math.round(p*100)+' % | CORRECTION P-08 (séance fantôme)',profil:'2 jours',opt:{p},subs:{__patch:COR.P08}});

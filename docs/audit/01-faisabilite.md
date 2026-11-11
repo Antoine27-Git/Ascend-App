@@ -24,7 +24,7 @@ Audit du 11/11/2026, moteur v54 (`main` après fusion de la PR #21). Aucune règ
 
 « Prêt pour le 50 km » = sortie longue d'au moins 3 h 39 (90 % de la cible du moteur, 4 h 03) deux semaines avant. « Effondrement » = un dimanche où la fenêtre des 30 jours ne porte plus 80 % du niveau atteint. D+ : il suit la durée (le moteur le déduit d'elle) ; une sortie d'au moins 1 350 m est tenue dans 96 / 83 / 51 % des cas à 10 / 25 / 40 %.
 
-**Lecture.** À 10 % de semaines perdues, le plan tient. À 25 %, une fois sur quatre tu n'as pas ta sortie de 5 h. À 40 %, deux fois sur trois. Et les mêmes semaines perdues **groupées** (un mois de boulot, une maladie) coûtent 16 à 26 points de plus que dispersées.
+**Lecture.** À 10 % de semaines perdues, le plan tient. À 25 %, une fois sur quatre tu n'as pas ta sortie de 5 h. À 40 %, deux fois sur trois. Et les mêmes semaines perdues **groupées** (un mois de boulot, une maladie) coûtent 11 à 26 points de plus que dispersées.
 
 **Je te challenge.** Ta seule donnée réelle est pire que mon pire scénario : septembre et octobre 2026, environ 8 semaines sur 9 sans courir, d'un seul bloc. Les scénarios à 10 et 25 % sont donc des hypothèses optimistes pour toi tant que tu n'as pas tenu 8 semaines d'affilée. Le plan affiché dans l'appli, lui, suppose 0 % : « 5 h le 11/07/2027 » est le meilleur cas, pas une prévision.
 
@@ -89,7 +89,7 @@ Motif de D-71 (SPEC, 28/09/2026) : simplifier, l'endurance est plafonnée à 1 h
 
 ## 5. Défauts du moteur rencontrés en route (détaillés dans l'audit 02)
 
-- **A. Heure d'été** : pour un plan démarré en hiver, tout lundi d'heure d'été est compté dans la semaine précédente (`todayW`, `runsW` en `Math.floor`). Le lundi, la semaine écoulée n'est pas « passée ». Reproduit par `tests/audit/t_audit_heure_ete.js` (rouge attendu). Si le plan est lu le lundi, la probabilité de 5 h tombe de 75 à 66 % (25 %) et de 36 à 26 % (40 %) dans ma première série.
+- **A. Heure d'été** : pour un plan démarré en hiver, tout lundi d'heure d'été est compté dans la semaine précédente (`todayW`, `runsW` en `Math.floor`). Le lundi, la semaine écoulée n'est pas « passée ». Reproduit par `tests/audit/t_audit_heure_ete.js` (rouge attendu). Si le plan est lu le lundi, la probabilité de 5 h tombe de 75 à 66 % (25 %) et de 36 à 26 % (40 %) (`sim_adherence.js 400 1 LUNDI`, `docs/audit/data/01-lecture-lundi.json`).
 - **B. Sortie clé consommée sans être faite** : une semaine clé où seule l'endurance est courue compte comme clé faite.
 - **C. La course en fenêtre masque le besoin de monter** : pendant 30 jours après le 50 km, `doitMonter` voit 8 h dans la fenêtre et conclut que le niveau est atteint ; la sortie longue reste à son niveau d'avant course alors que la règle des 30 jours autoriserait la montée. Exemple : coupure de 4 semaines en novembre → sortie clé finale de 4 h 35 au lieu de 6 h, **sans alerte d'écart** (4 h 35 ≥ 90 % de 5 h).
 - **D. `isRun` des tests ≠ `isRun` de l'appli** : les tests excluent le type « course », l'appli l'inclut. Sans effet aujourd'hui (aucun test ne rejoue une course), mais un test futur donnerait un autre plan que l'appli.

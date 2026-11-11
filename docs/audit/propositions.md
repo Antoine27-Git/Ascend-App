@@ -22,7 +22,7 @@ Jamais d'effet sur le plan (affichage seul, comme D-88).
 | environ 80 % | 3 h 50 à 6 h | 3 sur 4 |
 | environ 70 % | 2 h 35 à 6 h | 1 sur 3 |
 
-**Nature.** Convention (H-59) : le modèle de semaines perdues (indépendantes, une ou deux sorties) est une hypothèse ; les pertes groupées font 16 à 26 points de moins.
+**Nature.** Convention (H-59) : le modèle de semaines perdues (indépendantes, une ou deux sorties) est une hypothèse ; les pertes groupées font 11 à 26 points de moins.
 **Réfutation.** Comparer, à chaque changement de phase, la fourchette annoncée 8 semaines plus tôt au niveau réel.
 
 ### P-02 — Mode « semaine chargée » (D-98 provisoire)
