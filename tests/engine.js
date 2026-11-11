@@ -501,6 +501,43 @@ function build(inp){
   out.ok=true;out.model={volume:m.volume,casse:m.casse,base:m.base};
   return out;
 }
-return {build,CONV,arrondi,Calendrier,dureeCourse,tranche_de,_t:{Modele,ajuste,atteint,max30,ref30,relachesPrevues}};
+/* ---- D-99 : bilan de séance, étage A (calculé, déterministe ; ne modifie pas le plan) ----
+   Seuils des messages : conventions (H-59), réglables ici. */
+const BILAN={baseZ:2,haut:0.40,bas:0.20,rpeBas:3,rpeHaut:7,ecart:0.25};
+function bilan(inp,sid){
+  const all=inp.sessions||[],s=all.find(x=>x.id===sid);if(!s)return null;
+  const isR=inp.isRun||(x=>['ef','long','qual','desc'].includes(x.type));
+  const today=inp.today||s.date,horizon=today>s.date?today:add(s.date,1);
+  /* effet sur le plan : moteur avec et sans la séance */
+  const avec=build(Object.assign({},inp,{today:horizon})),sans=build(Object.assign({},inp,{today:horizon,sessions:all.filter(x=>x.id!==sid)}));
+  const prochaine=o=>o.sessions.filter(x=>x.type==='long'&&x.date>=horizon).sort((a,b)=>a.date<b.date?-1:1)[0]||null;
+  const pA=prochaine(avec),pS=prochaine(sans);
+  const prevu=avec.sessions.find(x=>x.id===s.plannedId)||null;
+  /* référence : plus longue course des 30 jours avant la séance */
+  const ref=Math.max(0,...all.filter(x=>x.id!==sid&&isR(x)&&x.date<s.date&&x.date>=add(s.date,-30)).map(x=>x.dur||0));
+  const derSL=all.filter(x=>x.id!==sid&&x.type==='long'&&x.date<s.date).sort((a,b)=>a.date<b.date?1:-1)[0]||null;
+  const veille=all.find(x=>x.type==='cf'&&x.date===add(s.date,-1))||null;
+  /* temps par zone (zones d'intervals.icu, D-98) ; « au-dessus de la base » = au-delà de la zone BILAN.baseZ */
+  let zones=null,dessus=null;
+  if(s.hrZ&&Array.isArray(s.hrZ.t)){const t=s.hrZ.t.map(x=>+x||0),tot=t.reduce((a,b)=>a+b,0);
+    if(tot>0){zones=t.map((x,i)=>({z:i+1,haut:s.hrZ.b&&s.hrZ.b[i]!=null?s.hrZ.b[i]:null,pct:Math.round(100*x/tot)}));
+      dessus=t.slice(BILAN.baseZ).reduce((a,b)=>a+b,0)/tot;}}
+  const msgs=[],m=(code,txt)=>msgs.push({code,txt});
+  if(dessus!=null&&s.rpe!=null&&s.rpe<=BILAN.rpeBas&&dessus>BILAN.haut)m('fc-haute','Ton cœur a travaillé plus que ton ressenti : '+Math.round(dessus*100)+' % du temps au-dessus de ta zone de base. Ralentis, marche dans les côtes.');
+  if(dessus!=null&&s.rpe!=null&&s.rpe>=BILAN.rpeHaut&&dessus<BILAN.bas&&s.type!=='qual')m('fc-basse','Ressenti dur mais cardio bas : fatigue des jambes ou fatigue générale probable.');
+  if(prevu&&prevu.dur&&s.dur){const e=s.dur/prevu.dur-1;if(e>BILAN.ecart)m('plus-long','Plus long que prévu (+'+Math.round(e*100)+' %).');else if(e<-BILAN.ecart)m('plus-court','Plus court que prévu ('+Math.round(e*100)+' %).');}
+  if(veille&&isR(s)&&veille.cfJ&&veille.cfJ!=='non')m('veille-cf','CrossFit la veille ('+(veille.cfJ==='fort'?'jambes très sollicitées':'jambes un peu sollicitées')+') : jambes déjà entamées au départ.');
+  if(isR(s)&&ref>0&&s.dur>ref*SEUIL+5)m('30j','Au-delà de +10 % de ta plus longue sortie des 30 jours ('+ref+' min) : la prochaine sortie longue en tiendra compte.');
+  /* un indicateur expliqué (texte fixe) */
+  const ind=zones?'zones':(s.dplus&&s.dur)?'dplus-h':'charge';
+  const effet={prochaine:pA?{date:pA.date,dur:pA.dur,dplus:pA.dplus||null}:null,sans:pS?{date:pS.date,dur:pS.dur}:null,
+    change:!!(pA&&pS&&(pA.date!==pS.date||pA.dur!==pS.dur)),ecarts:(avec.ecarts||[]).map(e=>e.obj)};
+  return {id:s.id,date:s.date,type:s.type,dur:s.dur||null,durTot:s.durTot||null,dist:s.dist||null,dplus:s.dplus||null,dminus:s.dminus||null,
+    hrAvg:s.hrAvg||null,hrMax:s.hrMax||null,rpe:s.rpe!=null?s.rpe:null,zones,dessusBase:dessus!=null?Math.round(dessus*100):null,
+    prevu:prevu?{type:prevu.type,dur:prevu.dur,dplus:prevu.dplus||null}:null,ref30:ref||null,
+    joursDepuisSL:derSL?Math.round((D(s.date)-D(derSL.date))/864e5):null,veilleCF:veille?(veille.cfJ||'?'):null,
+    dplusH:s.dplus&&s.dur?Math.round(s.dplus/(s.dur/60)):null,msgs,indicateur:ind,effet};
+}
+return {build,bilan,BILAN,CONV,arrondi,Calendrier,dureeCourse,tranche_de,_t:{Modele,ajuste,atteint,max30,ref30,relachesPrevues}};
 })();
 if(typeof module!=='undefined')module.exports=ENGINE;
