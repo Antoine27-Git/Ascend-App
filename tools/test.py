@@ -15,6 +15,7 @@ ETAPES = [
     ("Décalage d'une séance dans la semaine", ['node', 't_decal.js'], T, None),
     ("Repère de reprise sans effet de seuil (D-94)", ['node', 't_reprise.js'], T, None),
     ("Arrondi supérieur de la séance qui bute sur +10 % (D-96)", ['node', 't_arrondi.js'], T, None),
+    ("Invariants sur 120 scénarios tirés au hasard (audit, fuseau UTC)", ['node', 't_invariants.js'], T, None),
 ]
 echecs = 0
 for nom, cmd, cwd, verdict in ETAPES:

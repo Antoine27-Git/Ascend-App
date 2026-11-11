@@ -1,0 +1,33 @@
+3000 scénarios rejoués (0 refusés par le moteur : moins de 6 semaines, etc.), 277 s
+✗ I1 règle des 30 jours (autre séance) : 13 cas dans 7 scénarios ; écart extrême 28 % — graines 409, 808, 923, 1930, 1994, 2413
+     [409] S13 2026-10-29 qual 70 > limite 61 (réf. réelle 55)
+     [409] S13 2026-10-31 ef 70 > limite 68 (réf. réelle 61)
+     [808] S36 2027-07-15 ef 65 > limite 60 (réf. réelle 55)
+✗ I1 règle des 30 jours (autre séance) — plan lu le lundi : 1 cas dans 1 scénarios ; écart extrême 47 % — graines 1776
+     [1776] S28 2027-08-12 qual 80 > limite 60 (réf. réelle 55)
+✗ I3 monotonie : une course de plus baisse la sortie longue (autre) : 1 cas dans 1 scénarios ; écart extrême -6 % — graines 2353
+     [2353] ajout 45 min le 2026-12-19 (départ 2026-12-21, lecture le 2027-01-05) : 48 → 45
+✗ I3 monotonie : une course de plus baisse la sortie longue (course ajoutée après le départ) : 11 cas dans 11 scénarios ; écart extrême -45 % — graines 312, 372, 630, 722, 783, 1153
+     [312] ajout 45 min le 2026-03-18 (départ 2026-03-02, lecture le 2026-03-24) : 100 → 80
+     [372] ajout 20 min le 2026-06-05 (départ 2026-05-18, lecture le 2026-06-09) : 60 → 36
+     [630] ajout 20 min le 2026-06-03 (départ 2026-05-25, lecture le 2026-06-09) : 220 → 130
+✗ I3 monotonie : une course de plus baisse la sortie longue (déclaration annulée par une course réelle avant le départ) : 113 cas dans 113 scénarios ; écart extrême -91 % — graines 7, 26, 33, 44, 115, 121
+     [7] ajout 20 min le 2025-12-13 (départ 2026-01-05, lecture le 2026-01-13) : 33 → 30
+     [26] ajout 15 min le 2026-08-08 (départ 2026-08-10, lecture le 2026-08-11) : 40 → 30
+     [33] ajout 15 min le 2026-08-08 (départ 2026-08-24, lecture le 2026-09-01) : 120 → 30
+✗ I6b séance de moins de 20 min prescrite (plancher de 30 min non tenu) : 6567 cas dans 1135 scénarios — graines 1, 3, 5, 6, 7, 8
+     [1] 2026-11-14 ef 19 min (affutage)
+     [3] 2026-12-16 ef 18 min (affutage)
+     [5] 2027-03-17 ef 19 min (aff_sec)
+Sorties longues faites comme prescrites : 26492
+   +10 à +30 %                    2748  10.4 %
+   +30 à +100 %                    393  1.5 %
+   > +100 %                        126  0.5 %
+   aucune course dans les 30 j     305  1.2 %
+   ≤ +10 %                       22920  86.5 %
+Autres séances faites comme prescrites : 36529
+   +10 à +30 %                      67  0.2 %
+   +30 à +100 %                     35  0.1 %
+   > +100 %                          3  0.0 %
+   aucune course dans les 30 j     795  2.2 %
+   ≤ +10 %                       35629  97.5 %
