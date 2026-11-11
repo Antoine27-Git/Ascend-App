@@ -15,7 +15,7 @@ Lis ce fichier en entier avant de toucher au code. Il vaut pour tout assistant d
 | `tests/engine.js` | **source unique du moteur de plan** (fonctions pures : profil + séances réalisées + date → plan) |
 | `tools/build.py` | injecte `tests/engine.js` dans `index.html` (repères `ENGINE:BEGIN` / `ENGINE:END`) et recopie la version de `sw.js` |
 | `tools/test.py` | lance toute la batterie de tests |
-| `tests/` | `parity.py` (le moteur en règles v1 doit égaler `sim8.py`, 0 écart), `t_profils.js` (propriétés sur 9 profils), `t_steps.js` (déroulé = durée), `t_react3.js` (réaction au ressenti et aux séances manquées), `t_decal.js` (décalage dans la semaine), `t_reprise.js` (repère de reprise sans effet de seuil, D-94), `t_arrondi.js` (arrondi supérieur, D-96), `t_prof.json` (profil de test) |
+| `tests/` | `parity.py` (le moteur en règles v1 doit égaler `sim8.py`, 0 écart), `t_profils.js` (propriétés sur 9 profils), `t_steps.js` (déroulé = durée), `t_react3.js` (réaction au ressenti et aux séances manquées), `t_decal.js` (décalage dans la semaine), `t_invariants.js` (invariants sur 120 scénarios tirés au hasard ; scripts d'audit dans `tests/audit/`, rapports dans `docs/audit/`), `t_reprise.js` (repère de reprise sans effet de seuil, D-94), `t_arrondi.js` (arrondi supérieur, D-96), `t_prof.json` (profil de test) |
 | `sim8.py`, `sim3.py`, `serie11.py` | simulateur de référence des règles v1 et séries historiques |
 | `docs/` | décisions et doctrine (voir plus bas) |
 | Hébergement | GitHub Pages ; connexion et synchronisation par **Supabase** (obligatoires) |

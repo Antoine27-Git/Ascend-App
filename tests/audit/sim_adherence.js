@@ -55,7 +55,8 @@ function trajectoire(profil,opt,rand){
         if(opt.repli&&s.type==='long'){const d=Math.min(s.dur,opt.repli);ses.push({date:s.date,type:'long',dur:d,rpe:3,dplus:0});}
         return;}
       let d=s.dur;if(opt.mercMax&&s.type!=='long'&&new Date(s.date+'T12:00:00Z').getUTCDay()===3)d=Math.min(d,opt.mercMax);
-      ses.push({date:s.date,type:s.type==='qual'?'qual':s.type,dur:d,rpe:opt.rpe||3,dplus:s.dplus||0});faites++;
+      /* rpeBruit : ressenti de 3/10 ± 1 tiré au hasard (bruit de saisie, aucune fatigue réelle) */
+      ses.push({date:s.date,type:s.type==='qual'?'qual':s.type,dur:d,rpe:opt.rpeBruit?(opt.rpeBruit===true||rand()<opt.rpeBruit?3+Math.floor(rand()*3)-1:3):(opt.rpe||3),dplus:s.dplus||0});faites++;
       if(s.type==='long'){slFaites++;niv=Math.max(niv,d);}});
     log.push({w,ph:k.sous||k.phase,type:k.type,L:L0?L0.dur:null,fait:L0&&!perdues.has(L0.id)});
   }
@@ -70,7 +71,7 @@ function trajectoire(profil,opt,rand){
     slPerduesFin:log.filter(l=>l.w>=cal.fond-4&&l.w<cal.T&&l.L!=null&&!l.fait).length,
     effondrements,minPerdues,sautes,faites,slFaites,slPrevues,semPert,N,
     volH:ses.filter(s=>isRun(s)&&s.date>='2026-11-02').reduce((a,s)=>a+s.dur,0)/60,
-    arrets:fin.weeks.filter(k=>k.type==='arret').length,ecartP:fin.ecarts.some(e=>e.obj==='principal'),ecartS:fin.ecarts.some(e=>e.obj==='secondaire'),log};
+    arrets:fin.weeks.filter(k=>k.type==='arret').length,semFatigue:fin.weeks.filter(k=>k.sympt).length,ecartP:fin.ecarts.some(e=>e.obj==='principal'),ecartS:fin.ecarts.some(e=>e.obj==='secondaire'),log};
 }
 const q=(a,p)=>{const b=a.filter(x=>x!=null).slice().sort((x,y)=>x<y?-1:x>y?1:0);return b.length?b[Math.min(b.length-1,Math.floor(p*b.length))]:null;};
 function serie(profil,opt,n,seed,conv,subs){
@@ -84,7 +85,7 @@ function serie(profil,opt,n,seed,conv,subs){
     dplus1350:pc(r=>r.dplusMax>=1350),j180:[q(R.map(r=>r.j180),0.5),q(R.map(r=>r.j180),0.9)],j240:[q(R.map(r=>r.j240),0.5),q(R.map(r=>r.j240),0.9)],j300:[q(R.map(r=>r.j300),0.5),q(R.map(r=>r.j300),0.9)],
     sans300:pc(r=>!r.j300),effond:pc(r=>r.effondrements>0),minPerdues:q(R.filter(r=>r.effondrements).map(r=>Math.round(r.minPerdues)),0.5),
     parPertesFin:[0,1,2,3].map(k=>{const g=R.filter(r=>k<3?r.slPerduesFin===k:r.slPerduesFin>=3);return g.length?[g.length,Math.round(100*g.filter(r=>r.maxBloc>=300).length/g.length)]:[0,null];}),
-    slTenues:Math.round(100*R.reduce((a,r)=>a+r.slFaites,0)/R.reduce((a,r)=>a+r.slPrevues,0)),volH:Math.round(q(R.map(r=>r.volH),0.5)),arrets:q(R.map(r=>r.arrets),0.5),ecartP:pc(r=>r.ecartP)};
+    slTenues:Math.round(100*R.reduce((a,r)=>a+r.slFaites,0)/R.reduce((a,r)=>a+r.slPrevues,0)),volH:Math.round(q(R.map(r=>r.volH),0.5)),semFatigue:[q(R.map(r=>r.semFatigue),0.1),q(R.map(r=>r.semFatigue),0.5),q(R.map(r=>r.semFatigue),0.9)],arrets:q(R.map(r=>r.arrets),0.5),ecartP:pc(r=>r.ecartP)};
 }
 module.exports={trajectoire,serie,rng,add,days,ANTOINE,SES0,PROFILS,isRun};
 if(require.main===module){
@@ -108,8 +109,19 @@ if(require.main===module){
     SC.push({nom:profil+' | '+Math.round(p*100)+' % | VARIANTE marge de rampe '+mg+' sem.',profil,opt:{p},subs:{MARGE:mg}});
   for(const p of [0.25,0.40])for(const mg of [10,99])SC.push({nom:'2 jours | '+Math.round(p*100)+' % | VARIANTE marge '+mg+' + course décalée de +8 sem.',profil:'2 jours',opt:{p,goalDate:add('2027-09-25',56)},subs:{MARGE:mg}});
   for(const p of [0.25,0.40])SC.push({nom:'2 jours | '+Math.round(p*100)+' % | VARIANTE marge 10 + chargée + repli 90',profil:'2 jours',opt:{p,politique:'chargee',repli:90},subs:{MARGE:10}});
+  const COR=require('./corrections.js');
+  for(const p of [0,0.10,0.25,0.40]){
+    SC.push({nom:'2 jours | '+Math.round(p*100)+' % | CORRECTION P-08 (séance fantôme)',profil:'2 jours',opt:{p},subs:{__patch:COR.P08}});
+    SC.push({nom:'2 jours | '+Math.round(p*100)+' % | CORRECTION P-08 + P-09',profil:'2 jours',opt:{p},subs:{__patch:COR.P08.concat(COR.P09)}});
+    if(p)SC.push({nom:'2 jours | '+Math.round(p*100)+' % | CORRECTION P-08 + P-09 + repli 45 min',profil:'2 jours',opt:{p,repli:45},subs:{__patch:COR.P08.concat(COR.P09)}});
+    if(p)SC.push({nom:'2 jours | '+Math.round(p*100)+' % | CORRECTION P-08 + P-09 + sortie longue protégée',profil:'2 jours',opt:{p,politique:'chargee'},subs:{__patch:COR.P08.concat(COR.P09)}});
+    if(p)SC.push({nom:'2 jours | '+Math.round(p*100)+' % | CORRECTION P-08 + P-09 + grappes',profil:'2 jours',opt:{p,grappe:3},subs:{__patch:COR.P08.concat(COR.P09)}});
+  }
+  for(const p of [0,0.25])SC.push({nom:'2 jours | '+Math.round(p*100)+' % | BRUIT ressenti 3 ± 1 (aucune fatigue réelle)',profil:'2 jours',opt:{p,rpeBruit:true}});
+  for(const p of [0,0.25])SC.push({nom:'2 jours | '+Math.round(p*100)+' % | BRUIT léger : 3/10, et 2 ou 4 une fois sur cinq',profil:'2 jours',opt:{p,rpeBruit:0.3}});
+  SC.push({nom:'2 j → 3 j enchaîné dès F3 | 0 % | BRUIT ressenti 3 ± 1 (aucune fatigue réelle)',profil:'2 j → 3 j enchaîné dès F3',opt:{p:0,rpeBruit:true}});
   const out={};let idx=0;
-  for(const sc of SC){if(filtre&&!sc.nom.includes(filtre))continue;if((idx++)%part[1]!==part[0])continue;const r=serie(sc.profil,sc.opt,sc.opt.p===0?1:n,seed,sc.conv,sc.subs);out[sc.nom]=r;
+  for(const sc of SC){if(filtre&&!sc.nom.includes(filtre))continue;if((idx++)%part[1]!==part[0])continue;const r=serie(sc.profil,sc.opt,(sc.opt.p===0&&!sc.opt.rpeBruit)?1:n,seed,sc.conv,sc.subs);out[sc.nom]=r;
     console.log(sc.nom.padEnd(62),'SL≥5h',String(r.p300).padStart(3)+'%','≥4h30',String(r.p270).padStart(3)+'%','3 clés',String(r.cles3).padStart(3)+'%','max bloc P10/50/90',r.maxBloc.join('/'),'| 50 km',r.sec219==null?'—':r.sec219+'%','| effondr.',r.effond+'%','| SL tenues',r.slTenues+'%','| 5h le',r.j300[0]||'jamais');}
   const dir=path.join(__dirname,'out');fs.mkdirSync(dir,{recursive:true});fs.writeFileSync(path.join(dir,'adherence'+(filtre?'-'+filtre.replace(/[^a-z0-9]+/gi,'_'):'')+'-'+seed+(part[1]>1?'-'+part[0]:'')+'.json'),JSON.stringify(out,null,1));
 }

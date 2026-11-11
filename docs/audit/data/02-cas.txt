@@ -1,0 +1,57 @@
+A — Heure d'été : le lundi, la semaine écoulée n'est pas « passée »
+   voir tests/audit/t_audit_heure_ete.js (2 défauts reproduits) ; variante sécurité : node tests/audit/fuzz.js 1 1 101
+   (graine 101 : sortie longue du 09/08/2026 manquée, plan lu le lundi 10/08 → sortie longue de 170 min pour 140 min réelles dans le mois, +21 %)
+
+B — Sortie clé consommée sans être faite (S36 : seule l'endurance est courue)
+   S36 entièrement manquée → sorties de 4 h 30 ou plus réellement faites ensuite : 3 (07-18 5 h 00, 08-01 5 h 30, 08-22 6 h 00)
+   S36 : endurance faite, sortie clé manquée → sorties de 4 h 30 ou plus réellement faites ensuite : 2 (07-25 5 h 00, 08-08 5 h 30)
+
+B2 — Alternance sur une séance fantôme : sortie longue de 3 h 50 manquée en S18 (endurance faite), que propose S19 ?
+   S18 entièrement manquée                        → S19 : 3 h 50, S20 : 2 h 30 (dernière longue réelle : 3 h 30 le 2027-02-28)
+   S18 : endurance faite, sortie longue manquée   → S19 : 2 h 20, S20 : 3 h 50 (dernière longue réelle : 3 h 30 le 2027-02-28)
+
+C — La course en fenêtre masque le besoin de monter (coupure de 4 semaines S3–S6, tout le reste parfait)
+   S31 (4 semaines après le 50 km) : sortie longue prescrite 3 h 10 ; plus longue des 30 jours = la course, 8 h 06 → la règle autoriserait jusqu'à 8 h 55
+   plus longue sortie du bloc : 4 h 35 (plan sans coupure : 6 h 00) ; alerte d'écart sur l'objectif principal : NON ; sur le 50 km : oui
+
+E — L'affûtage n'allège pas (2 jours, adhérence parfaite)
+   S40 2027-08-02 : 04/08 qual 90, 08/08 long 360 → 7 h 30
+   S41 2027-08-09 : 11/08 ef 65, 15/08 long 180 → 4 h 05
+   S42 2027-08-16 : 18/08 qual 90, 22/08 long 180 → 4 h 30
+   S43 2027-08-23 : 25/08 qual 90, 29/08 long 180 → 4 h 30
+   S44 2027-08-30 : 01/09 qual 90, 05/09 long 180 → 4 h 30
+   S45 2027-09-06 : 08/09 qual 75, 12/09 long 200 → 4 h 35
+   S46 2027-09-13 : 15/09 qual 60, 19/09 long 200 → 4 h 20
+   S47 2027-09-20 : 22/09 ef 85 → 1 h 25
+   course le 2027-09-25. Repère S-COU-006 (Bosquet 2007) : volume réduit de 41 à 60 % sur environ 2 semaines.
+
+F — D-96 : catégorie de pic (Frandsen 2025) des sorties longues du plan, adhérence parfaite
+   arrondiSup=true : {"+10 à +30 %":6,"≤ +10 %":38} ; plus grand dépassement : +11.8 %
+   arrondiSup=false : {"≤ +10 %":44} ; plus grand dépassement : +10.0 %
+
+G — Effet de seuil à 8 h sur la durée estimée du 50 km (tranche 4–8 h ou 8–20 h)
+   sortie de référence 107 min → 50 km estimé à 8 h 06 ; semaines d'affûtage + récupération autour : 3 + 3 ; objectif principal estimé à 15 h 05
+   sortie de référence 105 min → 50 km estimé à 7 h 57 ; semaines d'affûtage + récupération autour : 2 + 2 ; objectif principal estimé à 14 h 48
+
+H — Monotonie (D-94) : une course réelle avant le départ annule l'historique déclaré
+   déclaré « 2 × 1 h 30 par semaine, dernière longue 2 h le 18/10 », aucune course saisie : S1 = endurance 90, sortie longue 120 min
+   même profil + un footing de 15 min saisi le 20/10                               : S1 = endurance 30, sortie longue 120 min
+   sans « dernière longue » déclarée : sortie longue de S1 120 min → 30 min avec le footing ; endurance 90 → 30
+
+I — Dépassement suivi : sortie longue de 2 h prévue, 3 h faites
+   S7 prévue 2 h 00, faite 3 h 00 (+50 % sur la plus longue du mois) → S8 prescrite 3 h 00 ; signal du moteur : aucun ; garde-fou : aucun message
+
+J — Le signal de fatigue est relatif : un ressenti toujours haut ne déclenche rien
+   ressenti 7/10 sur toutes les endurances    → semaines marquées « fatigue » : aucune ; sortie longue S17 : 135
+   ressenti 3/10 puis 5/10 en S12             → semaines marquées « fatigue » : S12 ; sortie longue S17 : 120
+   aucun ressenti saisi                       → semaines marquées « fatigue » : aucune ; sortie longue S17 : 135
+
+K — Import montre : une sortie longue de moins de 1 h 30 arrive typée « endurance »
+   sorties longues < 1 h 30 enregistrées « long » : niveau retenu par le moteur en S12 = 76 min ; ressenti de ces sorties compté comme endurance : non
+   sorties longues < 1 h 30 enregistrées « ef » : niveau retenu par le moteur en S12 = 54.54545454545454 min ; ressenti de ces sorties compté comme endurance : oui
+
+M — Maladie : 3 semaines sans courir à partir de S33 (niveau 4 h 35), puis reprise
+   reprise prescrite S36–S38 : 07-07 qual 90, 07-11 long 200, 07-14 qual 90, 07-18 long 180, 07-21 qual 90, 07-25 long 220
+   alerte d'écart : [["principal","240/300"]] ; messages du garde-fou : 1
+   même chose avec 6 semaines (blessure) : reprise S39 = ef 50, long 60 ; projection de la plus longue sortie avant la course : 2 h 00 ; écart principal signalé : oui
+

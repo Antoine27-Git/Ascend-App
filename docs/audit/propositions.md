@@ -51,3 +51,54 @@ Jamais d'effet sur le plan (affichage seul, comme D-88).
 **Règle proposée.** Rétablir un plafond facultatif par jour, appliqué à l'**endurance et à la qualité seulement** ; la sortie longue garde sa progression (D-67). Une séance de qualité qui ne tient pas dans le plafond n'est pas posée (règle existante du créneau).
 **Nature.** Choix de produit. Coût : environ 13 h d'endurance en moins sur 11 mois (7 % du volume couru prévu).
 **Réfutation.** Si tu fais réellement 90 min le mercredi quand c'est prescrit, D-71 avait raison.
+
+---
+
+## Mission 2 — audit adversarial (rapport `02-adversarial.md`)
+
+### P-07 — Numéro de semaine insensible au changement d'heure (correction, pas de D-xx nécessaire)
+**Constat.** `todayW` et `runsW` : `Math.floor((D(a)-D(start))/(7*DAY))`. Plan démarré en hiver, lundi d'été : 7k jours − 1 h → semaine k−1. 82 scénarios sur 441 lus le lundi dépassent la règle des 30 jours ; 0 en UTC.
+**Correction proposée.** Compter les semaines entre lundis avec `Math.round`, comme le fait déjà `N` ; même fonction pour `todayW`, `runsW` et tout calcul de semaine de l'interface. Test : `tests/audit/t_audit_heure_ete.js` passe au vert, à ajouter à `tools/test.py`. Parité v1 : sans effet (les cas de parité n'ont ni séance ni lundi d'été), à confirmer par `parity.py`.
+
+### P-08 — Semaine passée : lire le réel, pas le prévu (D-103 provisoire)
+**Constat.** Une semaine passée avec une course mais sans sortie longue compte la sortie longue prévue comme faite : sortie clé consommée (cas B), alternance déclenchée (cas B2). 75 → 82 % à 25 % de semaines perturbées, 36 → 48 % à 40 %.
+**Règle proposée.** Pour une semaine passée : `lrPrec` = plus longue sortie longue réellement faite (0 sinon) ; une sortie clé n'est comptée que si une sortie longue d'au moins 90 % de sa durée a été faite. Texte de la correction testée : `tests/audit/corrections.js` (P08).
+**Nature.** Correction de logique (« le passé ne se réécrit pas » s'applique aussi au moteur).
+
+### P-09 — Besoin de monter jugé sur le niveau atteint (D-104 provisoire)
+**Constat.** Après une course, `doitMonter` lit la plus longue des 30 jours (la course) et conclut que la cible est atteinte (cas C). Avec P-08 : 82 → 88 % (25 %), 48 → 63 % (40 %).
+**Règle proposée.** `doitMonter` reçoit `min(plus longue des 30 jours, niveau de sortie longue atteint)`. **Borne à ajouter** : après une course, pas plus de +10 % par sortie au-dessus du niveau d'avant course (sinon saut direct à la cible, autorisé par la lettre de la règle des 30 jours mais sans appui).
+**Nature.** Correction + convention (la borne).
+
+### P-10 — Signal de fatigue robuste au bruit (D-105 provisoire, révise H-46 et H-47)
+**Constat.** À 2 jours de course, une note par semaine. Bruit de ± 1 point sans fatigue réelle : 100 → 67 % de réussite. Un ressenti toujours haut ne déclenche rien.
+**Règle proposée.** (a) Un gel de la sortie longue demande **deux signaux concordants** dans les 14 jours : deux notes au-dessus du repère, ou une note + une séance manquée pour fatigue (D-72), ou une note + une durée non tenue. Une note isolée = « à surveiller », affichée, sans effet. (b) **Plancher absolu** : une endurance notée 6/10 ou plus est un signal quel que soit le repère personnel. (c) Le repère se recalcule sur les 8 dernières notes, pas sur les 4 premières.
+**Nature.** Convention. L'échelle (0,12 par point) reste H-38, dont le texte est à réintégrer.
+**Réfutation.** Rejouer `sim_adherence.js … BRUIT` : la réussite sous bruit pur doit rester à ± 5 points de la réussite sans bruit ; une fatigue simulée de 3 semaines (notes +2) doit toujours déclencher.
+
+### P-11 — Mode reprise (D-106 provisoire, H-61 provisoire)
+**Constat.** 3 semaines d'arrêt : semaine de retour = qualité de 1 h 30 + 3 h 20 (cas M).
+**Règle proposée.** Après 2 semaines sans course, ou une semaine avec un jour marqué « malade » ou « blessé » : la première semaine n'a **pas de séance de qualité** et la sortie longue est limitée à 70 % de ce que la règle des 30 jours autorise ; la deuxième semaine revient à la règle. Message : la raison et la durée.
+**Nature.** Convention (H-61), dans l'esprit de S-BLE-003 (fréquence avant intensité, durée avant vitesse ; niveau de preuve faible).
+
+### P-12 — Dépassement non suivi (D-107 provisoire)
+**Constat.** 2 h prévues, 3 h faites : la suivante est prescrite à 3 h (cas I).
+**Règle proposée.** Si une sortie longue dépasse à la fois le prévu de 30 % et la règle des 30 jours, la suivante revient à ce qui était prévu, et un message le dit (« sortie bien au-delà du prévu : on consolide avant de remonter »). La référence des 30 jours, elle, lit toujours le réel.
+**Nature.** Convention prudente ; appui indirect : Frandsen 2025, catégorie +30 à +100 % (HR 1,52).
+
+### P-13 — Affûtage qui allège (D-108 provisoire, révise les coefficients `aff` de H-06)
+**Constat.** 2 jours : 4 h 30, 4 h 35, 4 h 20 sur les trois dernières semaines pleines ; 3 h 20 à J−6 ; 1 h 25 à J−3 (cas E).
+**Règle proposée.** Les coefficients d'affûtage s'appliquent au **volume des 3 dernières semaines de charge**, pas au niveau de la sortie clé ; dernière sortie longue ≤ 2 h à J−6 ou J−7 ; rien de plus de 45 min après J−4.
+**Nature.** Volume : S-COU-006 (niveau élevé, hors ultra). Plafonds de 2 h et 45 min : convention.
+
+### P-14 — Historique déclaré non annulé par une course réelle (prolonge D-94)
+**Constat.** Une course réelle dans les 35 jours avant le départ annule la fréquence déclarée (cas H, 113 états sur 3 000).
+**Règle proposée.** Par semaine d'avant plan : le réel s'il y en a, sinon la déclaration. Jamais « tout l'un ou tout l'autre ».
+
+### P-15 — Zones tampons autour des seuils (révise H-45, H-06)
+**Constat.** 2 minutes de sortie de référence déplacent 2 semaines de plan (cas G) ; 4 h 35 pour 5 h visées : aucune alerte.
+**Règle proposée.** Tranche de durée : entre 7 h et 9 h estimées, garder la tranche basse sauf priorité A (ou demander). Alerte d'écart : « dans la fourchette » de 90 à 100 %, dite comme telle, au lieu du silence.
+**Nature.** Convention.
+
+### P-16 — Tests
+`isRun` unique partagé par l'appli et les tests ; un test qui rejoue une course réelle ; `tests/t_invariants.js` (déjà ajouté, vert) ; `tests/audit/t_audit_heure_ete.js` à basculer dans `tools/test.py` quand P-07 est codée ; `tests/audit/cas.js` à transformer en assertions au fil des corrections.
