@@ -796,6 +796,39 @@ function watchSendBlock(ps){
    +(m?'<div class="note" style="margin-top:6px">'+esc(m)+'</div>':'')
    +'<div class="row" style="gap:8px;margin-top:10px"><button class="btn s dark" style="flex:1" '+(busy?'disabled':'')+' onclick="app.sendWatch(\''+ps.id+'\')">'+(busy?'Envoi…':si?'Renvoyer':'Envoyer sur ma montre')+'</button>'+(si&&!busy?'<button class="btn s" style="flex:1" onclick="app.removeWatch(\''+ps.id+'\')">Retirer</button>':'')+'</div></div>';
 }
+
+/* ---------- D-99 : bilan de séance (étage A calculé par le moteur, étage B rédigé par un LLM) ---------- */
+const IA_MODELE='claude-sonnet-5-5',IA_MAX_JOUR=20;
+const INDIC={
+  'zones':['Temps par zone de FC','Ta FC est rangée en zones (réglées dans intervals.icu). En endurance, l\'essentiel du temps devrait rester dans les deux premières : c\'est là que se construit le fond, sans fatigue inutile. Un temps élevé au-dessus signale un départ trop rapide, des côtes courues ou une fatigue. Une séance isolée ne suffit pas : regarde la tendance sur plusieurs semaines.'],
+  'dplus-h':['D+ par heure','Les mètres montés divisés par le temps : ça dit à quel point la sortie était vallonnée. Utile pour comparer deux sorties de même durée : à D+ par heure égal, une FC plus basse signale un progrès.'],
+  'charge':['Charge de séance','Durée × effort ressenti (RPE). Une mesure simple et validée de la charge interne (méthode de Foster) ; elle compare des séances de natures différentes.']};
+/* note envoyée à l'analyse : jamais le nom d'activité de la montre (souvent la commune), seulement ce qu'Antoine a écrit */
+function noteAEnvoyer(r){const n=String(r.note||'').trim();if(!n)return null;if(r.src==='intervals'&&(r.nomMontre==null||n===r.nomMontre))return null;return n.slice(0,300);}
+function bilanOf(r){try{return ENGINE.bilan({profile:S.profile,today:todayISO(),sessions:S.sessions,isRun,isOff},r.id);}catch(e){console.error(e);return null;}}
+function bilanSeanceHTML(r){const b=bilanOf(r);if(!b)return '';const ia=r.ia||{},L=[];
+  if(b.zones)L.push('Temps au-dessus de ta zone de base : <b>'+b.dessusBase+'&nbsp;%</b>');else L.push('<span style="color:var(--mut)">Temps par zone de FC : indisponible pour cette séance</span>');
+  if(b.dminus)L.push('D− : <b>'+b.dminus+' m</b>');
+  if(b.prevu&&b.prevu.dur)L.push('Prévu : '+durTxt(b.prevu.dur)+(b.prevu.dplus?' · '+b.prevu.dplus+' m D+':''));
+  const e=b.effet,pc=e.prochaine?'Prochaine sortie longue : <b>'+durTxt(e.prochaine.dur)+'</b> le '+fmtD(e.prochaine.date)+(e.change?' (sans cette séance : '+durTxt(e.sans.dur)+')':' — inchangée par cette séance'):'';
+  const ind=INDIC[b.indicateur];
+  return '<h3 style="font-size:16px;margin:18px 0 6px">Bilan</h3>'
+    +'<div class="mini" style="font-size:14px;line-height:1.5">'+L.join('<br>')+'</div>'
+    +(b.msgs.length?'<div style="margin-top:8px">'+b.msgs.map(m=>'<div class="mini" style="font-size:14px;margin-top:4px">• '+esc(m.txt)+'</div>').join('')+'</div>':'')
+    +(pc?'<div class="mini" style="font-size:14px;margin-top:8px">'+pc+'</div>':'')
+    +(ind?'<details style="margin-top:10px"><summary class="mini" style="font-size:14px"><b>Comprendre : '+ind[0]+'</b></summary><div class="mini" style="margin-top:6px">'+ind[1]+'</div></details>':'')
+    +'<h3 style="font-size:16px;margin:18px 0 6px">Analyse</h3>'
+    +(ia.txt?'<div style="font-size:14.5px;line-height:1.5;white-space:pre-wrap">'+esc(ia.txt)+'</div>'
+      +'<div class="mini" style="margin-top:10px">Cette analyse colle à ta séance ?</div><div class="row" style="gap:8px;margin-top:6px">'
+      +['oui','non'].map(v=>'<button class="btn s'+(ia.retour===v?' dark':'')+'" onclick="app.iaRetour(\''+r.id+'\',\''+v+'\')">'+(v==='oui'?'Oui':'Pas vraiment')+'</button>').join('')+'</div>'
+      +(ia.retour==='non'?'<input style="margin-top:8px" placeholder="Qu\'est-ce qui ne colle pas ?" value="'+esc(ia.com||'')+'" onchange="app.iaCom(\''+r.id+'\',this.value)">':'')
+      +'<button class="btn full" style="margin-top:10px;background:transparent;color:var(--mut)" onclick="app.analyser(\''+r.id+'\',true)">Refaire l\'analyse</button>'
+    :'<div class="mini">Facultatif : ta propre lecture en une phrase, avant de lire l\'analyse.</div><input style="margin-top:6px" placeholder="Ex. : sortie facile, jambes lourdes au début" value="'+esc(r.lecture||'')+'" onchange="app.lecture(\''+r.id+'\',this.value)">'
+      +'<button class="btn full dark" style="margin-top:10px" '+(IA_BUSY===r.id?'disabled':'')+' onclick="app.analyser(\''+r.id+'\')">'+(IA_BUSY===r.id?'Analyse en cours…':'Analyser la séance')+'</button>'
+      +(IA_ERR[r.id]?'<div class="note" style="margin-top:8px">'+esc(IA_ERR[r.id])+'</div>':''));
+}
+let IA_BUSY=null;const IA_ERR={};
+function iaCompteJour(){const t=todayISO(),c=S.profile.iaCompte||{};return c.date===t?c.n:0;}
 /* ---------- Ma montre : activités lues dans intervals.icu (fonction Supabase intervals-activities, lecture seule, D-77) ---------- */
 let WT={busy:false,list:null,seen:0,err:null,days:7};
 function actToSess(a){
@@ -1732,7 +1765,44 @@ function build(inp){
   out.ok=true;out.model={volume:m.volume,casse:m.casse,base:m.base};
   return out;
 }
-return {build,CONV,arrondi,Calendrier,dureeCourse,tranche_de,_t:{Modele,ajuste,atteint,max30,ref30,relachesPrevues}};
+/* ---- D-99 : bilan de séance, étage A (calculé, déterministe ; ne modifie pas le plan) ----
+   Seuils des messages : conventions (H-59), réglables ici. */
+const BILAN={baseZ:2,haut:0.40,bas:0.20,rpeBas:3,rpeHaut:7,ecart:0.25};
+function bilan(inp,sid){
+  const all=inp.sessions||[],s=all.find(x=>x.id===sid);if(!s)return null;
+  const isR=inp.isRun||(x=>['ef','long','qual','desc'].includes(x.type));
+  const today=inp.today||s.date,horizon=today>s.date?today:add(s.date,1);
+  /* effet sur le plan : moteur avec et sans la séance */
+  const avec=build(Object.assign({},inp,{today:horizon})),sans=build(Object.assign({},inp,{today:horizon,sessions:all.filter(x=>x.id!==sid)}));
+  const prochaine=o=>o.sessions.filter(x=>x.type==='long'&&x.date>=horizon).sort((a,b)=>a.date<b.date?-1:1)[0]||null;
+  const pA=prochaine(avec),pS=prochaine(sans);
+  const prevu=avec.sessions.find(x=>x.id===s.plannedId)||null;
+  /* référence : plus longue course des 30 jours avant la séance */
+  const ref=Math.max(0,...all.filter(x=>x.id!==sid&&isR(x)&&x.date<s.date&&x.date>=add(s.date,-30)).map(x=>x.dur||0));
+  const derSL=all.filter(x=>x.id!==sid&&x.type==='long'&&x.date<s.date).sort((a,b)=>a.date<b.date?1:-1)[0]||null;
+  const veille=all.find(x=>x.type==='cf'&&x.date===add(s.date,-1))||null;
+  /* temps par zone (zones d'intervals.icu, D-98) ; « au-dessus de la base » = au-delà de la zone BILAN.baseZ */
+  let zones=null,dessus=null;
+  if(s.hrZ&&Array.isArray(s.hrZ.t)){const t=s.hrZ.t.map(x=>+x||0),tot=t.reduce((a,b)=>a+b,0);
+    if(tot>0){zones=t.map((x,i)=>({z:i+1,haut:s.hrZ.b&&s.hrZ.b[i]!=null?s.hrZ.b[i]:null,pct:Math.round(100*x/tot)}));
+      dessus=t.slice(BILAN.baseZ).reduce((a,b)=>a+b,0)/tot;}}
+  const msgs=[],m=(code,txt)=>msgs.push({code,txt});
+  if(dessus!=null&&s.rpe!=null&&s.rpe<=BILAN.rpeBas&&dessus>BILAN.haut)m('fc-haute','Ton cœur a travaillé plus que ton ressenti : '+Math.round(dessus*100)+' % du temps au-dessus de ta zone de base. Ralentis, marche dans les côtes.');
+  if(dessus!=null&&s.rpe!=null&&s.rpe>=BILAN.rpeHaut&&dessus<BILAN.bas&&s.type!=='qual')m('fc-basse','Ressenti dur mais cardio bas : fatigue des jambes ou fatigue générale probable.');
+  if(prevu&&prevu.dur&&s.dur){const e=s.dur/prevu.dur-1;if(e>BILAN.ecart)m('plus-long','Plus long que prévu (+'+Math.round(e*100)+' %).');else if(e<-BILAN.ecart)m('plus-court','Plus court que prévu ('+Math.round(e*100)+' %).');}
+  if(veille&&isR(s)&&veille.cfJ&&veille.cfJ!=='non')m('veille-cf','CrossFit la veille ('+(veille.cfJ==='fort'?'jambes très sollicitées':'jambes un peu sollicitées')+') : jambes déjà entamées au départ.');
+  if(isR(s)&&ref>0&&s.dur>ref*SEUIL+5)m('30j','Au-delà de +10 % de ta plus longue sortie des 30 jours ('+ref+' min) : la prochaine sortie longue en tiendra compte.');
+  /* un indicateur expliqué (texte fixe) */
+  const ind=zones?'zones':(s.dplus&&s.dur)?'dplus-h':'charge';
+  const effet={prochaine:pA?{date:pA.date,dur:pA.dur,dplus:pA.dplus||null}:null,sans:pS?{date:pS.date,dur:pS.dur}:null,
+    change:!!(pA&&pS&&(pA.date!==pS.date||pA.dur!==pS.dur)),ecarts:(avec.ecarts||[]).map(e=>e.obj)};
+  return {id:s.id,date:s.date,type:s.type,dur:s.dur||null,durTot:s.durTot||null,dist:s.dist||null,dplus:s.dplus||null,dminus:s.dminus||null,
+    hrAvg:s.hrAvg||null,hrMax:s.hrMax||null,rpe:s.rpe!=null?s.rpe:null,zones,dessusBase:dessus!=null?Math.round(dessus*100):null,
+    prevu:prevu?{type:prevu.type,dur:prevu.dur,dplus:prevu.dplus||null}:null,ref30:ref||null,
+    joursDepuisSL:derSL?Math.round((D(s.date)-D(derSL.date))/864e5):null,veilleCF:veille?(veille.cfJ||'?'):null,
+    dplusH:s.dplus&&s.dur?Math.round(s.dplus/(s.dur/60)):null,msgs,indicateur:ind,effet};
+}
+return {build,bilan,BILAN,CONV,arrondi,Calendrier,dureeCourse,tranche_de,_t:{Modele,ajuste,atteint,max30,ref30,relachesPrevues}};
 })();
 /* ENGINE:END */
 
@@ -2066,7 +2136,7 @@ function vSessDetail(){
       +adv.map(a=>'<div class="fline"><span class="fli">'+mi(advIcon(a))+'</span><span>'+esc(a)+'</span></div>').join('')+'</div>';}
   const wm=isRun(ps)&&st.k!=='done'&&WT.list?watchNew().filter(o=>o.date===ps.date&&(o.type==='ef'||o.type==='long')).sort((a,b)=>Math.abs(a.dur-(ps.dur||0))-Math.abs(b.dur-(ps.dur||0)))[0]:null;
   let res='';
-  if(st.k==='done'&&st.r)res='<div class="card"><h2>Réalisé</h2><div class="mini" style="color:var(--mintT);font-size:14px;margin-top:6px">'+[st.r.dur?durTxt(st.r.dur):null,st.r.dist?r1(st.r.dist)+' km':null,st.r.dplus?r0(st.r.dplus)+' m D+':null,st.r.hrAvg?'FC '+st.r.hrAvg:null,st.r.rpe!=null?'effort '+st.r.rpe:null].filter(Boolean).join(' · ')+(st.r.type==='cf'&&cfLine(st.r)?'<br>'+cfLine(st.r):'')+'</div><button class="btn full" style="margin-top:12px" onclick="app.edit(\''+st.r.id+'\')">Ouvrir la séance réalisée</button></div>';
+  if(st.k==='done'&&st.r)res='<div class="card"><h2>Réalisé</h2><div class="mini" style="color:var(--mintT);font-size:14px;margin-top:6px">'+[st.r.dur?durTxt(st.r.dur):null,st.r.dist?r1(st.r.dist)+' km':null,st.r.dplus?r0(st.r.dplus)+' m D+':null,st.r.hrAvg?'FC '+st.r.hrAvg:null,st.r.rpe!=null?'effort '+st.r.rpe:null].filter(Boolean).join(' · ')+(st.r.type==='cf'&&cfLine(st.r)?'<br>'+cfLine(st.r):'')+'</div><button class="btn full" style="margin-top:12px" onclick="app.edit(\''+st.r.id+'\')">Ouvrir la séance réalisée</button>'+(isRun(st.r)?bilanSeanceHTML(st.r):'')+'</div>';
   else if(missRun&&manqueDe(ps))res='<div class="card"><div class="row sbtw"><div><h2 style="margin:0">Pas faite</h2><div class="mini" style="margin-top:4px">Raison : '+(manqueDe(ps)==='fatigue'?'fatigue':'agenda, imprévu')+'</div></div><button class="btn s" onclick="app.manqueOuvrir(\''+ps.id+'\')">Modifier</button></div></div>'
     +fOpt('person','Je l\'ai faite finalement','Saisir à la main',"app.newSession('"+ps.id+"')");
   else if(ps.date<=today&&st.k!=='off')res=(wm&&S.profile.hasWatch!==false?fOpt('timer','Récupérer depuis ta montre','Sortie trouvée : '+[durTxt(wm.dur),wm.dist?r1(wm.dist)+' km':null,wm.dplus?r0(wm.dplus)+' m D+':null].filter(Boolean).join(' · '),"app.addWatch('"+wm.ext+"')",true):'')
@@ -2828,7 +2898,7 @@ function vGate(){
     +authFormHTML('Un compte garde ton plan et tes séances en sécurité, et te permet de les retrouver sur un autre téléphone. Ton prénom personnalise l\'app.')
     +syncLineHTML()+versionLineHTML()+'</div></main>';
 }
-const APP_VERSION='v56';   /* généré depuis sw.js par tools/build.py */
+const APP_VERSION='v57';   /* généré depuis sw.js par tools/build.py */
 function versionLineHTML(){return '<div class="mini" id="ver" style="margin-top:12px;text-align:center;opacity:.7">Ascend '+APP_VERSION+' · moteur de plan v2</div>';}
 /* compare la page chargée au cache du service worker : signale un déploiement pas encore actif */
 function checkVersion(){if(!('caches' in window))return;caches.keys().then(ks=>{const c=ks.filter(k=>/^ascend-v\d+$/.test(k)).map(k=>+k.slice(8)).sort((a,b)=>b-a)[0],el=document.getElementById('ver');
@@ -3031,7 +3101,7 @@ const app=window.app={
     const cand=allPlan().filter(p=>p.date===o.date&&(TYPES[p.type]||TYPES.autre).run===((o.type==='ef'||o.type==='long')?1:0)&&!realizedOf(p));
     app.newSession(cand.length===1?cand[0].id:null);
     /* D-98 : rattachée à une séance prévue, l'activité en garde le type (la montre ne fournit que les mesures) */
-    Object.assign(E,{date:o.date,type:cand.length===1?cand[0].type:o.type,dur:o.dur,dist:o.dist,dplus:o.dplus,dminus:o.dminus||null,hrAvg:o.hrAvg,hrMax:o.hrMax,note:o.note,ext:o.ext,src:'intervals',durTot:o.durTot||null,hrZ:o.hrZ||null});
+    Object.assign(E,{date:o.date,type:cand.length===1?cand[0].type:o.type,dur:o.dur,dist:o.dist,dplus:o.dplus,dminus:o.dminus||null,hrAvg:o.hrAvg,hrMax:o.hrMax,note:o.note,nomMontre:o.note,ext:o.ext,src:'intervals',durTot:o.durTot||null,hrZ:o.hrZ||null});
     openSheet(true);},
   attachTrack(input){const f=input.files&&input.files[0];if(!f)return;const rd=new FileReader();
     rd.onload=()=>{try{const pts=parseTrack(rd.result),m=trackMetrics(pts);if(!m){flash('Trace illisible ou trop courte');return;}
@@ -3073,6 +3143,23 @@ const app=window.app={
   manqueFaite(){const ps=findPlan(MQS.id);MQS=null;if(!ps)return;const P=S.profile;if(P.manques&&P.manques[ps.decale||ps.date]){P.manques=Object.assign({},P.manques);delete P.manques[ps.decale||ps.date];save();}app.newSession(ps.id);},
   manque(d,k){const P=S.profile;P.manques=Object.assign({},P.manques);if(P.manques[d]===k)delete P.manques[d];else P.manques[d]=k;REPROG=null;save();
     flash(P.manques[d]==='fatigue'?'Noté : fatigue':P.manques[d]?'Noté : agenda':'Réponse retirée');render();refreshPE();},
+  lecture(id,v){const r=S.sessions.find(x=>x.id===id);if(!r)return;r.lecture=String(v||'').slice(0,300)||null;save();},
+  iaRetour(id,v){const r=S.sessions.find(x=>x.id===id);if(!r||!r.ia)return;r.ia.retour=r.ia.retour===v?null:v;save();render();refreshPE();},
+  iaCom(id,v){const r=S.sessions.find(x=>x.id===id);if(!r||!r.ia)return;r.ia.com=String(v||'').slice(0,500)||null;save();},
+  async analyser(id,refaire){const r=S.sessions.find(x=>x.id===id);if(!r||IA_BUSY)return;
+    if(!(await authOK())){flash('Connecte-toi (Profil, en bas) pour analyser');return;}
+    if(iaCompteJour()>=IA_MAX_JOUR){flash('Limite de '+IA_MAX_JOUR+' analyses par jour atteinte');return;}
+    const b=bilanOf(r);if(!b){flash('Bilan indisponible');return;}
+    const P=S.profile,payload={bilan:Object.assign({},b,{note:noteAEnvoyer(r),lecture:r.lecture||null}),
+      profil:{objectif:{dist:P.goalDist,dplus:P.goalDplus,date:P.goalDate},phase:(eng().weeks.find(w=>w.mon<=b.date&&b.date<addDays(w.mon,7))||{}).phase||null},
+      model:P.iaModele||IA_MODELE};
+    IA_BUSY=id;delete IA_ERR[id];render();refreshPE();
+    try{const res=await sbFetch('/functions/v1/analyze-session',{method:'POST',body:JSON.stringify(payload)});
+      if(!res||!res.texte)throw new Error('Réponse vide');
+      r.ia={txt:res.texte,model:res.model||payload.model,at:new Date().toISOString(),retour:null,com:null};
+      const t=todayISO(),c=P.iaCompte||{};P.iaCompte={date:t,n:(c.date===t?c.n:0)+1};save();
+    }catch(e){let m=e.message||'';try{m=JSON.parse(m).error||m;}catch(x){}IA_ERR[id]='Analyse impossible : '+m;}
+    IA_BUSY=null;render();refreshPE();},
   reprog(id){PM=false;REPROG=REPROG===id?null:id;render();refreshPE();},
   decaler(o,t,o2,t2){const P=S.profile;P.decal=Object.assign({},P.decal,{[o]:t});if(o2)P.decal[o2]=t2;   /* D-97 : échange */
     [o,o2].forEach(k=>{if(k&&P.decal[k]===k)delete P.decal[k];if(k&&P.manques)delete P.manques[k];});REPROG=null;save();

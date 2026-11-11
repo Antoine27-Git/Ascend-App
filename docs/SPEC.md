@@ -3274,7 +3274,7 @@ Règle :
 Déploiement : la fonction Supabase est à recoller dans l'éditeur du tableau de bord (pas de déploiement depuis GitHub). Tant qu'elle ne l'est pas, l'appli fonctionne comme avant pour le D− et les zones (champs absents).
 Test : `tests/ui/test_v56.py` (type « Sortie longue » pour une sortie de 60 min rattachée ; D− lu ; trace qui ne remplace pas). Moteur inchangé.
 
-### D-99 — Bilan de séance et assistant d'interprétation (proposée le 11/11/2026, à valider)
+### D-99 — Bilan de séance et assistant d'interprétation (validée le 11/11/2026, v57)
 Besoin (Antoine) : « je ne sais pas lire mes données de course ». Il veut un assistant qui interprète ses séances, dit leur effet (par séance, en fin de bloc) et lui apprend à lire les indicateurs.
 Principe directeur (Lacroix) : une séance isolée dit peu de choses (fatigue, terrain, capteur au poignet). Le bilan de séance reste court et prudent ; les conclusions solides se font sur les tendances (bilan de bloc, étape 2).
 
@@ -3290,10 +3290,17 @@ Principe directeur (Lacroix) : une séance isolée dit peu de choses (fatigue, t
 - Fonction Supabase `analyze-session` ; secret `ANTHROPIC_API_KEY` ; « Verify JWT » activé ; modèle réglable (Sonnet 5.5 par défaut, Opus 5.5 pour comparer à l'aveugle).
 - Entrée : **uniquement le JSON de l'étage A** (pas de trace brute) + le profil utile (objectif, phase, zones). La note libre est envoyée **sans nom de lieu** (le nom d'activité de la montre, souvent la commune, n'est pas envoyé).
 - Sortie : français, ≤ 120 mots, trois parties — ce qui s'est passé · ce que ça veut dire · pour la prochaine séance. Le LLM **ne modifie jamais le plan** : il cite l'effet calculé à l'étage A, distingue science et convention, et dit quand une donnée ne permet pas de conclure.
-- Le texte est enregistré avec la séance (payé une fois) ; bouton « Refaire ». Plafond : 20 analyses par jour et par utilisateur (garde-fou de coût). Sans réseau ou en erreur : l'étage A reste affiché.
-- Retour d'Antoine : « juste / à côté » en un geste + commentaire facultatif, enregistrés avec la séance (sert à corriger les consignes et les règles, pas à « entraîner » le modèle). Option d'apprentissage : écrire sa propre lecture en une phrase avant d'ouvrir l'analyse.
+- Le texte est enregistré avec la séance (payé une fois) ; bouton « Refaire ». Plafond : 20 analyses par jour, compté dans l'appli ; le vrai garde-fou de coût est la **limite de dépense mensuelle** réglée sur la console Anthropic (une fonction Supabase sans base de données ne peut pas compter les appels de façon fiable). Sans réseau ou en erreur : l'étage A reste affiché.
+- Retour d'Antoine : « Cette analyse colle à ta séance ? » — « Oui » / « Pas vraiment » en un geste ; « Pas vraiment » ouvre « Qu'est-ce qui ne colle pas ? » (facultatif) ; enregistrés avec la séance (sert à corriger les consignes et les règles, pas à « entraîner » le modèle). Option d'apprentissage : écrire sa propre lecture en une phrase avant d'ouvrir l'analyse.
 - Coût estimé (11/11/2026, ~4 000 tokens en entrée, ~600 en sortie) : ≈ 1,4 centime par analyse avec Sonnet 5.5, ≈ 3 centimes avec Opus 5.5.
 
 **Étape 2 (spec à part)** : bilan de bloc (tendances : FC à allure égale, D+ tenu, régularité), qui s'appuie sur l'historique du plan figé.
 
 Préalables : compte sur la console Anthropic avec crédit, clé en secret Supabase ; zones de FC réglées dans intervals.icu. Déploiement des fonctions : intégration GitHub de Supabase (déploiement à la fusion sur `main`, tous plans) à activer après ajout de `supabase/config.toml` ; sinon copier-coller dans l'éditeur.
+
+**D-99, mise en œuvre (v57, 11/11/2026)**
+- Étage A : fonction pure `bilan(inp, id)` dans `tests/engine.js` (moteur appelé avec et sans la séance ; ne modifie pas le plan). Affiché dans la fiche de la séance prévue, sous « Réalisé », pour les courses.
+- Messages (seuils `BILAN`, conventions H-59) : « fc-haute » (RPE ≤ 3 et plus de 40 % du temps au-dessus de la zone 2), « fc-basse » (RPE ≥ 7 et moins de 20 %, hors qualité), « plus-long » / « plus-court » (écart de plus de 25 % au prévu), « veille-cf » (CrossFit la veille avec jambes sollicitées), « 30j » (au-delà de +10 % de la plus longue des 30 jours, + 5 min de tolérance).
+- Zone de base = zones 1 et 2 d'intervals.icu : la borne haute de la zone 2 doit valoir 155 bpm pour Antoine.
+- Étage B : fonction `supabase/functions/analyze-session` (Sonnet 5.5 par défaut, `profile.iaModele` pour Opus 5.5). Note envoyée seulement si Antoine l'a écrite (jamais le nom d'activité de la montre, `nomMontre`). Lecture d'Antoine envoyée pour qu'il ait un retour sur sa propre lecture.
+- Tests : `tests/t_bilan.js`, `tests/ui/test_v57.py`.
