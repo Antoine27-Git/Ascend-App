@@ -804,7 +804,8 @@ function actToSess(a){
   if(/run|trail|hike|walk|marche|rando|course/.test(t))type=dur>=90?'long':'ef';
   else if(/weight|strength|crossfit|workout|hiit|muscu|force|fitness|gym/.test(t))type='cf';
   const run=type==='ef'||type==='long';
-  return {ext:'icu:'+a.id,date:a.date,type,dur,dist:run&&a.dist_m?Math.round(a.dist_m/100)/10:null,dplus:run&&a.dplus?Math.round(a.dplus):null,hrAvg:a.hr_avg?Math.round(a.hr_avg):null,hrMax:a.hr_max?Math.round(a.hr_max):null,note:a.name||''};
+  return {ext:'icu:'+a.id,date:a.date,type,dur,dist:run&&a.dist_m?Math.round(a.dist_m/100)/10:null,dplus:run&&a.dplus?Math.round(a.dplus):null,dminus:run&&a.dminus?Math.round(a.dminus):null,hrAvg:a.hr_avg?Math.round(a.hr_avg):null,hrMax:a.hr_max?Math.round(a.hr_max):null,note:a.name||'',
+    durTot:a.elapsed_s?Math.round(a.elapsed_s/60):null,hrZ:Array.isArray(a.hr_zone_times)&&a.hr_zone_times.length?{t:a.hr_zone_times,b:Array.isArray(a.hr_zones)?a.hr_zones:null}:null};   /* D-98 : D−, temps total et temps par zone de FC lus dans intervals.icu */
 }
 function watchNew(){
   return (WT.list||[]).filter(o=>!S.sessions.some(x=>x.ext===o.ext)&&!S.sessions.some(x=>x.date===o.date&&Math.abs((x.dur||0)-o.dur)<=2));
@@ -971,7 +972,7 @@ function vEdit(){
       const cands=allPlan().filter(x=>Math.abs(daysTo(x.date)-daysTo(e.date))<=3&&!S.sessions.some(s=>s.plannedId===x.id&&s.id!==e.id));
       return cands.length?'<label class="f">Rattacher à une séance prévue</label><select onchange="app.linkPlan(this.value)"><option value="">–</option>'+cands.map(x=>'<option value="'+x.id+'">'+fmtS(x.date)+' · '+planTitle(x)+'</option>').join('')+'</select>':'';})()
   +(run?'<label class="filebtn">'+mi('terrain')+'<span>'+(e.track?'Remplacer la trace':'Importer ma trace (TCX ou GPX)')+'</span><input type="file" accept=".tcx,.gpx,application/xml,text/xml" onchange="app.attachTrack(this)"></label>'
-      +(e.track?'<div class="mini" style="margin-top:6px">Trace analysée, '+e.track.n+' points : durée, distance et D+ viennent d\'elle. <a href="#" style="color:var(--mintT)" onclick="app.setE(\'track\',null);return false">Retirer</a></div>':'<div class="mini" style="margin-top:6px">La trace remplace la durée, la distance et le D+ prévus par les vrais.</div>'):'')
+      +(e.track?'<div class="mini" style="margin-top:6px">Trace analysée, '+e.track.n+' points : '+(e.src==='intervals'?'elle complète les données de la montre sans les remplacer.':'durée, distance et D+ viennent d\'elle.')+' <a href="#" style="color:var(--mintT)" onclick="app.setE(\'track\',null);return false">Retirer</a></div>':'<div class="mini" style="margin-top:6px">'+(e.src==='intervals'?'Facultatif : la montre fournit déjà les données.':'La trace remplace la durée, la distance et le D+ prévus par les vrais.')+'</div>'):'')
   +'<label class="f">Date</label><input type="date" max="'+todayISO()+'" value="'+e.date+'" onchange="app.setE(\'date\',this.value)">'
   +'<details class="tsel"><summary>Type : '+((TYPES[e.type]||TYPES.autre).l)+'</summary>'+chips(Object.keys(TYPES),e.type,v=>'app.setE(\'type\',\''+v+'\')','type',Object.keys(TYPES).map(k=>TYPES[k].l),null,'txt')+'</details>'
   +'<div class="g2">'+inp('dur',cf?'Durée totale (min)':'Durée (min)','min')+(run?inp('dist','Distance (km)','km','0.1'):'')+'</div>'
@@ -2827,7 +2828,7 @@ function vGate(){
     +authFormHTML('Un compte garde ton plan et tes séances en sécurité, et te permet de les retrouver sur un autre téléphone. Ton prénom personnalise l\'app.')
     +syncLineHTML()+versionLineHTML()+'</div></main>';
 }
-const APP_VERSION='v55';   /* généré depuis sw.js par tools/build.py */
+const APP_VERSION='v56';   /* généré depuis sw.js par tools/build.py */
 function versionLineHTML(){return '<div class="mini" id="ver" style="margin-top:12px;text-align:center;opacity:.7">Ascend '+APP_VERSION+' · moteur de plan v2</div>';}
 /* compare la page chargée au cache du service worker : signale un déploiement pas encore actif */
 function checkVersion(){if(!('caches' in window))return;caches.keys().then(ks=>{const c=ks.filter(k=>/^ascend-v\d+$/.test(k)).map(k=>+k.slice(8)).sort((a,b)=>b-a)[0],el=document.getElementById('ver');
@@ -3029,11 +3030,14 @@ const app=window.app={
     const o=(WT.list||[]).find(x=>x.ext===ext);if(!o)return;
     const cand=allPlan().filter(p=>p.date===o.date&&(TYPES[p.type]||TYPES.autre).run===((o.type==='ef'||o.type==='long')?1:0)&&!realizedOf(p));
     app.newSession(cand.length===1?cand[0].id:null);
-    Object.assign(E,{date:o.date,type:o.type,dur:o.dur,dist:o.dist,dplus:o.dplus,dminus:null,hrAvg:o.hrAvg,hrMax:o.hrMax,note:o.note,ext:o.ext,src:'intervals'});
+    /* D-98 : rattachée à une séance prévue, l'activité en garde le type (la montre ne fournit que les mesures) */
+    Object.assign(E,{date:o.date,type:cand.length===1?cand[0].type:o.type,dur:o.dur,dist:o.dist,dplus:o.dplus,dminus:o.dminus||null,hrAvg:o.hrAvg,hrMax:o.hrMax,note:o.note,ext:o.ext,src:'intervals',durTot:o.durTot||null,hrZ:o.hrZ||null});
     openSheet(true);},
   attachTrack(input){const f=input.files&&input.files[0];if(!f)return;const rd=new FileReader();
     rd.onload=()=>{try{const pts=parseTrack(rd.result),m=trackMetrics(pts);if(!m){flash('Trace illisible ou trop courte');return;}
-      E.track=m;if(m.dur)E.dur=m.dur;if(m.dist)E.dist=m.dist;if(m.hrAvg)E.hrAvg=m.hrAvg;if(m.hrMax)E.hrMax=m.hrMax;if(m.dplus>0)E.dplus=m.dplus;if(m.dminus>0)E.dminus=m.dminus;
+      E.track=m;const mo=E.src==='intervals',put=(k,v)=>{if(v&&(!mo||E[k]==null||E[k]===''))E[k]=v;};   /* D-98 : après la montre, la trace complète sans écraser */
+      if(mo){put('dur',m.dur);put('dist',m.dist);put('hrAvg',m.hrAvg);put('hrMax',m.hrMax);put('dplus',m.dplus>0?m.dplus:null);put('dminus',m.dminus>0?m.dminus:null);}
+      else{if(m.dur)E.dur=m.dur;if(m.dist)E.dist=m.dist;if(m.hrAvg)E.hrAvg=m.hrAvg;if(m.hrMax)E.hrMax=m.hrMax;if(m.dplus>0)E.dplus=m.dplus;if(m.dminus>0)E.dminus=m.dminus;}
       openSheet();flash('Trace analysée');}catch(e){flash('Trace illisible');}};
     rd.readAsText(f);},
   saveE(){if(!E.date){flash('Date manquante');return;}if(E.date>todayISO()){flash('Date dans le futur');return;}if(!E.dur){flash('Durée manquante');return;}if(E.type==='cf'&&!cfJ(E)){flash('Jambes sollicitées : non, un peu ou beaucoup ?');return;}delete E.aiBusy;delete E.aiFresh;

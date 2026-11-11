@@ -3263,3 +3263,13 @@ Règle (v2) :
 - Inchangé : semaine en cours seulement, jamais de report à la semaine suivante, durée, contenu et D+ inchangés, identifiants conservés (la séance réalisée se rattache à la bonne séance). Aucun garde-fou nouveau : la règle des 30 jours borne toujours la séance.
 Effet pour Antoine (11/11/2026) : ses décalages déjà enregistrés deviennent valides sans rien refaire ; la sortie longue d'1 h 01 faite le mercredi est rattachée à la sortie longue de la semaine (prévue 1 h 00), l'endurance de 30 min passe au dimanche. Sorties longues suivantes inchangées : 1 h 05, 1 h 10, puis 45 min (semaine allégée).
 Tests : `t_decal.js` (échange, refus d'un seul sens), `tests/ui/test_v55.py` (bouton « échange », décalages enregistrés, Aujourd'hui). Règles v1 inchangées (parité 0 écart).
+
+### D-98 — Import depuis la montre : le plan donne le type, la montre les mesures (11/11/2026, v56 ; complète D-77)
+Constat (sortie longue du 11/11/2026) : (a) une activité rattachée à une séance prévue prenait un type déduit de sa durée (course < 90 min = endurance), même rattachée à une sortie longue ; (b) le D− n'arrivait que par la trace TCX ; (c) charger la trace après l'import écrasait la durée (temps en mouvement → temps total) et le D+ (corrigé par la montre → recalculé sur les altitudes brutes : 164 → 186 m).
+Règle :
+- Rattachée à une séance prévue, l'activité garde le **type de la séance**. La déduction par la durée ne sert que pour une activité sans séance prévue.
+- La fonction `intervals-activities` transmet aussi le **D−** (`total_elevation_loss`), le **temps total** (`elapsed_time`) et le **temps par zone de FC** avec les bornes des zones (`icu_hr_zone_times`, `icu_hr_zones`, zones réglées dans intervals.icu). Ce sont des données d'activité, pas de santé : D-77 inchangé (ni sommeil, ni VFC, ni poids). Les zones servent au bilan de séance à venir ; la FC ne pilote pas le plan (D-12).
+- **Sources** : durée = temps en mouvement (c'est lui que compare la règle des 30 jours) ; D+ et D− de la montre. Après un import montre, la trace TCX/GPX est facultative et ne fait que compléter les champs vides.
+- Sans import montre (saisie manuelle), la trace remplace durée, distance et D+ comme avant.
+Déploiement : la fonction Supabase est à recoller dans l'éditeur du tableau de bord (pas de déploiement depuis GitHub). Tant qu'elle ne l'est pas, l'appli fonctionne comme avant pour le D− et les zones (champs absents).
+Test : `tests/ui/test_v56.py` (type « Sortie longue » pour une sortie de 60 min rattachée ; D− lu ; trace qui ne remplace pas). Moteur inchangé.
