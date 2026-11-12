@@ -3364,3 +3364,39 @@ f. **Comparaison avec tes séances comparables** (même type, durée à ±20 %) 
 - Premier constat réel : sur la sortie du 11/11, la FC en descente est 6 bpm sous la montée (pas de constat « descente ») ; sur le trail de 42 km, elle est au-dessus (165 contre 161).
 - Tests : `tests/t_flux.js` (synthétique + traces réelles sans position `tests/data/flux_20261111.json`, `flux_42km.json`), `tests/ui/test_v60.py`.
 - v64–v65 : voir ci-dessus (pentes, Minetti, puis analyse IA).
+
+### D-101 — « Ta progression » : ce que l'entraînement produit, suivi dans le temps (proposée le 12/11/2026, à valider ; suite de D-100)
+**Pourquoi.** Le Suivi dit si Antoine **fait** le plan (sortie longue, D+ : indicateurs de moyens), pas si le plan le **fait progresser** (indicateurs de résultat). Et l'analyse d'une séance seule est creuse (constat d'Antoine, 12/11/2026) : une sortie facile d'1 h contient peu d'information ; la valeur vient de la comparaison dans le temps. Objectif intermédiaire : 50 km / 2 000 m D+ le 8 mai 2027 ; objectif principal : 80 km fin septembre 2027.
+
+**1. Trois repères, calculés par l'appli à partir des données seconde par seconde (D-100).**
+Partie utile d'une sortie : après les 10 premières minutes, hors descentes (pente < −1 %), pente mesurée sur 200 m (H-63).
+a. **Allure facile** = allure équivalente plat (Minetti) **ramenée à la limite de la zone facile** (aujourd'hui 159 bpm) : vitesse × (159 − FC repos) / (FC moyenne − FC repos). Affichée en min/km.
+   - Pourquoi pas « l'allure quand la FC est en zone facile » (proposition du 12/11) : sur la sortie du 11/11, seules **6 min** de la partie utile sont sous 159 bpm ; sur le 42 km, ces minutes sont surtout en fin de course, fatigué (8:48/km) : biaisé. La version ramenée à 159 bpm utilise toute la partie utile (35 min le 11/11).
+   - Repose sur la relation à peu près linéaire entre FC et vitesse en effort sous-maximal (établie) et sur Minetti (établi pour l'énergie, H-63). La FC de référence est **figée** à la première mesure (si la FC max change, la tendance reste comparable).
+   - Valeurs réelles : 11/11 → **6:32/km** ; 42 km (1re heure et demie) → 7:05 ; 42 km entier → 8:24.
+b. **Tenue** = perte d'efficacité entre 1re et 2e moitié de la partie utile (`derive.pct`, D-100 v64). Seulement si la sortie dure 1 h 15 ou plus et a 40 min utiles. Valeur réelle : 42 km → −21 %.
+c. **Montée** = mètres montés par heure sur les seules montées (> +3 %), ramenés à 159 bpm de la même façon. Valeur réelle : 11/11 → 384 m/h à FC 161, soit ~378 à 159.
+- Une sortie sans données de la montre, ou avec moins de 20 min utiles, ne compte pas.
+
+**2. Dans le Suivi : bloc « Ta progression », sous-titre « à effort égal ».** Même style que « Prêt pour le jour J ? » (icône, titre court, verdict, valeur ; ligne repliable).
+- Trois cases par repère : **Départ** → **Il y a 6 semaines** → **Maintenant** (dernière case en vert).
+  - Départ = moyenne des **2 premières sorties depuis le début du plan** (pas d'août). Avec une seule sortie : sa valeur, mention « provisoire ». Ne bouge plus ensuite.
+  - Il y a 6 semaines = moyenne des sorties entre 8 et 4 semaines avant aujourd'hui (au plus les 3 plus récentes de cette fenêtre).
+  - Maintenant = moyenne des 3 dernières sorties des 4 dernières semaines.
+  - Une case sans au moins 2 sorties affiche « — » (sauf Départ provisoire). Six semaines : délai d'apparition d'une adaptation d'endurance, **convention**.
+- Verdict, de « Il y a 6 semaines » (à défaut Départ) à « Maintenant » : écart ≥ 3 % dans le bon sens = « en progrès », ≥ 3 % dans le mauvais = « en baisse », sinon « stable ». Seuil 3 % = variation habituelle d'une sortie à l'autre (chaleur, fatigue, FC au poignet) : **convention** (H-64).
+- Ligne ouverte : une valeur par mois depuis le début du plan.
+- **Historique** : à la première ouverture du Suivi, l'appli lit les données de la montre des sorties du plan déjà importées (fonction `intervals-streams`, une sortie à la fois, au plus 30), puis garde le résumé.
+
+**3. Deux objectifs dans le Suivi.**
+- En haut : carte « Objectif » (80 km, fin sept. 2027) et « Prochaine étape » (prochaine course intermédiaire, 50 km le 8 mai, J−).
+- « Prêt pour le jour J ? » vise **la prochaine course intermédiaire par défaut**, avec un bouton 50 km / 80 km. « Ta progression » est commune aux deux.
+
+**4. Bilan d'une séance.**
+- Nouveau bloc **« Par rapport à d'habitude »** sous les chiffres clés : chaque repère de la séance face à la moyenne des 3 sorties précédentes (« 6:25, ta moyenne 6:38 : mieux »), même seuil de 3 %. Tenue seulement sur les sorties de 1 h 15 et plus.
+- **Analyse IA** : reçoit en plus le résumé des **5 sorties précédentes** (date, type, durée, D+, repères, effort ressenti, CrossFit la veille). Rôle : expliquer un écart à l'habitude en cherchant une cause dans l'historique. Si rien ne sort de l'ordinaire (tous les repères « stable », aucun constat ▲) : **une ligne** le disant, sans conseil forcé.
+- Corrections de la consigne (relevées sur l'analyse du 12/11) : FC ≤ limite facile = zone facile ; pas de conseil de glucides sous 75 min de course ; au plus un chiffre repris de l'écran.
+
+**5. Ce qui ne change pas.** Le plan n'est jamais modifié par ces repères (D-12). Aucun seuil cible pour le 50 km ou le 80 km : l'appli montre le sens de la tendance, pas une valeur à atteindre (aucune valeur établie pour Antoine).
+
+**6. Versions.** v66 : repères dans le moteur, bloc « Ta progression », historique, deux objectifs. v67 : « Par rapport à d'habitude » dans le bilan et IA avec historique (fonction `analyze-session` à recoller une fois).
