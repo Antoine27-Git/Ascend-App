@@ -813,6 +813,10 @@ const FLUX_TRY={};
 function fluxAFaire(r){if(!r.ext||!/^icu:/.test(r.ext)||!isRun(r))return false;const z=ENGINE.zonesKarvonen(S.profile.fcMax,S.profile.fcRepos);
   if(!r.flux)return !r.fluxKO;return (r.flux.v||1)<2||!!(z&&(!r.flux.zones||r.flux.zones.bornes.join()!==z.join()));}
 const ICO={up:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--mut);flex:none;margin-right:-1px"><path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/></svg>',flat:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--mut);flex:none;margin-right:-1px"><path d="M5 12h14"/><path d="M15 16l4-4-4-4"/></svg>',down:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--mut);flex:none;margin-right:-1px"><path d="M3 7l6 6 4-4 8 8"/><path d="M21 10v7h-7"/></svg>',up2:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--mut);flex:none"><path d="M4 15l7-3 4 2 5-3"/><path d="M16 9l4 2-2 4"/></svg>',down2:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--mut);flex:none"><path d="M4 9l7 3 4-2 5 3"/><path d="M16 15l4-2-2-4"/></svg>'};
+function iaBlocs(ia){const P='font-size:14.5px;line-height:1.55;padding:10px 0',L='<div class="mini" style="font-size:12px;margin-bottom:3px">';
+  if(!ia.interp&&!ia.conseil)return '<div style="'+P+';white-space:pre-wrap">'+esc(ia.txt||'')+'</div>';
+  return (ia.interp?'<div style="'+P+'">'+L+'Ce que j\'en lis</div>'+esc(ia.interp)+'</div>':'')
+    +(ia.conseil?'<div style="'+P+(ia.interp?';border-top:1px solid var(--line,#e3e8e5)':'')+'">'+L+'Pour la prochaine</div>'+esc(ia.conseil)+'</div>':'');}
 function bilanSeanceHTML(r){
   if(fluxAFaire(r)){const k=r.id+':'+(S.profile.fcMax||'')+':'+(S.profile.fcRepos||'');if(!FLUX_TRY[k]){FLUX_TRY[k]=1;setTimeout(()=>app.fluxLire(r.id),0);}}
   const b=bilanOf(r);if(!b)return '';const ia=r.ia||{},F=b.flux,Fz=r.flux&&r.flux.zones;
@@ -852,7 +856,7 @@ function bilanSeanceHTML(r){
   const ind=INDIC[b.indicateur];if(ind)h+='<details style="margin-top:14px"><summary class="mini" style="font-size:13px">Pour comprendre : '+ind[0]+'</summary><div class="mini" style="margin-top:6px">'+ind[1]+'</div></details>';
   return h
     +SEC('Analyse')
-    +(ia.txt?'<div style="font-size:14.5px;line-height:1.5;white-space:pre-wrap'+(IA_BUSY===r.id?';opacity:.45':'')+'">'+esc(ia.txt)+'</div>'
+    +((ia.interp||ia.conseil||ia.txt)?'<div style="'+BOX+';padding:4px 14px'+(IA_BUSY===r.id?';opacity:.45':'')+'">'+iaBlocs(ia)+'</div>'
       +'<div class="mini" style="margin-top:10px">Cette analyse colle à ta séance ?</div><div class="row" style="gap:8px;margin-top:6px">'
       +['oui','non'].map(v=>'<button class="btn s'+(ia.retour===v?' dark':'')+'" onclick="app.iaRetour(\''+r.id+'\',\''+v+'\')">'+(v==='oui'?'Oui':'Pas vraiment')+'</button>').join('')+'</div>'
       +(ia.retour==='non'?'<input style="margin-top:8px" placeholder="Qu\'est-ce qui ne colle pas ?" value="'+esc(ia.com||'')+'" onchange="app.iaCom(\''+r.id+'\',this.value)">':'')
@@ -3016,7 +3020,7 @@ function vGate(){
     +authFormHTML('Un compte garde ton plan et tes séances en sécurité, et te permet de les retrouver sur un autre téléphone. Ton prénom personnalise l\'app.')
     +syncLineHTML()+versionLineHTML()+'</div></main>';
 }
-const APP_VERSION='v64';   /* généré depuis sw.js par tools/build.py */
+const APP_VERSION='v65';   /* généré depuis sw.js par tools/build.py */
 function versionLineHTML(){return '<div class="mini" id="ver" style="margin-top:12px;text-align:center;opacity:.7">Ascend '+APP_VERSION+' · moteur de plan v2</div>';}
 /* compare la page chargée au cache du service worker : signale un déploiement pas encore actif */
 function checkVersion(){if(!('caches' in window))return;caches.keys().then(ks=>{const c=ks.filter(k=>/^ascend-v\d+$/.test(k)).map(k=>+k.slice(8)).sort((a,b)=>b-a)[0],el=document.getElementById('ver');
@@ -3280,8 +3284,8 @@ const app=window.app={
       model:P.iaModele||IA_MODELE};
     IA_BUSY=id;delete IA_ERR[id];render();refreshPE();
     try{const res=await sbFetch('/functions/v1/analyze-session',{method:'POST',body:JSON.stringify(payload)});
-      if(!res||!res.texte)throw new Error('Réponse vide');
-      r.ia={txt:res.texte,model:res.model||payload.model,at:new Date().toISOString(),retour:null,com:null};
+      if(!res||!(res.interpretation||res.conseil||res.texte))throw new Error('Réponse vide');
+      r.ia={interp:res.interpretation||null,conseil:res.conseil||null,txt:res.texte||null,model:res.model||payload.model,at:new Date().toISOString(),retour:null,com:null};
       const t=todayISO(),c=P.iaCompte||{};P.iaCompte={date:t,n:(c.date===t?c.n:0)+1};save();
     }catch(e){let m=e.message||'';try{m=JSON.parse(m).error||m;}catch(x){}IA_ERR[id]='Analyse impossible : '+m;}
     IA_BUSY=null;render();refreshPE();},
