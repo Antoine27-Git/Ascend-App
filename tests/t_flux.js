@@ -49,4 +49,17 @@ t('bilan : RPE 3 et 76 % au-dessus → « FC plus haute que le ressenti »',b.ms
 t('bilan : résumé du flux transmis (sans trace brute)',b.flux&&b.flux.terrain&&!b.flux.time,JSON.stringify(b.flux).length+' o');
 const b2=E.bilan({profile:Object.assign({},P,{fcMax:205}),today:'2026-11-12',sessions:[Object.assign({},ses[0],{flux:null})],isRun},'x');
 t('sans flux, FC max 205 : garde-fou sur la borne 158',b2.msgs.some(m=>m.code==='zones-decalees'&&/158/.test(m.txt)));
+/* D-101 : repères de progression (FC de référence 159, repos 52) */
+{const z=E.zonesKarvonen(205,52),a=E.flux(require('./data/flux_20261111.json'),z),k=E.flux(require('./data/flux_42km.json'),z);
+ const ra=E.repSeance(a,60,159,52),rk=E.repSeance(k,413,159,52);
+ t('11/11 : allure facile ~6:34/km à 159 bpm, montée ~377 m/h, pas de tenue (1 h)',Math.abs(ra.allure-394)<=4&&Math.abs(ra.montee-377)<=6&&ra.tenue==null,JSON.stringify(ra));
+ t('42 km : tenue 21 %, allure facile plus lente que le 11/11',rk.tenue>15&&rk.allure>ra.allure,JSON.stringify(rk));
+ const P1=E.progression([{date:'2026-11-11',dur:60,flux:a}],{start:'2026-11-02',today:'2026-11-12',ref:159,repos:52});
+ t('une seule sortie : départ provisoire, 1re mesure',P1.allure.provisoire&&P1.allure.verdict==='premiere'&&P1.allure.now==null&&P1.tenue===null);
+ const fake=(d,al)=>({date:d,dur:60,flux:Object.assign({},a,{util:Object.assign({},a.util,{v:1000/al*(a.util.fc-52)/107})})});
+ const P2=E.progression([fake('2026-09-01',420),fake('2026-09-05',420),fake('2026-10-01',410),fake('2026-10-04',410),fake('2026-11-05',395),fake('2026-11-10',395)],{start:'2026-08-31',today:'2026-11-12',ref:159,repos:52});
+ t('progression : 7:00 → 6:50 → 6:35, « en progrès »',P2.allure.depart===420&&P2.allure.s6===410&&P2.allure.now===395&&P2.allure.verdict==='progres',JSON.stringify(P2.allure));
+ const P3=E.progression([fake('2026-10-01',400),fake('2026-10-04',400),fake('2026-11-05',405),fake('2026-11-10',405)],{start:'2026-08-31',today:'2026-11-12',ref:159,repos:52});
+ t('écart de 1,25 % : « stable »',P3.allure.verdict==='stable',P3.allure.ecart);
+ t('avant le début du plan : ignoré',E.progression([fake('2026-08-20',420)],{start:'2026-08-31',today:'2026-11-12',ref:159,repos:52}).allure===null);}
 process.exit(ok?0:1);

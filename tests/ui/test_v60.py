@@ -36,7 +36,7 @@ with sync_playwright() as p:
     pg.locator('#sheet details summary',has_text='Par km').click();pg.wait_for_timeout(300);pg.screenshot(path=OUT+'/km.png')
     pg.locator('#sheet h3',has_text='Ce que ça dit').scroll_into_view_if_needed();pg.wait_for_timeout(300);pg.screenshot(path=OUT+'/constats.png')
     s=json.loads(pg.evaluate('localStorage.getItem("trail-state-v1")'));x=[z for z in s['sessions'] if z['id']=='x1'][0]
-    chk(x.get('flux',{}).get('v')==2 and 'time' not in x['flux'],'résumé enregistré avec la séance, sans la trace brute (%d o)'%len(json.dumps(x.get('flux'))))
+    chk(x.get('flux',{}).get('v')==3 and 'time' not in x['flux'],'résumé enregistré avec la séance, sans la trace brute (%d o)'%len(json.dumps(x.get('flux'))))
     pg.evaluate('app.close()');pg.wait_for_timeout(300);pg.locator('.wd:not(.rest)').filter(has_text='Sortie longue').first.click();pg.wait_for_timeout(800)
     chk(len(req)==1,'réouverture : pas de nouvelle lecture')
     pg.evaluate('app.close()');pg.locator('nav').get_by_text('Profil').click();pg.wait_for_timeout(400);pg.evaluate("app.psub('toi')");pg.wait_for_timeout(500);pt=pg.locator('main').first.inner_html() if pg.locator('main').count() else pg.content()

@@ -511,6 +511,33 @@ const FLUX={pente:3,fauxPlat:1,fenetreM:200,lissage:7,depart:600,plateau:0.95,ec
 /* Minetti et al. 2002 : coût énergétique de la course (J/kg/m) selon la pente i (fraction, −0,45 à +0,45). */
 function minetti(i){i=Math.max(-0.45,Math.min(0.45,i));return 155.4*i**5-30.4*i**4-43.3*i**3+46.3*i**2+19.5*i+3.6;}
 const TERRAIN=[['montee',0.03,1],['fpm',0.01,0.03],['plat',-0.01,0.01],['fpd',-0.03,-0.01],['descente',-1,-0.03]];
+/* D-101 : repères de progression. Valeurs d'une sortie ramenées à une FC de référence fixe (ref) par proportion sur la FC de réserve.
+   allure (s/km, plus bas = mieux), montee (m/h, plus haut = mieux), tenue (% perdu en 2e moitié, plus bas = mieux). H-64. */
+const PROGR={utilMin:20,tenueDur:75,seuil:3,fen6:[56,28],fenNow:28,nb:3};
+function repSeance(f,dur,ref,repos){if(!f||(f.v||1)<3||!(ref>repos))return null;const k=fc=>fc>repos+20?(ref-repos)/(fc-repos):null,o={};
+  if(f.util&&f.util.min>=PROGR.utilMin){const q=k(f.util.fc);if(q)o.allure=Math.round(1000/(f.util.v*q));}
+  if(f.vam&&f.terrain&&f.terrain.montee&&f.terrain.montee.fc){const q=k(f.terrain.montee.fc);if(q)o.montee=Math.round(f.vam*q);}
+  if(f.derive&&dur>=PROGR.tenueDur)o.tenue=f.derive.pct;
+  return Object.keys(o).length?o:null;}
+function progression(sessions,o){/* o = {start,today,ref,repos} ; sessions : {date,dur,flux} déjà filtrées sur la course */
+  const add=(d,n)=>{const x=new Date(d+'T12:00:00Z');x.setUTCDate(x.getUTCDate()+n);return x.toISOString().slice(0,10);};
+  const pts=sessions.filter(s=>s.date>=o.start&&s.date<=o.today).sort((a,b)=>a.date<b.date?-1:1).map(s=>({date:s.date,r:repSeance(s.flux,s.dur,o.ref,o.repos)})).filter(p=>p.r);
+  const moy=a=>a.length?a.reduce((s,x)=>s+x,0)/a.length:null,out={};
+  ['allure','montee','tenue'].forEach(k=>{const L=pts.filter(p=>p.r[k]!=null).map(p=>({date:p.date,v:p.r[k]}));
+    if(!L.length){out[k]=null;return;}
+    const dep=L.slice(0,2),f6=L.filter(p=>p.date>=add(o.today,-PROGR.fen6[0])&&p.date<add(o.today,-PROGR.fen6[1])).slice(-PROGR.nb),
+      now=L.filter(p=>p.date>=add(o.today,-PROGR.fenNow)).slice(-PROGR.nb);
+    const c=a=>a.length>=2?Math.round(10*moy(a.map(p=>p.v)))/10:null;
+    const R={depart:Math.round(10*moy(dep.map(p=>p.v)))/10,provisoire:dep.length<2,s6:c(f6),now:c(now),n:L.length,derniere:L[L.length-1]};
+    /* verdict : maintenant contre il y a 6 semaines, à défaut contre le départ (s'il ne partage pas les mêmes sorties) */
+    const depD=new Set(dep.map(p=>p.date)),base=R.s6!=null?R.s6:(!R.provisoire&&now.some(p=>!depD.has(p.date))?R.depart:null);
+    if(R.now==null||base==null)R.verdict=L.length===1?'premiere':'attente';
+    else{const sens=k==='montee'?1:-1,d=k==='tenue'?(R.now-base):100*(R.now-base)/base;
+      R.ecart=Math.round(10*d)/10;R.verdict=sens*d>=PROGR.seuil?'progres':-sens*d>=PROGR.seuil?'baisse':'stable';}
+    const M={};L.forEach(p=>{(M[p.date.slice(0,7)]=M[p.date.slice(0,7)]||[]).push(p.v);});
+    R.mois=Object.keys(M).sort().map(m=>({mois:m,v:Math.round(10*moy(M[m]))/10,n:M[m].length}));
+    out[k]=R;});
+  return out;}
 function zonesKarvonen(fcMax,fcRepos){
   if(!(fcMax>0&&fcRepos>0&&fcMax>fcRepos+40))return null;
   const R=fcMax-fcRepos;return KARV.map(x=>Math.floor(fcRepos+R*x));}
@@ -547,7 +574,7 @@ function flux(st,zones){
       if(dist>=(pas*1000)*0.3&&t>0)tranches.push({de:b-pas,a:Math.min(b,Math.round(km*10)/10),allure:Math.round(t/(dist/1000)),fc:hc?Math.round(hs/hc):null,dp:Al?Math.round(dp):null,dm:Al?Math.round(dm):null});
       if(i>=n-1)break;a=i;}}
   /* profil de terrain (D-100, v64) : pente sur ~200 m centrés, 5 catégories ; allure équivalente plat (Minetti) hors descente */
-  let terrain=null,vam=null,derive=null;
+  let terrain=null,vam=null,derive=null,util=null;
   if(Al&&hasD){const g=new Array(n).fill(null),W=FLUX.fenetreM/2;let a=0,b=0;
     for(let i=0;i<n;i++){while(a<i&&Dd[a]<Dd[i]-W)a++;while(b<n-1&&Dd[b]<Dd[i]+W)b++;
       const dd=Dd[b]-Dd[a];if(dd>=FLUX.fenetreM*0.6&&Al[a]!=null&&Al[b]!=null)g[i]=(Al[b]-Al[a])/dd;}
@@ -561,11 +588,13 @@ function flux(st,zones){
     if(S.montee.t>=120&&S.montee.dz>0)vam=Math.round(S.montee.dz/(S.montee.t/3600));
     /* dérive : hors départ et hors descentes, 1re moitié contre 2e moitié (FC et allure équivalente plat) */
     const tt=seg.reduce((s,x)=>s+x[0],0);
+    /* D-101 : partie utile (après le départ, hors descentes) : vitesse équivalente plat et FC moyennes */
+    {let de=0,h=0,hc=0;seg.forEach(x=>{de+=x[1];if(x[2]>0){h+=x[2];hc++;}});if(tt>=60&&de>0&&hc)util={min:Math.round(tt/60),v:Math.round(1000*de/tt)/1000,fc:Math.round(10*h/hc)/10};}
     if(tt>=FLUX.deriveMin){let c=0,k=0;while(k<seg.length&&c<tt/2){c+=seg[k][0];k++;}
       const m=q=>{let t=0,de=0,h=0,hc=0;q.forEach(x=>{t+=x[0];de+=x[1];if(x[2]>0){h+=x[2];hc++;}});return {fc:Math.round(h/hc),allure:Math.round(t/(de/1000)),e:(h/hc)/(de/t)};};
       const m1=m(seg.slice(0,k)),m2=m(seg.slice(k));
       derive={fc1:m1.fc,fc2:m2.fc,eq1:m1.allure,eq2:m2.allure,pct:Math.round(1000*(m2.e/m1.e-1))/10};}}
-  return {v:2,min:Math.round(tm/60),zones:zonesOut,croisiere:crois,tranches,terrain,vam,derive};
+  return {v:3,min:Math.round(tm/60),zones:zonesOut,croisiere:crois,tranches,terrain,vam,derive,util};
 }
 function bilan(inp,sid){
   const all=inp.sessions||[],s=all.find(x=>x.id===sid);if(!s)return null;
@@ -617,6 +646,6 @@ function bilan(inp,sid){
     joursDepuisSL:derSL?Math.round((D(s.date)-D(derSL.date))/864e5):null,veilleCF:veille?(veille.cfJ||'?'):null,
     dplusH:s.dplus&&s.dur?Math.round(s.dplus/(s.dur/60)):null,hautBase,flux:F?{croisiere:F.croisiere,terrain:F.terrain,vam:F.vam,tranches:F.tranches,derive:F.derive||null}:null,msgs,indicateur:ind,effet};
 }
-return {build,bilan,flux,minetti,zonesKarvonen,FLUX,BILAN,CONV,arrondi,Calendrier,dureeCourse,tranche_de,_t:{Modele,ajuste,atteint,max30,ref30,relachesPrevues}};
+return {build,bilan,flux,minetti,progression,repSeance,PROGR,zonesKarvonen,FLUX,BILAN,CONV,arrondi,Calendrier,dureeCourse,tranche_de,_t:{Modele,ajuste,atteint,max30,ref30,relachesPrevues}};
 })();
 if(typeof module!=='undefined')module.exports=ENGINE;
