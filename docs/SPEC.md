@@ -3365,7 +3365,7 @@ f. **Comparaison avec tes séances comparables** (même type, durée à ±20 %) 
 - Tests : `tests/t_flux.js` (synthétique + traces réelles sans position `tests/data/flux_20261111.json`, `flux_42km.json`), `tests/ui/test_v60.py`.
 - v64–v65 : voir ci-dessus (pentes, Minetti, puis analyse IA).
 
-### D-101 — « Ta progression » : ce que l'entraînement produit, suivi dans le temps (proposée le 12/11/2026, à valider ; suite de D-100)
+### D-101 — « Ta progression » : ce que l'entraînement produit, suivi dans le temps (validée le 12/11/2026 ; suite de D-100)
 **Pourquoi.** Le Suivi dit si Antoine **fait** le plan (sortie longue, D+ : indicateurs de moyens), pas si le plan le **fait progresser** (indicateurs de résultat). Et l'analyse d'une séance seule est creuse (constat d'Antoine, 12/11/2026) : une sortie facile d'1 h contient peu d'information ; la valeur vient de la comparaison dans le temps. Objectif intermédiaire : 50 km / 2 000 m D+ le 8 mai 2027 ; objectif principal : 80 km fin septembre 2027.
 
 **1. Trois repères, calculés par l'appli à partir des données seconde par seconde (D-100).**
@@ -3373,7 +3373,7 @@ Partie utile d'une sortie : après les 10 premières minutes, hors descentes (pe
 a. **Allure facile** = allure équivalente plat (Minetti) **ramenée à la limite de la zone facile** (aujourd'hui 159 bpm) : vitesse × (159 − FC repos) / (FC moyenne − FC repos). Affichée en min/km.
    - Pourquoi pas « l'allure quand la FC est en zone facile » (proposition du 12/11) : sur la sortie du 11/11, seules **6 min** de la partie utile sont sous 159 bpm ; sur le 42 km, ces minutes sont surtout en fin de course, fatigué (8:48/km) : biaisé. La version ramenée à 159 bpm utilise toute la partie utile (35 min le 11/11).
    - Repose sur la relation à peu près linéaire entre FC et vitesse en effort sous-maximal (établie) et sur Minetti (établi pour l'énergie, H-63). La FC de référence est **figée** à la première mesure (si la FC max change, la tendance reste comparable).
-   - Valeurs réelles : 11/11 → **6:32/km** ; 42 km (1re heure et demie) → 7:05 ; 42 km entier → 7:42.
+   - Valeurs réelles : 11/11 → **6:34/km** (calcul du moteur, pente lissée) ; 42 km (1re heure et demie) → 7:05 ; 42 km entier → 7:42.
 b. **Tenue** = perte d'efficacité entre 1re et 2e moitié de la partie utile (`derive.pct`, D-100 v64). Seulement si la sortie dure 1 h 15 ou plus et a 40 min utiles. Valeur réelle : 42 km → −21 %.
 c. **Montée** = mètres montés par heure sur les seules montées (> +3 %), ramenés à 159 bpm de la même façon. Valeur réelle : 11/11 → 384 m/h à FC 161, soit ~378 à 159.
 - Une sortie sans données de la montre, ou avec moins de 20 min utiles, ne compte pas.
@@ -3398,5 +3398,7 @@ c. **Montée** = mètres montés par heure sur les seules montées (> +3 %), ram
 - Corrections de la consigne (relevées sur l'analyse du 12/11) : FC ≤ limite facile = zone facile ; pas de conseil de glucides sous 75 min de course ; au plus un chiffre repris de l'écran.
 
 **5. Ce qui ne change pas.** Le plan n'est jamais modifié par ces repères (D-12). Aucun seuil cible pour le 50 km ou le 80 km : l'appli montre le sens de la tendance, pas une valeur à atteindre (aucune valeur établie pour Antoine).
+
+**Mise en œuvre (v66).** Moteur : `flux()` v3 ajoute `util:{min,v,fc}` ; `repSeance()` et `progression()` (constantes `PROGR`) ; FC de référence figée dans le profil (`repRef`, 159 / 52). Suivi : carte des objectifs, bouton 50 km / 80 km (visée avant la course intermédiaire = la moitié de sa durée estimée, 4 h 30 au plus, D-25), bloc « Ta progression » ; à l'ouverture, lecture des données de la montre des sorties du plan qui n'en ont pas (au plus 30). Limite : le graphique de « Prêt pour le jour J ? » garde la zone visée du 80 km. Tests : `tests/t_flux.js`, `tests/ui/test_v66.py`.
 
 **6. Versions.** v66 : repères dans le moteur, bloc « Ta progression », historique, deux objectifs. v67 : « Par rapport à d'habitude » dans le bilan et IA avec historique (fonction `analyze-session` à recoller une fois).
