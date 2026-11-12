@@ -68,3 +68,7 @@ La ligne « Ascend vNN » en bas de Profil sert à vérifier qu'un déploiement 
 - Lecture de photo : fonction Supabase à déployer ; retirée du formulaire de renforcement (D-74), à reprendre avec le journal de progression.
 - Idées reportées : `docs/BACKLOG.md`.
 - `H-38` et `H-39` sont cités dans le moteur mais leur texte est introuvable dans `docs/` (à réintégrer depuis `MOTEUR-V0.md` s'il existe encore). H-40 réécrite le 09/11/2026 (D-94).
+
+
+## Déploiement des fonctions Supabase
+À chaque fusion sur main, `.github/workflows/fonctions-supabase.yml` déploie les fonctions modifiées sous `supabase/functions/` (secret GitHub `SUPABASE_ACCESS_TOKEN`). Plus de copier-coller dans Supabase. Redéploiement manuel : Actions → Fonctions Supabase → Run workflow, avec le nom de la fonction.

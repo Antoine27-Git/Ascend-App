@@ -1,0 +1,40 @@
+# Déploie dans Supabase les fonctions modifiées à chaque fusion sur main (méthode officielle :
+# https://supabase.com/docs/guides/functions/deploy). Secret GitHub requis : SUPABASE_ACCESS_TOKEN.
+# Ne touche qu'aux fonctions présentes dans supabase/functions (jamais analyze-wod, absente du dépôt).
+# « Verify JWT » reste activé (valeur par défaut du CLI).
+name: Fonctions Supabase
+on:
+  push:
+    branches: [main]
+    paths: ['supabase/functions/**']
+  workflow_dispatch:
+    inputs:
+      fonction:
+        description: "Nom de la fonction à déployer (ex. analyze-session)"
+        required: true
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      PROJECT_ID: amvvpiwemrpbvezvetih
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - name: Déployer
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            LISTE="${{ github.event.inputs.fonction }}"
+          else
+            LISTE=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} -- supabase/functions | cut -d/ -f3 | sort -u)
+          fi
+          for f in $LISTE; do
+            if [ -f "supabase/functions/$f/index.ts" ]; then
+              echo "Déploiement de $f"
+              supabase functions deploy "$f" --project-ref "$PROJECT_ID"
+            fi
+          done
