@@ -3373,7 +3373,7 @@ Partie utile d'une sortie : après les 10 premières minutes, hors descentes (pe
 a. **Allure facile** = allure équivalente plat (Minetti) **ramenée à la limite de la zone facile** (aujourd'hui 159 bpm) : vitesse × (159 − FC repos) / (FC moyenne − FC repos). Affichée en min/km.
    - Pourquoi pas « l'allure quand la FC est en zone facile » (proposition du 12/11) : sur la sortie du 11/11, seules **6 min** de la partie utile sont sous 159 bpm ; sur le 42 km, ces minutes sont surtout en fin de course, fatigué (8:48/km) : biaisé. La version ramenée à 159 bpm utilise toute la partie utile (35 min le 11/11).
    - Repose sur la relation à peu près linéaire entre FC et vitesse en effort sous-maximal (établie) et sur Minetti (établi pour l'énergie, H-63). La FC de référence est **figée** à la première mesure (si la FC max change, la tendance reste comparable).
-   - Valeurs réelles : 11/11 → **6:32/km** ; 42 km (1re heure et demie) → 7:05 ; 42 km entier → 8:24.
+   - Valeurs réelles : 11/11 → **6:32/km** ; 42 km (1re heure et demie) → 7:05 ; 42 km entier → 7:42.
 b. **Tenue** = perte d'efficacité entre 1re et 2e moitié de la partie utile (`derive.pct`, D-100 v64). Seulement si la sortie dure 1 h 15 ou plus et a 40 min utiles. Valeur réelle : 42 km → −21 %.
 c. **Montée** = mètres montés par heure sur les seules montées (> +3 %), ramenés à 159 bpm de la même façon. Valeur réelle : 11/11 → 384 m/h à FC 161, soit ~378 à 159.
 - Une sortie sans données de la montre, ou avec moins de 20 min utiles, ne compte pas.
