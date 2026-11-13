@@ -29,7 +29,7 @@ with sync_playwright() as p:
     t=pg.locator('main').inner_text()
     chk('Objectif' in t and '80 km' in t and 'Prochaine étape' in t and '50 km' in t and 'J−177' in t,'carte des deux objectifs (J−177)')
     chk('8 mai 2027 · J−177' in t and 'sortie longue visée : 4' in t and 'Plus longue' in t and 'Plus gros' in t,'Prêt pour le jour J : 50 km par défaut, graphique et cases')
-    chk('≈ 55\u00a0%\nde ta course' in t or '55\u00a0%' in t,'part de la course sous la visée (50 km)')
+    chk('55\u00a0% de ta course' in t,'part de la course sous la visée (50 km)')
     chk('Ton temps estimé' in t and 'Ordre de grandeur' in t,'temps estimé avec cases')
     pg.locator('.card',has_text='Ton temps estimé').scroll_into_view_if_needed();pg.screenshot(path=OUT+'/temps.png')
     chk('Ta progression' in t and 'Allure facile' in t and 'Résistance' in t and 'Montée' in t,'bloc Ta progression, 3 lignes')
