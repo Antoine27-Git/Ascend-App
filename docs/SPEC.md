@@ -3410,3 +3410,27 @@ c. **Montée** = mètres montés par heure sur les seules montées (> +3 %), ram
 **Retours du 13/11 au soir, v68.** Graphique : une heure de marge au-dessus, quadrillage par heure et par mois, valeur de la visée du 50 km écrite sur l'axe. Part de la course sous la case « Visée » (et non dedans). Limite du temps estimé reformulée.
 
 **6. Versions.** v66 : repères dans le moteur, bloc « Ta progression », historique, deux objectifs. v67 et v68 : retours ci-dessus. v69 : « Par rapport à d'habitude » dans le bilan et IA avec historique (fonction `analyze-session` à recoller une fois).
+
+### D-102 — Le D+ des sorties se cale sur la course la plus proche, en dénivelé par km (proposée le 14/11/2026, validée par Antoine sur le principe ; touche le plan)
+**Constat (Antoine, 13/11/2026).** Avant son 50 km / 1 900 m D+ du 8 mai, le plan ne prévoit qu'environ 800 m de D+ sur sa plus longue sortie (4 h 35). Cause : la densité de D+ (m par heure) monte lentement vers celle de l'objectif principal (H-41) et ignore les objectifs intermédiaires.
+
+**Ce que disent les sources (recherche du 14/11/2026).**
+- Aucune étude ne fixe un D+ à atteindre à l'entraînement, en une sortie ou par semaine. Le « 50 à 70 % du D+ de la course » avancé le 13/11 n'a pas de source : **retiré**.
+- Avis d'expert (Koop, CTS) : pas de relation dose-effet avec le D+ cumulé ; ce qui compte est le **dénivelé par km** à l'entraînement comparé à celui de la course ; le moteur aérobie passe avant la spécificité du terrain.
+- Études : en ultra-trail, la vitesse baisse davantage en descente qu'en montée en fin de course, et les mieux classés limitent cette baisse (Genitrini et al. 2022). L'exposition préalable à la descente réduit les dégâts musculaires (effet de la répétition), protection partielle (Bontemps et al. 2025 ; Martinez-Navarro et al. 2026, exploratoire).
+- La Clinique du Coureur : exposition progressive sous la capacité d'adaptation (quantification du stress mécanique) ; week-ends de choc dans ses programmes trail. Chiffres de leur plan 50 km non consultés.
+
+**Règles.**
+1. **Densité de course.** Pour chaque objectif intermédiaire de statut « objectif » avec un D+ : densité = D+ / durée estimée (Antoine : 1 900 m / ≈ 8 h ≈ 240 m/h, soit 38 m par km à l'allure de course).
+2. **Fenêtre spécifique.** Pendant les 8 semaines qui précèdent cette course, la densité des sorties longues vaut au moins celle de la course. Avant la fenêtre, la rampe monte linéairement du niveau de départ jusqu'à cette densité (pas de saut). Après la course, la densité ne redescend pas : elle reprend sa montée vers celle de l'objectif principal.
+3. **Week-end de choc** (existe déjà : D-70, un seul, 4 à 6 semaines avant un intermédiaire exigeant, si l'enchaînement est activé) : la sortie de la veille passe à la **pleine densité** (aujourd'hui moitié). Exemple : 3 h + 4 h 35 ≈ 720 + 1 100 = 1 800 m en deux jours, ≈ 95 % du D+ de la course.
+4. **Descentes courues** : le texte de la séance le précise (c'est là que se joue la fin de course).
+5. **Inchangé** : durées, règle des 30 jours, fourchette de D+ (H-50), endurances (moitié de densité, plafond en F1–F2), règles v1 (parité).
+
+**Affichage.** Séance : « ≈ 38 m de D+ par km, comme ta course ». Suivi : « Visé » suit automatiquement. Graphique de « Prêt pour le jour J ? » en mode objectif principal : libellés « 5 h » et « 6 h » de la sortie longue visée en vert, comme le « 4 h 35 » du mode 50 km.
+
+**Limites (H-66).** La fenêtre de 8 semaines et la pleine densité la veille sont des choix de conception appuyés sur des pratiques de coachs, pas sur des études. Suppose un terrain qui offre 38 m/km près de chez Antoine : à vérifier avec lui.
+
+**Mise en œuvre prévue.** Moteur (`dens(w)`, facteur de la veille de choc), tests de profils à rebaser et à relire un par un, test dédié (profil d'Antoine : D+ de la plus longue sortie avant le 8 mai ≈ 1 100 m), parité v1 à 0 écart.
+
+**Sources.** Koop, trainright.com/?p=26580 et /hierarchy-ultramarathon-training-needs-jason-koop/ ; Genitrini et al. 2022, PMC9680470 ; Bontemps et al. 2025, Eur J Sport Sci 25(3) ; Martinez-Navarro et al. 2026, PMC12846201 ; La Clinique du Coureur, fiche « Quantification du stress ».

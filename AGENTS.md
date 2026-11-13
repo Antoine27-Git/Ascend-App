@@ -54,6 +54,9 @@ La ligne « Ascend vNN » en bas de Profil sert à vérifier qu'un déploiement 
 - Une alerte d'écart dit la vraie cause (point de départ et temps restant), pas un levier inutile.
 - Textes affichés : français, courts, lisibles sur téléphone.
 
+## Règles du plan : chercher avant de proposer (demandé par Antoine le 14/11/2026)
+Pour toute règle qui touche au plan : chercher d'abord les études et les pratiques de référence (ex. La Clinique du Coureur), citer les sources dans la spec, et étiqueter chaque élément : **étude**, **avis d'expert**, ou **non vérifié**. Ne jamais avancer une « habitude d'entraîneur » de mémoire.
+
 ## Sécurité
 - Aucune clé secrète dans le dépôt. La clé Supabase `sb_publishable_…` de `index.html` est publique par conception ; jamais de `service_role` ni `sb_secret_…`, ni de clé Anthropic.
 - La fonction `analyze-wod` exige un utilisateur connecté (garde-fou de coût).
