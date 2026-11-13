@@ -3407,4 +3407,6 @@ c. **Montée** = mètres montés par heure sur les seules montées (> +3 %), ram
 - « Tenue » renommée « Résistance ». Textes explicatifs : une idée par ligne. Chevrons plus visibles. Détail par mois annoncé « dès le 2e mois ».
 - « Ton temps estimé » suit la course choisie, en trois cases : Départ (estimation actuelle) → il y a 6 semaines → maintenant, ajustées du rapport d'allure facile à son départ (H-65, **convention**) ; affiché comme ordre de grandeur, ne tient pas compte de la résistance.
 
-**6. Versions.** v66 : repères dans le moteur, bloc « Ta progression », historique, deux objectifs. v67 : retours ci-dessus. v68 : « Par rapport à d'habitude » dans le bilan et IA avec historique (fonction `analyze-session` à recoller une fois).
+**Retours du 13/11 au soir, v68.** Graphique : une heure de marge au-dessus, quadrillage par heure et par mois, valeur de la visée du 50 km écrite sur l'axe. Part de la course sous la case « Visée » (et non dedans). Limite du temps estimé reformulée.
+
+**6. Versions.** v66 : repères dans le moteur, bloc « Ta progression », historique, deux objectifs. v67 et v68 : retours ci-dessus. v69 : « Par rapport à d'habitude » dans le bilan et IA avec historique (fonction `analyze-session` à recoller une fois).

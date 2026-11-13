@@ -1076,7 +1076,9 @@ const svLn=(l,v,s)=>'<div class="svl"><span>'+l+(s?'<small>'+s+'</small>':'')+'<
 const svN=t=>'<div class="svn">'+(Array.isArray(t)?t.map(x=>'<div style="margin-top:5px">'+x+'</div>').join(''):t)+'</div>';
 /* v67 : trois cases (même style que « Ta progression ») */
 const svBox=(l,v,last,sub)=>'<div style="flex:1;min-width:0;text-align:center;border-radius:10px;padding:6px 2px;background:'+(last?'#e4f6ec':'var(--bg)')+'"><div style="font-size:11.5px;color:var(--mut);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+l+'</div><div style="font-size:14.5px;font-weight:800;font-variant-numeric:tabular-nums'+(last&&v!=='—'?';color:var(--mintT)':'')+'">'+v+'</div>'+(sub?'<div style="font-size:11px;color:var(--mut);font-weight:600;line-height:1.25;padding:0 3px">'+sub+'</div>':'')+'</div>';
-const svCases=a=>'<div style="display:flex;gap:5px;padding:0 0 14px">'+a.map((x,i)=>svBox(x[0],x[1],i===a.length-1,x[2])).join('<span style="color:var(--mut);align-self:center">→</span>')+'</div>';
+const svCases=a=>{const n=a[a.length-1][2],ar='<span style="color:var(--mut);align-self:center">→</span>';
+  return '<div style="display:flex;gap:5px;padding:0 0 '+(n?4:14)+'px">'+a.map((x,i)=>svBox(x[0],x[1],i===a.length-1)).join(ar)+'</div>'
+    +(n?'<div style="display:flex;gap:5px;padding:0 0 12px">'+a.map((x,i)=>'<div style="flex:1;min-width:0;text-align:center;font-size:11.5px;color:var(--mut);font-weight:600;line-height:1.3">'+(i===a.length-1?n:'')+'</div>').join(ar.replace('color:var(--mut)','visibility:hidden'))+'</div>':'');};
 const svDay=d=>DOWN[parseISO(d).getDay()].toLowerCase()+' '+fmtS(d);
 const round50=v=>Math.round(v/50)*50;
 const svD=m=>durTxt(Math.round(m)).replace(/ /g,'\u00a0');
@@ -1103,11 +1105,14 @@ function svChart(B,M){/* v67 : prévu (pointillés), fait (trait plein), sortie 
   const {E,P,t,runs,start}=B,W=320,H=176,x0=6,x1=288,yt=12,yb=H-22,c=M.zone;
   const plan=svPrev(B).filter(s=>s.date<=M.date),real=runs.filter(s=>s.date>=start);
   const t0=parseISO(start),t1=parseISO(M.date);
-  const ymax=Math.max(c[1]+30,...plan.map(s=>s.dur),...real.map(s=>s.dur));
+  const ymax=Math.ceil((Math.max(c[1],...plan.map(s=>s.dur),...real.map(s=>s.dur))+60)/60)*60;
   const X=d=>x0+Math.max(0,Math.min(1,(parseISO(d)-t0)/((t1-t0)||1)))*(x1-x0),Y=m=>yb-m/ymax*(yb-yt);
   let s='<svg class="svg" viewBox="0 0 '+W+' '+H+'" width="100%" role="img" aria-label="Ta plus longue sortie : faite et prévue, jusqu\'au '+fmtS(M.date)+'">';
   s+='<rect x="'+x0+'" y="'+Y(c[1]).toFixed(1)+'" width="'+(x1-x0)+'" height="'+Math.max(3,Y(c[0])-Y(c[1])).toFixed(1)+'" class="svgz"/>';
-  for(let h=1;h*60<=ymax;h++){s+='<line x1="'+x0+'" x2="'+x1+'" y1="'+Y(h*60).toFixed(1)+'" y2="'+Y(h*60).toFixed(1)+'" class="svgg"/>';s+='<text x="'+(x1+5)+'" y="'+(Y(h*60)+3.5).toFixed(1)+'" class="svgt">'+h+' h</text>';}
+  const vv=M.axe||[],near=y=>vv.some(v=>Math.abs(Y(v)-y)<11);
+  for(let h=1;h*60<=ymax;h++){const y=Y(h*60);s+='<line x1="'+x0+'" x2="'+x1+'" y1="'+y.toFixed(1)+'" y2="'+y.toFixed(1)+'" class="svgg"/>';if(!near(y))s+='<text x="'+(x1+5)+'" y="'+(y+3.5).toFixed(1)+'" class="svgt">'+h+' h</text>';}
+  vv.forEach(v=>{s+='<text x="'+(x1+5)+'" y="'+(Y(v)+3.5).toFixed(1)+'" class="svgt b" style="fill:var(--mintT)">'+svD(v).replace(/\u00a0/g,'')+'</text>';});
+  {const d=new Date(t0);d.setDate(1);d.setMonth(d.getMonth()+1);while(d<t1){const iso=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-01',x=X(iso);s+='<line x1="'+x.toFixed(1)+'" x2="'+x.toFixed(1)+'" y1="'+yt+'" y2="'+yb+'" class="svgg"/>';d.setMonth(d.getMonth()+1);}}
   s+='<line x1="'+x0+'" x2="'+x1+'" y1="'+yb+'" y2="'+yb+'" class="svgg"/>';
   let m=0;const pp=[X(start).toFixed(1)+','+Y(0).toFixed(1)].concat(plan.map(p=>{m=Math.max(m,p.dur);return X(p.date).toFixed(1)+','+Y(m).toFixed(1);}));
   if(plan.length)s+='<path d="M'+pp.join(' L')+'" class="svgpl"/>';
@@ -1123,7 +1128,7 @@ function svReady(B){
   const cD=MN?NX.date:(P.goalDate||addDays(start,7*E.info.N)),lim=addDays(cD,-14),planAll=svPrev(B),plan=planAll.filter(s=>s.date<=cD),planV=planAll.filter(s=>s.date<=lim);
   const pMax=planV.reduce((m,x)=>Math.max(m,x.dur||0),0);
   const zone=MN?[Math.min(nxV||pMax,pMax),Math.max(nxV||pMax,pMax)]:c,zl=MN?(zone[0]===zone[1]?svD(zone[0]):svD(zone[0])+' à '+svD(zone[1])):svD(c[0])+' à '+svD(c[1]);
-  const cDur=MN?nxE:E.info.dureeMain,pc=cDur?'≈ '+(MN?Math.round(pMax/cDur*20)*5:Math.round(c[0]/cDur*20)*5+'–'+Math.round(c[1]/cDur*20)*5)+'\u00a0%<br>de ta course':'';
+  const cDur=MN?nxE:E.info.dureeMain,pc=cDur?'≈ '+(MN?Math.round(pMax/cDur*20)*5:Math.round(c[0]/cDur*20)*5+'–'+Math.round(c[1]/cDur*20)*5)+'\u00a0% de ta course':'';
   const ec=(E.ecarts||[]).find(e=>e.obj==='principal');
   const nx=plan.find(p=>p.date>=t&&!runs.some(r=>r.date===p.date&&svLong(r)));
   /* durée */
@@ -1132,7 +1137,7 @@ function svReady(B){
     +(nx?svLn('Prochaine sortie longue',svD(nx.dur),svDay(nx.date)):'')
     +(decl&&decl.date<start?svLn('Avant la reprise',svD(decl.dur),'déclarée le '+fmtS(decl.date)):'')
     +svN(MN?['Visée : la plus longue sortie que le plan te fait faire avant le '+fmtS(NX.date)+' ('+svD(pMax)+', 2 semaines avant au plus tard).','Minimum conseillé : ≈ la moitié de ta durée de course estimée ('+(nxE?durR(nxE):'—')+'), soit '+(nxV?svD(nxV):'—')+'.','On plafonne la sortie longue vers 5 à 6 h, quelle que soit la course : au-delà, la récupération coûte plus qu\'elle ne rapporte (habitude d\'entraîneur).']
-      :['Visée : '+zl+' pour ta plus longue sortie, pendant le bloc spécifique.','Ta course dure ≈ '+(E.info.dureeMain?durR(E.info.dureeMain):'—')+' : la visée en représente '+(pc?pc.replace('≈ ','').replace('<br>de ta course',''):'—')+'.','On plafonne la sortie longue vers 5 à 6 h, quelle que soit la course : au-delà, la récupération coûte plus qu\'elle ne rapporte (habitude d\'entraîneur).','La fin de course se prépare autrement : week-ends enchaînés (par exemple 5 h le samedi, 3 h le dimanche).'])
+      :['Visée : '+zl+' pour ta plus longue sortie, pendant le bloc spécifique.','Ta course dure ≈ '+(E.info.dureeMain?durR(E.info.dureeMain):'—')+' : la visée en représente '+(pc?pc.replace('≈ ','').replace(' de ta course',''):'—')+'.','On plafonne la sortie longue vers 5 à 6 h, quelle que soit la course : au-delà, la récupération coûte plus qu\'elle ne rapporte (habitude d\'entraîneur).','La fin de course se prépare autrement : week-ends enchaînés (par exemple 5 h le samedi, 3 h le dimanche).'])
     +(ec&&!MN?svN('<b style="color:var(--coralT)">À ce rythme, le plan n\'atteint pas la visée</b> : '+svD(ec.atteint)+' au lieu de '+svD(ec.cible)+' avant le '+fmtS(ec.limite)+'.'):'');
   out.push(svRow('duree','terrain','s','Ta sortie longue',vt,vc,'','',bd,true,
     svCases([['Plus longue',rL?svD(rL):'—'],['Prochaine',nx?svD(nx.dur):'—'],['Visée',MN?svD(pMax):svD(c[0]).replace(/\u00a0h$/,'')+'–'+svD(c[1]),pc]])));
@@ -1156,7 +1161,7 @@ function svReady(B){
         +svN('Nausées et vomissements : première cause d\'abandon sur 160 km. Teste ce que tu prendras en course.')));}}
   const chip=(k,l)=>'<button onclick="app.svObj(\''+k+'\')" style="border:1px solid '+(SV_OBJ===k?'var(--ink)':'var(--line)')+';background:'+(SV_OBJ===k?'var(--ink)':'transparent')+';color:'+(SV_OBJ===k?'#fff':'var(--mut)')+';border-radius:999px;padding:4px 11px;font:inherit;font-size:12.5px;font-weight:700">'+l+'</button>';
   const sw=NX?'<div style="display:flex;justify-content:space-between;align-items:center;padding:0 0 6px"><span class="mini">'+fmtSY(cD)+' · J−'+Math.round((parseISO(cD)-parseISO(t))/864e5)+'</span><span style="display:flex;gap:6px">'+chip('next',NX.dist?fmtN(NX.dist)+' km':esc(NX.name||'Étape'))+chip('main',P.goalDist?fmtN(P.goalDist)+' km':'Objectif')+'</span></div>':'';
-  return '<div class="card svc0"><div class="svhd"><b>Prêt pour le jour J ?</b><span>'+(NX?'':(P.goalDate?fmtSY(P.goalDate):''))+'</span></div>'+sw+svChart(B,{date:cD,zone,label:zl})+out.join('').replace('<div class="sva f','<div class="sva')+'</div>';}
+  return '<div class="card svc0"><div class="svhd"><b>Prêt pour le jour J ?</b><span>'+(NX?'':(P.goalDate?fmtSY(P.goalDate):''))+'</span></div>'+sw+svChart(B,{date:cD,zone,label:zl,axe:MN?[pMax]:[]})+out.join('').replace('<div class="sva f','<div class="sva')+'</div>';}
 /* 2. Tu fais ce qu'il faut ? (H-54) — semaines « arrêt » : séances dues d'après les jours de la période (D-92 e) */
 function svWeeks(B){
   const {E,P,t,start}=B,res=[];
@@ -1223,7 +1228,7 @@ function svTime(B){const P=B.P,NX=svNext(P,B.t),MN=NX&&SV_OBJ==='next',dist=MN?N
   const D=progData(),a=D&&D.res.allure,k=v=>a&&v!=null?v/a.depart:null,f=q=>q?'≈ '+durR(e.m*q):'—';
   const cases=a?svCases([['Départ'+(a.provisoire?'*':''),f(1)],['Il y a 6 sem.',f(k(a.s6))],['Maintenant',f(k(a.now))]]):'';
   return '<div class="card svc0"><div class="sva f"><button class="svh" onclick="app.svobj()"><span class="svi c">'+mi('timer')+'</span><span class="svt"><b>Ton temps estimé</b><span>'+[dist?fmtN(dist)+' km':null,dp?fmtN(dp)+' m D+':null].filter(Boolean).join(' · ')+'</span></span><span class="svv"><b>≈ '+durR(e.m*(k(a&&a.now)||1))+'</b><small>Ton objectif ›</small></span></button>'+cases
-    +(a?svN(['Ordre de grandeur, pas une prédiction.','Départ : calculé à partir de '+(e.ref?esc(e.ref.nom||'ta référence'):'ta vitesse moyenne')+'.','Ensuite : ajusté de ta progression en allure facile (convention).','Ne tient pas compte de ta résistance, qui compte beaucoup sur long.']):'')+'</div></div>';}
+    +(a?svN(['Ordre de grandeur, pas une prédiction.','Départ : calculé à partir de '+(e.ref?esc(e.ref.nom||'ta référence'):'ta vitesse moyenne')+'.','Ensuite : ajusté de ta progression en allure facile (convention).','Limite : il suppose que tu gardes ton allure jusqu\'au bout. Si tu ralentis en fin de course (voir « Résistance »), ton temps réel sera plus long.']):'')+'</div></div>';}
 /* autres suivis des modules (D-92 d : en attendant leur place dans les modules) */
 function svOther(){
   const t=todayISO(),inj=injOn(),days=[];for(let i=29;i>=0;i--)days.push(addDays(t,-i));
@@ -3089,7 +3094,7 @@ function vGate(){
     +authFormHTML('Un compte garde ton plan et tes séances en sécurité, et te permet de les retrouver sur un autre téléphone. Ton prénom personnalise l\'app.')
     +syncLineHTML()+versionLineHTML()+'</div></main>';
 }
-const APP_VERSION='v67';   /* généré depuis sw.js par tools/build.py */
+const APP_VERSION='v68';   /* généré depuis sw.js par tools/build.py */
 function versionLineHTML(){return '<div class="mini" id="ver" style="margin-top:12px;text-align:center;opacity:.7">Ascend '+APP_VERSION+' · moteur de plan v2</div>';}
 /* compare la page chargée au cache du service worker : signale un déploiement pas encore actif */
 function checkVersion(){if(!('caches' in window))return;caches.keys().then(ks=>{const c=ks.filter(k=>/^ascend-v\d+$/.test(k)).map(k=>+k.slice(8)).sort((a,b)=>b-a)[0],el=document.getElementById('ver');
