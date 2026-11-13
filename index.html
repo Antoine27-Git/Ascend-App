@@ -811,7 +811,7 @@ function allureTxt(sec){if(!sec)return '–';const m=Math.floor(sec/60),x=Math.r
 /* D-100 : données seconde par seconde lues une fois dans intervals.icu, résumé gardé avec la séance (pas la trace) */
 const FLUX_TRY={};
 function fluxAFaire(r){if(!r.ext||!/^icu:/.test(r.ext)||!isRun(r))return false;const z=ENGINE.zonesKarvonen(S.profile.fcMax,S.profile.fcRepos);
-  if(!r.flux)return !r.fluxKO;return (r.flux.v||1)<2||!!(z&&(!r.flux.zones||r.flux.zones.bornes.join()!==z.join()));}
+  if(!r.flux)return !r.fluxKO;return (r.flux.v||1)<3||!!(z&&(!r.flux.zones||r.flux.zones.bornes.join()!==z.join()));}
 const ICO={up:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--mut);flex:none;margin-right:-1px"><path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/></svg>',flat:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--mut);flex:none;margin-right:-1px"><path d="M5 12h14"/><path d="M15 16l4-4-4-4"/></svg>',down:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--mut);flex:none;margin-right:-1px"><path d="M3 7l6 6 4-4 8 8"/><path d="M21 10v7h-7"/></svg>',up2:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--mut);flex:none"><path d="M4 15l7-3 4 2 5-3"/><path d="M16 9l4 2-2 4"/></svg>',down2:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--mut);flex:none"><path d="M4 9l7 3 4-2 5 3"/><path d="M16 15l4-2-2-4"/></svg>'};
 function iaBlocs(ia){const P='font-size:14.5px;line-height:1.55;padding:10px 0',L='<div class="mini" style="font-size:12px;margin-bottom:3px">';
   if(!ia.interp&&!ia.conseil)return '<div style="'+P+';white-space:pre-wrap">'+esc(ia.txt||'')+'</div>';
@@ -1119,6 +1119,7 @@ function svChart(B){
   return s+'</svg><div class="svlg"><span><i class="svlgr"></i>ta plus longue sortie à ce jour</span><span><i class="svd long f"></i>chaque sortie longue faite</span><span><i class="svlgp"></i>prévu</span><span><i class="svd v0"></i>prochaine</span><span><i class="svlgz"></i>zone visée : '+svD(c[0])+' à '+svD(c[1])+'</span></div>';}
 function svReady(B){
   const {E,P,t,decl,runs,start}=B,c=E.info.cible||[300,360],out=[],plan=svPrev(B),real=runs.filter(s=>s.date>=start);
+  const NX=svNext(P,t),MN=NX&&SV_OBJ==='next',nxE=MN?(estDur(NX.dist,NX.dplus,P)||{}).m:null,nxV=nxE?Math.round(Math.min(ENGINE.CONV.secPart*nxE,ENGINE.CONV.secMax)/15)*15:null;
   const ec=(E.ecarts||[]).find(e=>e.obj==='principal'),secs=(E.ecarts||[]).filter(e=>e.obj==='secondaire');
   const nx=plan.find(p=>p.date>=t&&!runs.some(r=>r.date===p.date&&svLong(r)));
   const nxt=nx?'dim'===DOWS[parseISO(nx.date).getDay()].toLowerCase()?'dim.':DOWS[parseISO(nx.date).getDay()].toLowerCase()+'.':'';
@@ -1128,7 +1129,7 @@ function svReady(B){
   const bd=svLn('Ta plus longue depuis la reprise',rL?svD(rL):'aucune',rL?fmtS(svMax(real,x=>x.dur).date):'')
     +svLn('Prévu à cette date',pL?svD(pL):'—','niveau que le plan visait')
     +(nx?svLn('Prochaine',svD(nx.dur),svDay(nx.date)):'')
-    +svLn('Visée',svD(c[0])+' à '+svD(c[1]),'ta plus longue sortie, pendant le bloc spécifique')
+    +(MN?(nxV?svLn('Visée avant le '+fmtS(NX.date),svD(nxV),'≈ la moitié de ta course ('+durR(nxE)+'), 2 semaines avant'):''):svLn('Visée',svD(c[0])+' à '+svD(c[1]),'ta plus longue sortie, pendant le bloc spécifique'))
     +(decl&&decl.date<start?svLn('Avant la reprise',svD(decl.dur),'déclarée le '+fmtS(decl.date)+' · sert de point de départ'):'')
     +secs.map(e=>svLn(esc(e.nom),svD(e.atteint)+' sur '+svD(e.cible),'sortie longue prévue avant le '+fmtS(e.limite))).join('')
     +(ec?svN('<b style="color:var(--coralT)">À ce rythme, le plan n\'atteint pas la cible :</b> sa plus longue sortie avant le '+fmtS(ec.limite)+' fait '+svD(ec.atteint)+' pour '+svD(ec.cible)+' visées. Cause : ton point de départ et le temps restant. Leviers : protéger ta sortie longue, ajouter un jour de course, ou revoir la date (Ton objectif).'):'')
@@ -1142,7 +1143,7 @@ function svReady(B){
     +svLn('Prévu à cette date',pD?'≈ '+fmtN(round50(pD))+' m':'—')
     +(nx&&nx.dplus?svLn('Prochaine','≈ '+fmtN(nx.dplus)+' m','avec ta sortie longue'):'')
     +(tg?svLn('Visé','≈ '+fmtN(round50(tg.dplus))+' m','sur ta plus longue sortie, '+fmtS(tg.date)):'')
-    +svN((P.goalDplus?'Ta course : '+fmtN(P.goalDplus)+' m de D+. ':'')+'Le D+ de tes sorties longues monte avec leur durée.')));
+    +svN((MN?(NX.dplus?'Ta course : '+fmtN(NX.dplus)+' m de D+. ':''):(P.goalDplus?'Ta course : '+fmtN(P.goalDplus)+' m de D+. ':''))+'Le D+ de tes sorties longues monte avec leur durée.')));
   /* ventre */
   if(modOn('nutrition')){const fed=real.filter(s=>(s.carbs||0)>0);
     if(!fed.length)out.push(svRow('ventre','nutrition','c','Ton ventre','à construire','neu','—','pas commencé',
@@ -1153,7 +1154,9 @@ function svReady(B){
         svLn('Toléré aujourd\'hui',nt.t+' g/h',nt.held?'progression gelée : dernière sortie nourrie mal digérée':fed.length+' sortie'+(fed.length>1?'s':'')+' nourrie'+(fed.length>1?'s':''))
         +svLn('Prévu à cette date',pv+' g/h','+6 g/h par semaine de sortie longue bien digérée')+svLn('Visé en course','60 à 90 g/h')
         +svN('Nausées et vomissements : première cause d\'abandon sur 160 km. Teste ce que tu prendras en course.')));}}
-  return '<div class="card svc0"><div class="svhd"><b>Prêt pour le jour J ?</b><span>'+(P.goalDate?fmtSY(P.goalDate):'')+'</span></div>'+svChart(B)+out.join('').replace('<div class="sva f','<div class="sva')+'</div>';}
+  const chip=(k,l)=>'<button onclick="app.svObj(\''+k+'\')" style="border:1px solid '+(SV_OBJ===k?'var(--ink)':'var(--line)')+';background:'+(SV_OBJ===k?'var(--ink)':'transparent')+';color:'+(SV_OBJ===k?'#fff':'var(--mut)')+';border-radius:999px;padding:4px 11px;font:inherit;font-size:12.5px;font-weight:700">'+l+'</button>';
+  const sw=NX?'<div style="display:flex;justify-content:space-between;align-items:center;padding:0 0 6px"><span class="mini">'+fmtSY(MN?NX.date:P.goalDate)+'</span><span style="display:flex;gap:6px">'+chip('next',NX.dist?fmtN(NX.dist)+' km':esc(NX.name||'Étape'))+chip('main',P.goalDist?fmtN(P.goalDist)+' km':'Objectif')+'</span></div>':'';
+  return '<div class="card svc0"><div class="svhd"><b>Prêt pour le jour J ?</b><span>'+(NX?'':(P.goalDate?fmtSY(P.goalDate):''))+'</span></div>'+sw+svChart(B)+out.join('').replace('<div class="sva f','<div class="sva')+'</div>';}
 /* 2. Tu fais ce qu'il faut ? (H-54) — semaines « arrêt » : séances dues d'après les jours de la période (D-92 e) */
 function svWeeks(B){
   const {E,P,t,start}=B,res=[];
@@ -1235,13 +1238,46 @@ function svOther(){
   if(!h)return '';
   const open=!!SVO.other;
   return '<div class="card svc0"><div class="sva f'+(open?' o':'')+'"><button class="svh" aria-expanded="'+open+'" onclick="app.svtog(\'other\')"><span class="svt"><b>Autres suivis</b><span>Ce que tes modules enregistrent</span></span><i class="svc">⌄</i></button>'+(open?'<div class="svb">'+h+'</div>':'')+'</div></div>';}
+/* ---------- D-101 : objectifs et « Ta progression » (v66) ---------- */
+let SV_OBJ='next',PROG_BUSY=false,PROG_TRY=false;
+function svNext(P,t){return (P.races||[]).filter(r=>r.date&&r.date>=t&&r.prio!=='C'&&(!P.goalDate||r.date<P.goalDate)).sort((a,b)=>a.date<b.date?-1:1)[0]||null;}
+const svKm=(d,dp)=>[d?fmtN(d)+' km':null,dp?fmtN(dp)+' m D+':null].filter(Boolean).join(' · ');
+function svObj(B){const {P,t}=B,nx=svNext(P,t),j=d=>Math.round((parseISO(d)-parseISO(t))/864e5);
+  if(!nx)return '';
+  return '<div class="card" style="padding:14px 18px"><div style="display:flex;justify-content:space-between;align-items:baseline"><span class="mini">Objectif</span><span class="mini">'+(P.goalDate?fmtSY(P.goalDate):'')+'</span></div>'
+    +'<div style="font-size:16px;font-weight:800;margin-top:2px">'+(svKm(P.goalDist,P.goalDplus)||esc(P.goalName||'Objectif'))+'</div>'
+    +'<div style="border-top:1px solid var(--line);margin-top:12px;padding-top:12px;display:flex;justify-content:space-between;align-items:baseline"><span class="mini">Prochaine étape</span><span style="font-size:13px;font-weight:800;color:var(--mintT)">J−'+j(nx.date)+'</span></div>'
+    +'<div style="font-size:16px;font-weight:800;margin-top:2px">'+(svKm(nx.dist,nx.dplus)||esc(nx.name||'Course'))+' · '+fmtS(nx.date)+'</div></div>';}
+function progData(){const P=S.profile,z=ENGINE.zonesKarvonen(P.fcMax,P.fcRepos);if(!z)return null;
+  if(!P.repRef||!P.repRef.fc){P.repRef={fc:z[1],repos:P.fcRepos};save();}
+  const E=eng(),start=E&&E.info?E.info.start:(P.planStart||'');
+  return {ref:P.repRef,start,res:ENGINE.progression(S.sessions.filter(s=>isRun(s)&&s.flux),{start,today:todayISO(),ref:P.repRef.fc,repos:P.repRef.repos})};}
+const PVERD={progres:['ok','en progrès'],stable:['neu','stable'],baisse:['late','en baisse'],premiere:['neu','1re mesure'],attente:['neu','à confirmer']};
+function svProg(B){const D=progData();
+  if(!D)return '<div class="card svc0"><div class="svhd"><b>Ta progression</b><span>à effort égal</span></div><div class="svn" style="padding-bottom:14px;margin-top:0">Renseigne ta FC max et ta FC repos (Profil, « Toi ») pour suivre ta progression.</div></div>';
+  const R=D.res,ref=D.ref.fc,fA=v=>allureTxt(Math.round(v)),fM=v=>fmtN(Math.round(v)),fT=v=>Math.round(v)+' %';
+  const box=(l,v,last)=>'<div style="flex:1;min-width:0;text-align:center;border-radius:10px;padding:6px 2px;background:'+(last?'#e4f6ec':'var(--bg)')+'"><div style="font-size:11.5px;color:var(--mut);font-weight:600;white-space:nowrap">'+l+'</div><div style="font-size:14.5px;font-weight:800;font-variant-numeric:tabular-nums'+(last&&v!=='—'?';color:var(--mintT)':'')+'">'+v+'</div></div>';
+  const ar='<span style="color:var(--mut);align-self:center">→</span>';
+  const ligne=(k,icon,cls,titre,unite,f,expl,first)=>{const x=R[k];
+    if(!x)return svRow('pg'+k,icon,cls,titre,k==='tenue'?'à mesurer':'pas encore de mesure','neu','—',k==='tenue'?'sortie de 1 h 15+':'',svN(expl),first);
+    const [vc,vt]=PVERD[x.verdict]||PVERD.attente,val=x.now!=null?x.now:x.derniere.v;
+    const cases=(x.n>1||x.provisoire)?'<div style="display:flex;gap:6px;padding:0 0 14px 50px">'+box('Départ'+(x.provisoire?'*':''),f(x.depart))+ar+box('il y a 6 sem.',x.s6!=null?f(x.s6):'—')+ar+box('maintenant',x.now!=null?f(x.now):'—',true)+'</div>':'';
+    const body=x.mois.map(m=>svLn(parseISO(m.mois+'-15').toLocaleDateString('fr-FR',{month:'long',year:'numeric'}),f(m.v),m.n+' sortie'+(m.n>1?'s':''))).join('')
+      +svN(expl+(x.provisoire?' * Départ provisoire : une seule sortie pour l\'instant.':'')+' Chaque case est la moyenne de 2 à 3 sorties ; écart de moins de 3 % = stable (convention).');
+    return svRow('pg'+k,icon,cls,titre,vt,vc,f(val),unite,body,first).replace('</button>'+(SVO['pg'+k]?'<div class="svb">':'</div>'),'</button>'+cases+(SVO['pg'+k]?'<div class="svb">':'</div>'));};
+  return '<div class="card svc0"><div class="svhd"><b>Ta progression</b><span>à effort égal</span></div>'
+    +ligne('allure','timer','c','Allure facile','/km à '+ref+' bpm',fA,'Ton allure, pente corrigée (Minetti), ramenée à '+ref+' bpm, la limite de ta zone facile. Si elle baisse, tu cours plus vite pour le même effort.',true)
+    +ligne('tenue','run','s','Tenue','perdus en fin',fT,'Sur tes sorties de 1 h 15 et plus : combien ton efficacité baisse en 2e moitié (hors départ et descentes). Plus c\'est bas, mieux tu tiens.')
+    +ligne('montee','monitoring','k','Montée','m/h à '+ref+' bpm',fM,'Mètres montés par heure sur les montées, ramenés à '+ref+' bpm. Plus c\'est haut, mieux tu grimpes.')
+    +(PROG_BUSY?'<div class="svn" style="padding-bottom:14px">Lecture de tes sorties passées…</div>':'')+'</div>';}
 function vSuivi(){
   const B=svBase();
   if(!B)return '<header><h1>Suivi</h1></header><main><div class="card"><h2>Pas encore de suivi</h2><div class="mini">Le plan ne peut pas encore être construit : complète ton profil.</div></div></main>';
   const {E,P,t}=B,wk=weekOf(t),j=P.goalDate?Math.round((parseISO(P.goalDate)-parseISO(t))/864e5):null;
   const sub=[wk?'Semaine '+wk.w+' sur '+E.info.N:null,wk?SOUS[wk.sous||wk.phase]:null,j!=null&&j>=0?'J−'+j:null].filter(Boolean).join(' · ');
+  if(!PROG_TRY){PROG_TRY=true;setTimeout(()=>app.progLire(),0);}
   return '<header><h1>Suivi</h1><div class="sub">'+sub+'</div></header><main>'
-    +svProof(B)+svReady(B)
+    +svProof(B)+svObj(B)+svReady(B)+svProg(B)
     +'<div class="card svc0">'+svPlan(B)+svLoad(B)+'</div>'
     +svTime(B)+svOther()+'</main>';
 }
@@ -1815,6 +1851,33 @@ const FLUX={pente:3,fauxPlat:1,fenetreM:200,lissage:7,depart:600,plateau:0.95,ec
 /* Minetti et al. 2002 : coût énergétique de la course (J/kg/m) selon la pente i (fraction, −0,45 à +0,45). */
 function minetti(i){i=Math.max(-0.45,Math.min(0.45,i));return 155.4*i**5-30.4*i**4-43.3*i**3+46.3*i**2+19.5*i+3.6;}
 const TERRAIN=[['montee',0.03,1],['fpm',0.01,0.03],['plat',-0.01,0.01],['fpd',-0.03,-0.01],['descente',-1,-0.03]];
+/* D-101 : repères de progression. Valeurs d'une sortie ramenées à une FC de référence fixe (ref) par proportion sur la FC de réserve.
+   allure (s/km, plus bas = mieux), montee (m/h, plus haut = mieux), tenue (% perdu en 2e moitié, plus bas = mieux). H-64. */
+const PROGR={utilMin:20,tenueDur:75,seuil:3,fen6:[56,28],fenNow:28,nb:3};
+function repSeance(f,dur,ref,repos){if(!f||(f.v||1)<3||!(ref>repos))return null;const k=fc=>fc>repos+20?(ref-repos)/(fc-repos):null,o={};
+  if(f.util&&f.util.min>=PROGR.utilMin){const q=k(f.util.fc);if(q)o.allure=Math.round(1000/(f.util.v*q));}
+  if(f.vam&&f.terrain&&f.terrain.montee&&f.terrain.montee.fc){const q=k(f.terrain.montee.fc);if(q)o.montee=Math.round(f.vam*q);}
+  if(f.derive&&dur>=PROGR.tenueDur)o.tenue=f.derive.pct;
+  return Object.keys(o).length?o:null;}
+function progression(sessions,o){/* o = {start,today,ref,repos} ; sessions : {date,dur,flux} déjà filtrées sur la course */
+  const add=(d,n)=>{const x=new Date(d+'T12:00:00Z');x.setUTCDate(x.getUTCDate()+n);return x.toISOString().slice(0,10);};
+  const pts=sessions.filter(s=>s.date>=o.start&&s.date<=o.today).sort((a,b)=>a.date<b.date?-1:1).map(s=>({date:s.date,r:repSeance(s.flux,s.dur,o.ref,o.repos)})).filter(p=>p.r);
+  const moy=a=>a.length?a.reduce((s,x)=>s+x,0)/a.length:null,out={};
+  ['allure','montee','tenue'].forEach(k=>{const L=pts.filter(p=>p.r[k]!=null).map(p=>({date:p.date,v:p.r[k]}));
+    if(!L.length){out[k]=null;return;}
+    const dep=L.slice(0,2),f6=L.filter(p=>p.date>=add(o.today,-PROGR.fen6[0])&&p.date<add(o.today,-PROGR.fen6[1])).slice(-PROGR.nb),
+      now=L.filter(p=>p.date>=add(o.today,-PROGR.fenNow)).slice(-PROGR.nb);
+    const c=a=>a.length>=2?Math.round(10*moy(a.map(p=>p.v)))/10:null;
+    const R={depart:Math.round(10*moy(dep.map(p=>p.v)))/10,provisoire:dep.length<2,s6:c(f6),now:c(now),n:L.length,derniere:L[L.length-1]};
+    /* verdict : maintenant contre il y a 6 semaines, à défaut contre le départ (s'il ne partage pas les mêmes sorties) */
+    const depD=new Set(dep.map(p=>p.date)),base=R.s6!=null?R.s6:(!R.provisoire&&now.some(p=>!depD.has(p.date))?R.depart:null);
+    if(R.now==null||base==null)R.verdict=L.length===1?'premiere':'attente';
+    else{const sens=k==='montee'?1:-1,d=k==='tenue'?(R.now-base):100*(R.now-base)/base;
+      R.ecart=Math.round(10*d)/10;R.verdict=sens*d>=PROGR.seuil?'progres':-sens*d>=PROGR.seuil?'baisse':'stable';}
+    const M={};L.forEach(p=>{(M[p.date.slice(0,7)]=M[p.date.slice(0,7)]||[]).push(p.v);});
+    R.mois=Object.keys(M).sort().map(m=>({mois:m,v:Math.round(10*moy(M[m]))/10,n:M[m].length}));
+    out[k]=R;});
+  return out;}
 function zonesKarvonen(fcMax,fcRepos){
   if(!(fcMax>0&&fcRepos>0&&fcMax>fcRepos+40))return null;
   const R=fcMax-fcRepos;return KARV.map(x=>Math.floor(fcRepos+R*x));}
@@ -1851,7 +1914,7 @@ function flux(st,zones){
       if(dist>=(pas*1000)*0.3&&t>0)tranches.push({de:b-pas,a:Math.min(b,Math.round(km*10)/10),allure:Math.round(t/(dist/1000)),fc:hc?Math.round(hs/hc):null,dp:Al?Math.round(dp):null,dm:Al?Math.round(dm):null});
       if(i>=n-1)break;a=i;}}
   /* profil de terrain (D-100, v64) : pente sur ~200 m centrés, 5 catégories ; allure équivalente plat (Minetti) hors descente */
-  let terrain=null,vam=null,derive=null;
+  let terrain=null,vam=null,derive=null,util=null;
   if(Al&&hasD){const g=new Array(n).fill(null),W=FLUX.fenetreM/2;let a=0,b=0;
     for(let i=0;i<n;i++){while(a<i&&Dd[a]<Dd[i]-W)a++;while(b<n-1&&Dd[b]<Dd[i]+W)b++;
       const dd=Dd[b]-Dd[a];if(dd>=FLUX.fenetreM*0.6&&Al[a]!=null&&Al[b]!=null)g[i]=(Al[b]-Al[a])/dd;}
@@ -1865,11 +1928,13 @@ function flux(st,zones){
     if(S.montee.t>=120&&S.montee.dz>0)vam=Math.round(S.montee.dz/(S.montee.t/3600));
     /* dérive : hors départ et hors descentes, 1re moitié contre 2e moitié (FC et allure équivalente plat) */
     const tt=seg.reduce((s,x)=>s+x[0],0);
+    /* D-101 : partie utile (après le départ, hors descentes) : vitesse équivalente plat et FC moyennes */
+    {let de=0,h=0,hc=0;seg.forEach(x=>{de+=x[1];if(x[2]>0){h+=x[2];hc++;}});if(tt>=60&&de>0&&hc)util={min:Math.round(tt/60),v:Math.round(1000*de/tt)/1000,fc:Math.round(10*h/hc)/10};}
     if(tt>=FLUX.deriveMin){let c=0,k=0;while(k<seg.length&&c<tt/2){c+=seg[k][0];k++;}
       const m=q=>{let t=0,de=0,h=0,hc=0;q.forEach(x=>{t+=x[0];de+=x[1];if(x[2]>0){h+=x[2];hc++;}});return {fc:Math.round(h/hc),allure:Math.round(t/(de/1000)),e:(h/hc)/(de/t)};};
       const m1=m(seg.slice(0,k)),m2=m(seg.slice(k));
       derive={fc1:m1.fc,fc2:m2.fc,eq1:m1.allure,eq2:m2.allure,pct:Math.round(1000*(m2.e/m1.e-1))/10};}}
-  return {v:2,min:Math.round(tm/60),zones:zonesOut,croisiere:crois,tranches,terrain,vam,derive};
+  return {v:3,min:Math.round(tm/60),zones:zonesOut,croisiere:crois,tranches,terrain,vam,derive,util};
 }
 function bilan(inp,sid){
   const all=inp.sessions||[],s=all.find(x=>x.id===sid);if(!s)return null;
@@ -1921,7 +1986,7 @@ function bilan(inp,sid){
     joursDepuisSL:derSL?Math.round((D(s.date)-D(derSL.date))/864e5):null,veilleCF:veille?(veille.cfJ||'?'):null,
     dplusH:s.dplus&&s.dur?Math.round(s.dplus/(s.dur/60)):null,hautBase,flux:F?{croisiere:F.croisiere,terrain:F.terrain,vam:F.vam,tranches:F.tranches,derive:F.derive||null}:null,msgs,indicateur:ind,effet};
 }
-return {build,bilan,flux,minetti,zonesKarvonen,FLUX,BILAN,CONV,arrondi,Calendrier,dureeCourse,tranche_de,_t:{Modele,ajuste,atteint,max30,ref30,relachesPrevues}};
+return {build,bilan,flux,minetti,progression,repSeance,PROGR,zonesKarvonen,FLUX,BILAN,CONV,arrondi,Calendrier,dureeCourse,tranche_de,_t:{Modele,ajuste,atteint,max30,ref30,relachesPrevues}};
 })();
 /* ENGINE:END */
 
@@ -3020,7 +3085,7 @@ function vGate(){
     +authFormHTML('Un compte garde ton plan et tes séances en sécurité, et te permet de les retrouver sur un autre téléphone. Ton prénom personnalise l\'app.')
     +syncLineHTML()+versionLineHTML()+'</div></main>';
 }
-const APP_VERSION='v65';   /* généré depuis sw.js par tools/build.py */
+const APP_VERSION='v66';   /* généré depuis sw.js par tools/build.py */
 function versionLineHTML(){return '<div class="mini" id="ver" style="margin-top:12px;text-align:center;opacity:.7">Ascend '+APP_VERSION+' · moteur de plan v2</div>';}
 /* compare la page chargée au cache du service worker : signale un déploiement pas encore actif */
 function checkVersion(){if(!('caches' in window))return;caches.keys().then(ks=>{const c=ks.filter(k=>/^ascend-v\d+$/.test(k)).map(k=>+k.slice(8)).sort((a,b)=>b-a)[0],el=document.getElementById('ver');
@@ -3268,6 +3333,14 @@ const app=window.app={
   lecture(id,v){const r=S.sessions.find(x=>x.id===id);if(!r)return;r.lecture=String(v||'').slice(0,300)||null;save();},
   iaRetour(id,v){const r=S.sessions.find(x=>x.id===id);if(!r||!r.ia)return;r.ia.retour=r.ia.retour===v?null:v;save();render();refreshPE();},
   iaCom(id,v){const r=S.sessions.find(x=>x.id===id);if(!r||!r.ia)return;r.ia.com=String(v||'').slice(0,500)||null;save();},
+  svObj(k){SV_OBJ=k;render();},
+  async progLire(){if(PROG_BUSY||!(await authOK()))return;const E=eng(),start=E&&E.info?E.info.start:'';
+    const L=S.sessions.filter(r=>r.date>=start&&fluxAFaire(r)&&!r.fluxKO).sort(byDate).slice(-30);if(!L.length)return;
+    PROG_BUSY=true;if(view==='suivi')render();
+    for(const r of L){try{const st=await sbFetch('/functions/v1/intervals-streams',{method:'POST',body:JSON.stringify({id:r.ext.replace(/^icu:/,'')})});
+        const f=ENGINE.flux(st,ENGINE.zonesKarvonen(S.profile.fcMax,S.profile.fcRepos));if(f){r.flux=f;delete r.fluxErr;delete r.fluxKO;}else r.fluxKO=1;}
+      catch(e){if(e.status===422||e.status===404)r.fluxKO=1;}}
+    save();PROG_BUSY=false;if(view==='suivi')render();},
   async fluxLire(id){const r=S.sessions.find(x=>x.id===id);if(!r||FLUX_BUSY||!(await authOK()))return;
     FLUX_BUSY=id;rerenderBilan();
     try{const st=await sbFetch('/functions/v1/intervals-streams',{method:'POST',body:JSON.stringify({id:r.ext.replace(/^icu:/,'')})});
