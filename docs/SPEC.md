@@ -3410,3 +3410,28 @@ c. **Montée** = mètres montés par heure sur les seules montées (> +3 %), ram
 **Retours du 13/11 au soir, v68.** Graphique : une heure de marge au-dessus, quadrillage par heure et par mois, valeur de la visée du 50 km écrite sur l'axe. Part de la course sous la case « Visée » (et non dedans). Limite du temps estimé reformulée.
 
 **6. Versions.** v66 : repères dans le moteur, bloc « Ta progression », historique, deux objectifs. v67 et v68 : retours ci-dessus. v69 : « Par rapport à d'habitude » dans le bilan et IA avec historique (fonction `analyze-session` à recoller une fois).
+
+### D-102 — Le D+ des sorties se cale sur la course la plus proche, en dénivelé par km (proposée le 14/11/2026, validée par Antoine sur le principe ; touche le plan)
+**Constat (Antoine, 13/11/2026).** Avant son 50 km / 1 900 m D+ du 8 mai, le plan ne prévoit qu'environ 800 m de D+ sur sa plus longue sortie (4 h 35). Cause : la densité de D+ (m par heure) monte lentement vers celle de l'objectif principal (H-41) et ignore les objectifs intermédiaires.
+
+**Ce que disent les sources (recherche du 14/11/2026).**
+- Aucune étude ne fixe un D+ à atteindre à l'entraînement, en une sortie ou par semaine. Le « 50 à 70 % du D+ de la course » avancé le 13/11 n'a pas de source : **retiré**.
+- Avis d'expert (Koop, CTS) : pas de relation dose-effet avec le D+ cumulé ; ce qui compte est le **dénivelé par km** à l'entraînement comparé à celui de la course ; le moteur aérobie passe avant la spécificité du terrain.
+- Études : en ultra-trail, la vitesse baisse davantage en descente qu'en montée en fin de course, et les mieux classés limitent cette baisse (Genitrini et al. 2022). L'exposition préalable à la descente réduit les dégâts musculaires (effet de la répétition), protection partielle (Bontemps et al. 2025 ; Martinez-Navarro et al. 2026, exploratoire).
+- La Clinique du Coureur : exposition progressive sous la capacité d'adaptation (quantification du stress mécanique) ; week-ends de choc dans ses programmes trail. Chiffres de leur plan 50 km non consultés.
+
+**Règles.**
+1. **Densité de course.** Pour chaque objectif intermédiaire de statut « objectif » avec un D+ : densité = D+ / durée estimée (Antoine : 1 900 m / ≈ 8 h ≈ 240 m/h, soit 38 m par km à l'allure de course).
+2. **Fenêtre spécifique.** Pendant les 8 semaines qui précèdent cette course, la densité des sorties longues vaut au moins celle de la course. Avant la fenêtre, la rampe monte linéairement du niveau de départ jusqu'à cette densité (pas de saut). Après la course, la densité ne redescend pas : elle reprend sa montée vers celle de l'objectif principal.
+3. **Week-end de choc** (existe déjà : D-70, un seul, 4 à 6 semaines avant un intermédiaire exigeant, si l'enchaînement est activé) : la sortie de la veille passe à la **pleine densité** (aujourd'hui moitié). Exemple : 3 h + 4 h 35 ≈ 720 + 1 100 = 1 800 m en deux jours, ≈ 95 % du D+ de la course.
+4. **Descentes courues** : le texte de la séance le précise (c'est là que se joue la fin de course).
+5. **Inchangé** : durées, règle des 30 jours, fourchette de D+ (H-50), endurances (moitié de densité, plafond en F1–F2), règles v1 (parité).
+
+**Affichage.** Séance : « ≈ 38 m de D+ par km, comme ta course ». Suivi : « Visé » suit automatiquement. Graphique de « Prêt pour le jour J ? » en mode objectif principal : libellés « 5 h » et « 6 h » de la sortie longue visée en vert, comme le « 4 h 35 » du mode 50 km.
+
+**Limites (H-66).** La fenêtre de 8 semaines et la pleine densité la veille sont des choix de conception appuyés sur des pratiques de coachs, pas sur des études. Suppose un terrain qui offre 38 m/km près de chez Antoine : à vérifier avec lui.
+
+**Mise en œuvre (v69).** `tests/engine.js` : `CONV.fenetreSpe` (8), `CONV.densVeille` (1), `CONV.densCourse` (interrupteur de comparaison, true). `dens(w)` = max(rampe d'avant, rampe ancrée) : points d'ancrage départ → début de fenêtre (densité de la course) → veille de la course → fin du fond (densité de l'objectif principal), jamais décroissants. Seules les courses de statut « objectif » avec un D+ comptent (les courses-entraînement, priorité C, sont ignorées) ; la densité de la course est plafonnée à celle de l'objectif principal. Règles v1 inchangées (parité 0 écart). La veille d'un week-end de choc est à pleine densité pour tous les week-ends de choc (y compris ceux du bloc spécifique de l'objectif principal). Textes de séance : « Environ 38 m de D+ par km, comme ta course » (sortie dont la densité atteint 90 % de celle de la course) et « Cours aussi les descentes, en contrôle… ». Suivi : en mode 80 km, les bornes de la visée (5 h, 6 h) sont écrites en vert sur l'axe. Test dédié : `tests/t_densite.js` (profil d'Antoine : plan du 2/11, 42 km en 6 h 30 comme référence, 50 km / 1 900 m le 8 mai).
+**Résultat sur le profil d'Antoine (80 km à 3 000 m, sa sortie de référence).** Plus gros D+ en sortie longue avant le 50 km : 850 m → 1 000 m (4 h 35). Week-end de choc de fin mars : 2 h 50 + 4 h 10, soit 600 + 1 050 m (avant : 250 + 1 050). **Correction de l'exemple de la spec** : « ≈ 1 100 m » supposait une course de 8 h ; le moteur estime ≈ 8 h 15 pour son 50 km (38 m/km, soit ≈ 230 m/h) et plafonne à la densité de l'80 km (≈ 220 m/h si le profil est à 3 000 m), d'où 1 000 m sur 4 h 35. À 4 000 m de D+ pour l'80 km, la rampe d'avant atteignait déjà la densité de course : le changement ne joue alors que sur le week-end de choc.
+
+**Sources.** Koop, trainright.com/?p=26580 et /hierarchy-ultramarathon-training-needs-jason-koop/ ; Genitrini et al. 2022, PMC9680470 ; Bontemps et al. 2025, Eur J Sport Sci 25(3) ; Martinez-Navarro et al. 2026, PMC12846201 ; La Clinique du Coureur, fiche « Quantification du stress ».
