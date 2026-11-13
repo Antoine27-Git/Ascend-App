@@ -3401,4 +3401,10 @@ c. **Montée** = mètres montés par heure sur les seules montées (> +3 %), ram
 
 **Mise en œuvre (v66).** Moteur : `flux()` v3 ajoute `util:{min,v,fc}` ; `repSeance()` et `progression()` (constantes `PROGR`) ; FC de référence figée dans le profil (`repRef`, 159 / 52). Suivi : carte des objectifs, bouton 50 km / 80 km (visée avant la course intermédiaire = la moitié de sa durée estimée, 4 h 30 au plus, D-25), bloc « Ta progression » ; à l'ouverture, lecture des données de la montre des sorties du plan qui n'en ont pas (au plus 30). Limite : le graphique de « Prêt pour le jour J ? » garde la zone visée du 80 km. Tests : `tests/t_flux.js`, `tests/ui/test_v66.py`.
 
-**6. Versions.** v66 : repères dans le moteur, bloc « Ta progression », historique, deux objectifs. v67 : « Par rapport à d'habitude » dans le bilan et IA avec historique (fonction `analyze-session` à recoller une fois).
+**Retours d'Antoine sur la v66 (13/11/2026), mis en œuvre en v67.**
+- Graphique de « Prêt pour le jour J ? » : s'arrête à la course choisie (50 km ou 80 km) ; trois éléments seulement : prévu (pointillés), fait (trait plein), sortie longue visée (bande), avec la mention « ta plus longue sortie d'entraînement, pas ton temps de course ».
+- Sortie longue et dénivelé en trois cases : Plus longue / Plus gros → Prochaine → Visée / Visé. Visée sous la case : part de la durée de la course (80 km : 5 à 6 h ≈ 35–40 % ; 50 km : la plus longue sortie du plan avant le 50 km, 2 semaines avant, ≈ 55 %, avec le minimum conseillé de la moitié de la course). Plafond de la sortie longue vers 5–6 h quelle que soit la course : **habitude d'entraîneur**. D+ visé = plus gros D+ prévu en une sortie avant la course choisie.
+- « Tenue » renommée « Résistance ». Textes explicatifs : une idée par ligne. Chevrons plus visibles. Détail par mois annoncé « dès le 2e mois ».
+- « Ton temps estimé » suit la course choisie, en trois cases : Départ (estimation actuelle) → il y a 6 semaines → maintenant, ajustées du rapport d'allure facile à son départ (H-65, **convention**) ; affiché comme ordre de grandeur, ne tient pas compte de la résistance.
+
+**6. Versions.** v66 : repères dans le moteur, bloc « Ta progression », historique, deux objectifs. v67 : retours ci-dessus. v68 : « Par rapport à d'habitude » dans le bilan et IA avec historique (fonction `analyze-session` à recoller une fois).
