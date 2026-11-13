@@ -1,8 +1,8 @@
-# v66 (D-101) : Suivi — objectifs 80 km / 50 km, bouton 50 km / 80 km sur « Prêt pour le jour J ? », bloc « Ta progression » (données réelles du 11/11), lecture de l'historique
+# v66-v67 (D-101) : Suivi — objectifs 80 km / 50 km, bouton 50 km / 80 km sur « Prêt pour le jour J ? », bloc « Ta progression » (données réelles du 11/11), lecture de l'historique
 import json, os, sys, subprocess
 from playwright.sync_api import sync_playwright
 sys.path.insert(0,os.path.dirname(os.path.abspath(__file__)));from state import state, AUTH
-ROOT=os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))));OUT=os.path.join(ROOT,'captures','ui','v66');os.makedirs(OUT,exist_ok=True)
+ROOT=os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))));OUT=os.path.join(ROOT,'captures','ui','v67');os.makedirs(OUT,exist_ok=True)
 T=os.path.join(ROOT,'tests')
 FX=json.loads(subprocess.check_output(['node','-e',"const E=require('./engine.js');console.log(JSON.stringify(E.flux(require('./data/flux_20261111.json'),E.zonesKarvonen(205,52))))"],cwd=T))
 RAW=json.load(open(os.path.join(T,'data','flux_20261111.json')))
@@ -28,18 +28,24 @@ with sync_playwright() as p:
     pg.evaluate("app.svtog('duree')");pg.wait_for_timeout(400)
     t=pg.locator('main').inner_text()
     chk('Objectif' in t and '80 km' in t and 'Prochaine étape' in t and '50 km' in t and 'J−177' in t,'carte des deux objectifs (J−177)')
-    chk('Visée avant le 8 mai' in t,'Prêt pour le jour J : vise le 50 km par défaut')
-    chk('Ta progression' in t and 'Allure facile' in t and 'Tenue' in t and 'Montée' in t,'bloc Ta progression, 3 lignes')
+    chk('8 mai 2027 · J−177' in t and 'sortie longue visée : 4' in t and 'Plus longue' in t and 'Plus gros' in t,'Prêt pour le jour J : 50 km par défaut, graphique et cases')
+    chk('≈ 55\u00a0%\nde ta course' in t or '55\u00a0%' in t,'part de la course sous la visée (50 km)')
+    chk('Ton temps estimé' in t and 'Ordre de grandeur' in t,'temps estimé avec cases')
+    pg.locator('.card',has_text='Ton temps estimé').scroll_into_view_if_needed();pg.screenshot(path=OUT+'/temps.png')
+    chk('Ta progression' in t and 'Allure facile' in t and 'Résistance' in t and 'Montée' in t,'bloc Ta progression, 3 lignes')
     chk(len(calls)==1 and calls[0].get('id')=='i2','historique : la sortie sans données de la montre est relue (%d appel)'%len(calls))
     chk('6:34' in t and '/km à 159 bpm' in t,'allure facile 6:34 /km à 159 bpm (11/11)')
-    chk('il y a 6 sem.' in t and 'maintenant' in t,'trois cases Départ → il y a 6 sem. → maintenant')
+    chk('Il y a 6 sem.' in t and 'Maintenant' in t,'trois cases Départ → il y a 6 sem. → maintenant')
     ref=json.loads(pg.evaluate("localStorage.getItem('trail-state-v1')"))['profile'].get('repRef')
     chk(ref=={'fc':159,'repos':52},'FC de référence figée : %s'%ref)
-    pg.locator('.card',has_text='Ta progression').scroll_into_view_if_needed();pg.screenshot(path=OUT+'/progression.png')
+    pg.locator('.card',has_text='à effort égal').first.scroll_into_view_if_needed();pg.screenshot(path=OUT+'/progression.png')
     pg.locator('main .card').first.scroll_into_view_if_needed();pg.screenshot(path=OUT+'/objectifs.png')
+    pg.locator('.card',has_text='Prêt pour le jour J').first.scroll_into_view_if_needed();pg.mouse.wheel(0,330);pg.wait_for_timeout(300);pg.screenshot(path=OUT+'/pret50.png')
+    pg.evaluate("app.svtog('pgallure')");pg.wait_for_timeout(300);pg.locator('.card',has_text='à effort égal').first.scroll_into_view_if_needed();pg.screenshot(path=OUT+'/progression_ouverte.png');pg.evaluate("app.svtog('pgallure')")
     pg.locator('button',has_text='80 km').first.click();pg.wait_for_timeout(500)
     t=pg.locator('main').inner_text()
-    chk('Visée avant' not in t and 'Visée' in t,'bouton 80 km : retour à la visée du 80 km')
+    chk('sortie longue visée : 5\u00a0h à 6\u00a0h' in t and '25 sept. 2027' in t,'bouton 80 km : graphique et visée du 80 km')
+    pg.locator('.card',has_text='Prêt pour le jour J').first.scroll_into_view_if_needed();pg.screenshot(path=OUT+'/pret80.png')
     b.close()
 print('errs',errs);ok=ok and not errs
 sys.exit(0 if ok else 1)
