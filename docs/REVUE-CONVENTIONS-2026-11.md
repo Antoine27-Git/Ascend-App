@@ -17,7 +17,7 @@ Aucun code n'est modifié par ce document. Chaque proposition attend sa validati
 | 4 | Nutrition, +5 à 10 g/h par semaine | Principe **confirmé**, rythme **non vérifié** | Les études ne montent pas par paliers. Elles exposent souvent, sur des sorties d'1 h. |
 | 5 | Règle des 30 jours en durée et en trail | **Confirmée** comme garde-fou, transposition **non vérifiée** | L'étude ne mesure ni la durée ni le dénivelé. Un coach de référence l'applique en heures. |
 
-**Le constat le plus important ne figurait pas dans la liste.** En vérifiant les points 1 et 2 sur le plan réel, trois écarts apparaissent dans les 9 dernières semaines avant le 80 km. Ils sont décrits en fin de document (« Ce que la revue a fait apparaître »).
+**Le constat le plus important ne figurait pas dans la liste.** En vérifiant les points 1 et 2 sur le plan que le moteur produit, trois écarts apparaissent dans les 9 dernières semaines avant le 80 km. Ils sont décrits en fin de document (« Ce que la revue a fait apparaître »).
 
 ---
 
