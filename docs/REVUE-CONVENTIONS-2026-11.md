@@ -50,7 +50,7 @@ Aucun code n'est modifié par ce document. Chaque proposition attend sa validati
 
 **Ce que disent les sources.**
 - **Étude** (méta-analyse, 27 études). Bosquet 2007 : baisser le volume de 41 à 60 % sur environ 2 semaines, en gardant intensité et fréquence, donne le meilleur gain (S-COU-006).
-- **Étude** (méta-analyse, 14 études, contre-la-montre de 800 m à 40 km). Wang 2023 : gain significatif avec une baisse de 41 à 60 %, intensité et fréquence maintenues, sur 7 jours ou moins, 8 à 14 jours ou 15 à 21 jours. Conclusion des auteurs : 21 jours au plus, baisse progressive.
+- **Étude** (méta-analyse, 14 études, 174 athlètes, contre-la-montre de 800 m à 40 km ; texte intégral lu le 14/11). Wang 2023 : effet par baisse de volume : 21–40 % −0,45 (limite), **41–60 % −0,77**, plus de 60 % non significatif. Par durée : 7 jours ou moins −0,36, **8 à 14 jours −1,47** (18 sujets seulement), 15 à 21 jours −0,78, **plus de 21 jours : pas de gain**. Intensité réduite : pas de gain. Baisse progressive ou par palier : pas de différence nette. L'article ne dit pas par rapport à quel volume la baisse est mesurée.
 - **Étude** (observationnelle, 158 117 marathoniens amateurs). Smyth et Lawlor 2021 : un affûtage strict, où le volume baisse chaque semaine, jusqu'à 3 semaines, va avec de meilleurs temps.
 - **Avis d'expert.** Koop : 2 à 3 semaines ; volume à 40–50 % la première semaine, 20–30 % la deuxième, moins de 20 % la dernière ; même terrain et même dénivelé que la course ; gain attendu de 1,5 à 3 %. Il précise qu'un affûtage raisonnable suffit.
 - **Non vérifié.** Aucune de ces études ne porte sur l'ultra ni sur le trail.
@@ -102,7 +102,7 @@ Aucun code n'est modifié par ce document. Chaque proposition attend sa validati
 **Ce que disent les sources.**
 - **Étude** (essai randomisé, 25 coureurs). Costa 2017 : 2 semaines de sorties d'1 h avec 90 g/h. Les symptômes digestifs baissent d'environ 60 % et la performance s'améliore face au placebo.
 - **Étude** (essai randomisé, 18 coureurs). Miall 2018 : même protocole, 90 g/h contre placebo. Moins d'inconfort et moins de malabsorption.
-- **Étude** (revue systématique, 8 études). Martinez 2023 : l'inconfort baisse de 47 % en moyenne après 2 semaines ; la malabsorption baisse dans 2 études sur 3 ; les résultats sur les symptômes sont flous dans 4 études sur 6. Les auteurs demandent de meilleures mesures avant d'affiner les protocoles.
+- **Étude** (revue systématique, 8 études ; texte intégral lu le 14/11). Martinez 2023 : les auteurs écrivent qu'il n'existe pas encore de protocole standard et ne recommandent ni dose ni fréquence ; aucune étude incluse ne teste une hausse hebdomadaire progressive ; l'inconfort baisse de 47 % en moyenne après 2 semaines ; la malabsorption baisse dans 2 études sur 3 ; les résultats sur les symptômes sont flous dans 4 études sur 6. Les auteurs demandent de meilleures mesures avant d'affiner les protocoles.
 - **Étude** (athlètes très entraînés). King 2022 : effets mineurs sur le confort digestif et la performance.
 - **Non vérifié.** Aucune étude ne teste une montée par paliers hebdomadaires. Les protocoles donnent d'emblée 90 g/h, une dizaine de fois en 2 semaines.
 
@@ -125,7 +125,7 @@ Aucun code n'est modifié par ce document. Chaque proposition attend sa validati
 - **Étude** (cohorte, 5 205 coureurs, 18 mois). Frandsen 2025 : dépasser de plus de 10 % la plus longue sortie des 30 jours augmente le taux de blessure de surmenage : rapport de 1,64 pour +10 à 30 %, 1,52 pour +30 à 100 %, 2,28 au-delà. La variation d'une semaine à l'autre n'est pas associée au risque.
 - **Limites dites par les auteurs.** Étude exploratoire. Blessures déclarées par les coureurs. Mesure en **distance**. Dénivelé, surface, montée et descente non pris en compte. Population surtout masculine, 46 ans en moyenne. Le risque ne croît pas régulièrement (1,64 puis 1,52) : le seuil de 10 % est une frontière de catégorie, pas un seuil démontré.
 - **Avis d'expert.** CTS (Pittman) applique cette règle à la sortie longue **en heures**, sur un mois. Koop accepte des hausses plus fortes pour la sortie longue (+20 %, +20 %, +10 %, puis moins) : notre règle est du côté prudent de la pratique.
-- **Non vérifié.** Aucune étude ne teste la règle en durée, ni en trail. Texte intégral de Frandsen non relu cette nuit (page bloquée) : chiffres repris du résumé officiel et d'une synthèse détaillée, cohérents avec SOURCES.md (S-BLE-004). Intervalles de confiance non revérifiés.
+- **Non vérifié.** Aucune étude ne teste la règle en durée, ni en trail. Texte intégral de Frandsen toujours inaccessible le 14/11 (contrôle anti-robot du site, pas une question d'autorisation) : chiffres confirmés par le billet des auteurs sur le blog du BJSM et par le communiqué de l'université d'Aarhus, cohérents avec SOURCES.md (S-BLE-004). Les auteurs y ajoutent que le risque monterait déjà entre 1 et 10 % de hausse, sans chiffre publié. Intervalles de confiance non revérifiés.
 
 **Verdict : confirmée comme garde-fou. Transposition non vérifiée, mais cohérente avec la pratique.**
 
@@ -183,4 +183,6 @@ Trois écarts, mesurés sur les plans simulés (profil à 4 jours et profil à 3
 20. Frandsen J.S.B. et coll. How much running is too much? Br J Sports Med, 2025. PMC12421110. Synthèse lue : https://www.physiotutors.com/?p=26053
 21. Pittman C. (CTS). The 10% running rule reframed. https://trainright.com/10-running-rule-reframed/
 
-**Non consulté.** Texte intégral de Frandsen 2025, de Wang 2023 et de Martinez 2023 (pages bloquées ou autorisation requise en l'absence d'Antoine) : résumés officiels utilisés. Programmes de La Clinique du Coureur : rien d'exploitable trouvé.
+**Mise à jour du 14/11 (avec Antoine).** Wang 2023 et Martinez 2023 lus en texte intégral : verdicts inchangés, précisions ajoutées aux points 2 et 4. Frandsen 2025 : texte intégral toujours bloqué par le site ; billet des auteurs et communiqué lus. Programmes de La Clinique du Coureur : rien d'exploitable trouvé.
+
+**Suite.** Écarts 1 à 3 : spec D-103 (docs/SPEC.md).
