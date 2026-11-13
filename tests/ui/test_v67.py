@@ -45,6 +45,8 @@ with sync_playwright() as p:
     pg.locator('button',has_text='80 km').first.click();pg.wait_for_timeout(500)
     t=pg.locator('main').inner_text()
     chk('sortie longue visée : 5\u00a0h à 6\u00a0h' in t and '25 sept. 2027' in t,'bouton 80 km : graphique et visée du 80 km')
+    vert=pg.evaluate("[...document.querySelectorAll('svg.svg text.svgt.b')].map(e=>e.textContent.trim())")
+    chk(vert==['5h','6h'] or vert==['5 h','6 h'] or [v.replace('\u00a0','').replace(' ','') for v in vert]==['5h','6h'],'D-102 : 5 h et 6 h écrits en vert sur l\'axe du 80 km : %s'%vert)
     pg.locator('.card',has_text='Prêt pour le jour J').first.scroll_into_view_if_needed();pg.screenshot(path=OUT+'/pret80.png')
     b.close()
 print('errs',errs);ok=ok and not errs

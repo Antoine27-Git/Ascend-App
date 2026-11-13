@@ -1161,7 +1161,7 @@ function svReady(B){
         +svN('Nausées et vomissements : première cause d\'abandon sur 160 km. Teste ce que tu prendras en course.')));}}
   const chip=(k,l)=>'<button onclick="app.svObj(\''+k+'\')" style="border:1px solid '+(SV_OBJ===k?'var(--ink)':'var(--line)')+';background:'+(SV_OBJ===k?'var(--ink)':'transparent')+';color:'+(SV_OBJ===k?'#fff':'var(--mut)')+';border-radius:999px;padding:4px 11px;font:inherit;font-size:12.5px;font-weight:700">'+l+'</button>';
   const sw=NX?'<div style="display:flex;justify-content:space-between;align-items:center;padding:0 0 6px"><span class="mini">'+fmtSY(cD)+' · J−'+Math.round((parseISO(cD)-parseISO(t))/864e5)+'</span><span style="display:flex;gap:6px">'+chip('next',NX.dist?fmtN(NX.dist)+' km':esc(NX.name||'Étape'))+chip('main',P.goalDist?fmtN(P.goalDist)+' km':'Objectif')+'</span></div>':'';
-  return '<div class="card svc0"><div class="svhd"><b>Prêt pour le jour J ?</b><span>'+(NX?'':(P.goalDate?fmtSY(P.goalDate):''))+'</span></div>'+sw+svChart(B,{date:cD,zone,label:zl,axe:MN?[pMax]:[]})+out.join('').replace('<div class="sva f','<div class="sva')+'</div>';}
+  return '<div class="card svc0"><div class="svhd"><b>Prêt pour le jour J ?</b><span>'+(NX?'':(P.goalDate?fmtSY(P.goalDate):''))+'</span></div>'+sw+svChart(B,{date:cD,zone,label:zl,axe:MN?[pMax]:[...new Set(c)]})+out.join('').replace('<div class="sva f','<div class="sva')+'</div>';}
 /* 2. Tu fais ce qu'il faut ? (H-54) — semaines « arrêt » : séances dues d'après les jours de la période (D-92 e) */
 function svWeeks(B){
   const {E,P,t,start}=B,res=[];
@@ -1373,6 +1373,9 @@ const CONV={
   efMax:{'4-8h':90,'8-20h':90},
   memPente:0.01,             /* D-94, H-40 : une sortie sortie de la fenêtre des 30 jours garde un repère qui baisse de 1 % par jour (0 au 130e jour) */
   memSeance:60,              /* D-94 : la mémoire n'autorise pas de séance de plus d'1 h (= 2 × le plancher de 30 min) ; au-delà, règle des 30 jours stricte */
+  densCourse:true,           /* D-102 : false = sans la densité de la course intermédiaire (comparaison dans les tests) */
+  fenetreSpe:8,              /* D-102, H-66 : 8 semaines avant un objectif intermédiaire, la densité de D+ des sorties longues vaut au moins celle de la course */
+  densVeille:1,              /* D-102, H-66 : la veille d'un week-end de choc est à pleine densité (0,5 avant) */
   arrondiSup:true};          /* D-96, H-58 : la séance de progression qui bute sur la limite de +10 % est arrondie au multiple de 5 min supérieur (dès 50 min), dépassement < 5 min ; false = minute inférieure (D-65d) */
 /* ressenti : RPE moyen des séances faciles → échelle du simulateur. 1 point de RPE = dérive 0,12 (H-38, à calibrer). */
 const RPE_REF=3,RPE_K=0.12;
@@ -1592,7 +1595,7 @@ function build(inp){
     const dur=dureeCourse(r.dist,r.dplus,refC)||120;let statut=r.prio==='C'?'entrainement':'objectif';
     const t2=TRANCHES[tranche_de(dur)]||TR_COURT;
     if(statut==='objectif'&&(w+t2.recup>c.fond)){statut='entrainement';G(1,(r.name||'Course')+' tombe dans le bloc spécifique : traitée en course-entraînement, sans affûtage ni récupération (D-25).');}
-    secs.push({w,date:r.date,dur,statut,name:r.name||'Course',t2,exigeant:CONV.secExigeant(dur,+r.dist||0,+r.dplus||0)});});
+    secs.push({w,date:r.date,dur,statut,name:r.name||'Course',dist:+r.dist||0,dplus:+r.dplus||0,t2,exigeant:CONV.secExigeant(dur,+r.dist||0,+r.dplus||0)});});
   const secAff={},secRec=new Set();
   secs.filter(s=>s.statut==='objectif').forEach(s=>{s.t2.aff.forEach((f,k)=>{secAff[s.w-s.t2.aff.length+1+k]=f;});for(let k=1;k<=s.t2.recup;k++)secRec.add(s.w+k);});
   const forcees=new Set(Object.keys(secAff).map(Number).concat([...secRec]));
@@ -1630,7 +1633,20 @@ function build(inp){
   /* GABARIT § 5 : le D+ monte pendant le fond. Départ à la moitié au plus de la densité de course (H-41, extrapolation) */
   dens0=Math.min(dens0,densC*0.5);
   out.info.densite={dep:dens0,course:densC};   /* D-92 : rampe de D+ exposée à l'écran (sortie seule, règles inchangées) */
-  const dens=w=>w>=c.fond?densC:dens0+(densC-dens0)*w/Math.max(1,c.fond);
+  /* D-102 (H-66) : la densité se cale sur la course intermédiaire la plus proche. Points d'ancrage (semaine, m/h), jamais décroissants :
+     départ → début de la fenêtre (densité de la course) → veille de la course → fin du fond (densité de l'objectif principal). Sans course intermédiaire : rampe linéaire d'avant. */
+  const ancres=[[0,dens0]];
+  if(V2&&CONV.densCourse)secs.filter(s=>s.statut==='objectif'&&s.dplus>0&&s.dur>0&&s.w<=c.fond).sort((a,b)=>a.w-b.w).forEach(s=>{
+    const dS=Math.min(s.dplus/(s.dur/60),densC),a=Math.max(1,s.w-CONV.fenetreSpe),L=ancres[ancres.length-1],v=Math.max(L[1],dS);
+    if(a>L[0])ancres.push([a,v]);else L[1]=v;
+    if(s.w-1>ancres[ancres.length-1][0])ancres.push([s.w-1,v]);
+    s.densSpe=v;s.mkm=s.dist?s.dplus/s.dist:null;});
+  ancres.push([Math.max(c.fond,ancres[ancres.length-1][0]),densC]);
+  const rampe=w=>w>=c.fond?densC:dens0+(densC-dens0)*w/Math.max(1,c.fond);   /* rampe d'avant (parité v1) */
+  const dens=w=>{if(w>=c.fond||ancres.length<3)return rampe(w);
+    for(let k=1;k<ancres.length;k++){const[x0,y0]=ancres[k-1],[x1,y1]=ancres[k];if(w<=x1)return Math.max(rampe(w),y0+(y1-y0)*(w-x0)/Math.max(1,x1-x0));}
+    return rampe(w);};   /* au moins la rampe d'avant : la course intermédiaire ne fait que relever la densité */
+  out.info.inter=secs.filter(s=>s.densSpe).map(s=>({w:s.w,name:s.name,dens:s.densSpe,mkm:s.mkm}));
   const terr=P.terrain||{};
   if(terr.climb&&['lt1','1-5'].includes(terr.climb)&&terr.mountain==='jamais')
     G(1,'Tes montées les plus longues sont courtes et tu n\'as pas d\'accès régulier à la montagne : le bloc spécifique s\'appuiera sur des répétitions de côte, et quelques sorties en moyenne montagne pendant le bloc feront une vraie différence.');
@@ -1777,7 +1793,7 @@ function build(inp){
       mv.forEach((m,x)=>{x.orig=m.o0;x.dow=m.td;x.jour=jourOf(m.t);});}
     /* D+ */
     const dz=dens(w);
-    rx.forEach(x=>{if(x.kind==='race'||x.kind==='goal')return;const f=x.kind==='long'||x.kind==='cle'?1:x.kind==='qual'?0.8:0.5;
+    rx.forEach(x=>{if(x.kind==='race'||x.kind==='goal')return;const f=x.kind==='long'||x.kind==='cle'?1:x.kind==='qual'?0.8:x.moyen?(CONV.densCourse?CONV.densVeille:0.5):0.5;
       let dp=Math.round(dz*f*x.dur/60/50)*50;
       /* F1–F2 : l'endurance se fait sur terrain roulant, son D+ est un plafond, pas un objectif */
       if(x.kind==='ef'&&ph==='fond'&&(sp==='F1'||sp==='F2')){x.dmax=Math.max(50,dp);x.dplus=null;}
@@ -1815,6 +1831,10 @@ function build(inp){
       else if(x.kind==='qual')b.push({F2:'Base aérobie : travail de force en côte, car ton renforcement ne le couvre pas.',F3:'Endurance musculaire : les jambes, pas le souffle, limitent la montée. C\'est la qualité qui manque le plus en ultra de montagne.',F4:'Intensité en côte : elle relève ton plafond aérobie avant le bloc spécifique.',bloc:'Bloc spécifique : effort de course en montée.',pic:'Pic : effort de course en montée.',affutage:'Affûtage : garder le rythme sans fatigue.'}[aff?'affutage':(sp||ph)]||'Séance de qualité.');
       else if(x.moyen)b.push('Week-end de choc : sortie moyenne la veille de ta sortie longue, pour courir le lendemain sur des jambes déjà fatiguées. Il y en a peu dans la préparation : c\'est l\'un d\'eux.');
       else if(x.kind==='ef')b.push('Endurance facile : elle construit le volume sans fatigue.');
+      if(x.dplus&&(x.kind==='long'||x.kind==='cle'||x.moyen)){   /* D-102 : densité de la course, et descentes */
+        const sp0=secs.find(s=>s.densSpe&&w>=s.w-CONV.fenetreSpe&&w<s.w),refD=sp0?sp0.densSpe:(ph!=='fond'||w>=c.fond?densC:null),mk=sp0?sp0.mkm:(P.goalDist&&P.goalDplus?P.goalDplus/P.goalDist:null);
+        if(refD&&mk&&x.dplus/(x.dur/60)>=0.9*refD)b.push('Environ '+Math.round(mk)+' m de D+ par km, comme ta course.');
+        b.push('Cours aussi les descentes, en contrôle : en fin de course, c\'est là que la vitesse baisse le plus.');}
       if(typ==='relache')b.push('Semaine allégée : on assimile.');
       if(typ==='aff_sec'||typ==='recup_sec')b.push('Autour de ton objectif intermédiaire.');
       if(typ==='affutage')b.push('Affûtage : le volume baisse, l\'intensité reste.');
@@ -3094,7 +3114,7 @@ function vGate(){
     +authFormHTML('Un compte garde ton plan et tes séances en sécurité, et te permet de les retrouver sur un autre téléphone. Ton prénom personnalise l\'app.')
     +syncLineHTML()+versionLineHTML()+'</div></main>';
 }
-const APP_VERSION='v68';   /* généré depuis sw.js par tools/build.py */
+const APP_VERSION='v69';   /* généré depuis sw.js par tools/build.py */
 function versionLineHTML(){return '<div class="mini" id="ver" style="margin-top:12px;text-align:center;opacity:.7">Ascend '+APP_VERSION+' · moteur de plan v2</div>';}
 /* compare la page chargée au cache du service worker : signale un déploiement pas encore actif */
 function checkVersion(){if(!('caches' in window))return;caches.keys().then(ks=>{const c=ks.filter(k=>/^ascend-v\d+$/.test(k)).map(k=>+k.slice(8)).sort((a,b)=>b-a)[0],el=document.getElementById('ver');
