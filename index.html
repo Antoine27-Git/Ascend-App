@@ -8,7 +8,19 @@
 <link rel="apple-touch-icon" href="./apple-touch-icon.png">
 <link rel="icon" href="./favicon.png">
 <meta name="theme-color" content="#114336">
-<style>html.sp,html.sp body{background:#114336}</style>
+<style>html.sp,html.sp body{background:#114336}.cj .cjt{font-size:17px;line-height:1.3}
+.cjco{border:1px solid var(--acc,#087a49);border-radius:16px;padding:12px 14px;margin:12px 0}
+.cjco small,.cjg small{display:block;font-size:12.5px;font-weight:700;color:var(--acc,#087a49);margin-bottom:4px}
+.cjco b{font-size:15px}.cjco p,.cjg p{margin:4px 0 0;font-size:14px;line-height:1.45}.cjco p{color:var(--mut)}
+.cjg{background:#eef7f1;border-radius:14px;padding:12px 14px;margin:0 0 14px}
+.cjd{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:0 0 11px}
+.cjr{display:grid;grid-template-columns:minmax(0,1fr) 58px 58px;gap:6px;align-items:center;padding:11px 0;border-top:1px solid var(--line)}
+.cjk{font-size:13.5px;color:var(--mut);line-height:1.35}.cja,.cjb{font-size:14.5px;text-align:right}.cjb{font-weight:700;color:var(--acc,#087a49)}
+.cjh{padding:8px 0}.cjh span{font-size:12.5px;color:var(--mut);text-align:right}.cjh .cjb{color:var(--acc,#087a49)}
+.cjj{font-size:14px;line-height:1.45;margin:0;padding:12px 0;border-top:1px solid var(--line)}
+.cjp b{font-size:12.5px}.cjp p{font-size:13px;color:var(--mut);line-height:1.45;margin:4px 0 0}
+.cj .btn{margin-top:10px}.cj .btn.p{margin-top:16px}.cj .btn.cjno{background:#fff;border:1px solid var(--acc,#087a49);color:var(--ink)}
+</style>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -2241,6 +2253,63 @@ function objLine(){const P=S.profile;if(!P.goalName&&!P.goalDate)return '';
   return '<div class="card objl" onclick="app.go(\'suivi\')"><div class="ic">'+mi('terrain')+'</div><div style="flex:1;min-width:0"><div style="font-weight:800;font-size:15px">'+esc(P.goalName||'Objectif')+(P.goalDate&&daysTo(P.goalDate)>=0?' · J−'+daysTo(P.goalDate):'')+'</div>'
     +(nr?'<div class="mini" style="margin:2px 0 0">Jalon : '+esc(nr.name||'Course')+' · J−'+daysTo(nr.date)+'</div>':'')+'</div></div>';
 }
+/* D-106 (v74) : la carte « Passer à N courses par semaine ? ». L'app conseille, le coureur décide ; un refus est définitif. */
+const CJ_CHOC=56,CJ_BLOC=21;   /* jours avant le week-end choc, avant le bloc spécifique (H-70, non vérifiés) */
+let CJ=null;
+function cjJour(d,cas){const run=d.run||[],cf=d.cf||[],L=+d.long,libres=[1,2,3,4,5,6,0].filter(i=>!run.includes(i)&&!cf.includes(i));if(!libres.length)return null;
+  const v=(L+6)%7;if(cas==='choc'&&libres.includes(v))return v;   /* avant un week-end choc : la veille de la sortie longue */
+  const g=(a,b)=>{const x=Math.abs(a-b)%7;return Math.min(x,7-x);};let best=null,bs=-1;
+  libres.forEach(i=>{const sc=run.length?Math.min(...run.map(r=>g(i,r))):7;if(sc>bs){bs=sc;best=i;}});return best;}
+function cjProfil(P,keys,jour){const Q=JSON.parse(JSON.stringify(P));Q.orgs=Q.orgs||[];
+  keys.forEach(k=>{let e=Q.orgs.find(o=>o.from===k);if(!e){const o=orgOf(Q,k);e={from:k,days:JSON.parse(JSON.stringify(o.d)),enchaine:o.en};Q.orgs.push(e);}
+    e.days.run=(e.days.run||[]).filter(x=>x!==jour).concat([jour]).sort();});return Q;}
+function cjMesure(E,ws){const run=E.sessions.filter(x=>isRun(x)&&x.type!=='race');
+  const vol=ws.map(k=>run.filter(x=>x.date>=k.mon&&x.date<addDays(k.mon,7)).reduce((a,x)=>a+(x.dur||0),0));
+  const we=ws.filter(k=>run.some(x=>x.date===addDays(k.mon,5))&&run.some(x=>x.date===addDays(k.mon,6))).length;
+  const tot=vol.reduce((a,x)=>a+x,0);return {moy:tot/Math.max(1,vol.length),max:Math.max(0,...vol),tot,we};}
+function cjCalc(){const P=S.profile;if(!P||!P.onboarded||!P.planStart)return null;const E=eng();if(!E||!E.ok||!E.weeks.length)return null;
+  const t=todayISO(),m0=monday(t),fait=P.conseilJours||{},cur=weekOf(t);if(!cur)return null;const ph=cur.sous||cur.phase;if(PORDER.indexOf(ph)<0)return null;
+  const build=Q=>{try{return ENGINE.build({profile:Q,today:t,sessions:S.sessions,isRun,isOff});}catch(e){return null;}};
+  const k=E.weeks.find(x=>x.choc&&x.mon>m0);
+  if(k){const key='choc:'+k.mon,dj=(parseISO(k.mon)-parseISO(t))/864e5,o=orgOf(P,ph),n=(o.d.run||[]).length;
+    if(!fait[key]&&dj<=CJ_CHOC&&n<3){const jour=cjJour(o.d,'choc');
+      if(jour!=null){const B=build(cjProfil(P,[ph],jour));if(B&&B.ok){
+        const ws=E.weeks.filter(x=>x.mon>=m0&&x.mon<k.mon),wsB=B.weeks.filter(x=>x.mon>=m0&&x.mon<k.mon),a=cjMesure(E,ws),b=cjMesure(B,wsB);
+        if(b.moy-a.moy>=5){const ch=E.sessions.filter(x=>isRun(x)&&x.date>=k.mon&&x.date<addDays(k.mon,7)&&(x.type==='long'||x.title==='Week-end choc')).sort((x,y)=>x.date<y.date?-1:1);
+          let cDur=null,cDist=null;if(k.phase==='fond'){const r=(P.races||[]).filter(r=>r.date>k.mon).sort((x,y)=>x.date<y.date?-1:1)[0];if(r){const e=estDur(r.dist,r.dplus,P);cDur=e&&e.m;cDist=r.dist;}}else{cDur=E.info.dureeMain;cDist=P.goalDist;}
+          const aj=B.sessions.filter(x=>x.type==='ef'&&x.date>=m0&&x.date<k.mon&&parseISO(x.date).getDay()===jour).map(x=>x.dur).sort((x,y)=>x-y);
+          return {cas:'choc',key,keys:[ph],jour,n,a,b,ch,cDur,cDist,ajDur:aj.length?aj[Math.floor(aj.length/2)]:null};}}}}}
+  const kb=E.weeks.find(x=>x.phase==='bloc');
+  if(kb){const key='bloc:'+P.goalDate,dj=(parseISO(kb.mon)-parseISO(t))/864e5,o=orgOf(P,'bloc'),n=(o.d.run||[]).length;
+    if(!fait[key]&&dj>0&&dj<=CJ_BLOC&&n<4){const jour=cjJour(o.d,'bloc');
+      if(jour!=null){const keys=['bloc'].concat(['pic','affutage'].filter(x=>(P.orgs||[]).some(e=>e.from===x))),B=build(cjProfil(P,keys,jour));
+        if(B&&B.ok){const N=E.info.N,ws=E.weeks.filter(x=>x.w>=N-9&&x.w<=N-1),wsB=B.weeks.filter(x=>x.w>=N-9&&x.w<=N-1),a=cjMesure(E,ws),b=cjMesure(B,wsB);
+          if(b.tot-a.tot>=60){const aj=B.sessions.filter(x=>x.type==='ef'&&x.date>=kb.mon&&parseISO(x.date).getDay()===jour).map(x=>x.dur).sort((x,y)=>x-y);
+            return {cas:'bloc',key,keys,jour,n,a,b,cDur:E.info.dureeMain,cDist:P.goalDist,ajDur:aj.length?aj[Math.floor(aj.length/2)]:null};}}}}}
+  return null;}
+function cjHTML(){const c=CJ=cjCalc();if(!c)return '';
+  const nb=s=>String(s).replace(/ /g,' '),D=m=>nb(durTxt(Math.round(m/5)*5)),Dh=m=>nb(Math.round(m/60)+' h'),n1=c.n+1,km=c.cDist?Math.round(c.cDist)+' kms':'ta course';
+  const row=(k,a,b)=>'<div class="cjr"><span class="cjk">'+k+'</span><span class="cja">'+a+'</span><span class="cjb">'+b+'</span></div>';
+  let avis,pq,gain,rows;
+  if(c.cas==='choc'){const L=c.ch[0],M=c.ch[1];
+    avis='<b>Oui, dès cette semaine.</b><p>'+(c.a.we===0&&L&&M?'Sinon, ton week-end choc sera la première fois que tu cours deux jours de suite : '+D(L.dur)+', puis '+D(M.dur)+'.':'Ton week-end choc'+(L&&M?' ('+D(L.dur)+', puis '+D(M.dur)+')':'')+' demande des jambes habituées à courir souvent.')+'</p>';
+    gain=c.cDur&&c.b.max>=0.9*c.cDur?'Ta plus grosse semaine atteint '+D(c.b.max)+', presque la durée de ta course ('+D(c.cDur)+'). À '+c.n+' jours, elle plafonne à '+D(c.a.max)+'.'
+      :'Ta plus grosse semaine avant le week-end choc passe de '+D(c.a.max)+' à '+D(c.b.max)+'.';
+    rows=row('Volume hebdo moyen',D(c.a.moy),D(c.b.moy))+row('Volume hebdo max',D(c.a.max),D(c.b.max))+row('Week-ends courus samedi et dimanche, avant le week-end choc',c.a.we,c.b.we);
+    pq=['Avant un week-end choc, les coachs de trail demandent 3 courses par semaine depuis 2 mois.','Tes muscles s\'habituent : chaque sortie protège un peu la suivante.'];}
+  else{avis='<b>Oui, si ton agenda le permet.</b><p>Ce sont les 9 semaines qui comptent le plus avant ton '+km+'.</p>';
+    gain=nb((Math.round(c.b.tot/60)-Math.round(c.a.tot/60))+' h')+' de course en plus dans les jambes au départ de ton '+km+'.';
+    rows=row('Volume hebdo moyen',D(c.a.moy),D(c.b.moy))+row('Volume hebdo max',D(c.a.max),D(c.b.max))+row('Volume total sur les 9 semaines avant ta course',Dh(c.a.tot),Dh(c.b.tot));
+    pq=['Sur ultra, le volume de course par semaine est ce qui prédit le mieux le résultat.','Dans une étude en ultra-trail, les coureurs qui ont fini couraient 77 km par semaine, ceux qui ont abandonné 51 km.'];}
+  return '<div class="card cj"><h2 class="cjt">Passer à '+n1+' courses par semaine ?</h2>'
+    +'<div class="cjco"><small>L\'avis du coach</small>'+avis+'</div>'
+    +'<div class="cjg"><small>Ce que tu y gagnes</small><p>'+gain+'</p></div>'
+    +(c.cDur?'<div class="cjd"><span class="cjk">Durée estimée pour ton '+km+'</span><b>'+D(c.cDur)+'</b></div>':'')
+    +'<div class="cjr cjh"><span></span><span>'+c.n+' jours</span><span class="cjb">'+n1+' jours</span></div>'+rows
+    +'<p class="cjj">Jour ajouté proposé : le '+DOWN[c.jour].toLowerCase()+(c.ajDur?', '+D(c.ajDur)+' de course facile':'')+'.</p>'
+    +'<div class="cjp"><b>Pourquoi</b>'+pq.map(x=>'<p>'+x+'</p>').join('')+'</div>'
+    +'<button class="btn p full" onclick="app.cjOui()">Passer à '+n1+' jours</button>'
+    +'<button class="btn full cjno" onclick="app.cjNon()">Garder '+c.n+' jours</button></div>';}
 function vHome(){
   curDate=todayISO();WT_SHOWN=new Set();
   if(auth&&!WT.list&&!WT.busy&&!WT.auto){WT.auto=true;setTimeout(()=>app.watchSync(7,true),50);}
@@ -2251,7 +2320,7 @@ function vHome(){
   const alerts=gardeHTML()+manquesHTML()+ecartsHTML()+bilanHTML();
   const top=off?offCard(t,st,d):'<div class="tdk">Aujourd\'hui</div>'+(pl.length?pl.map((p,i)=>todayCard(p,i)).join(''):restCard(nextAfter(t)));
   return '<header><div class="brand">Ascend<span>Reach your peak</span></div><h1>'+fmtLong(t)+'</h1><div class="sub">'+(weekLabel(t)||'Semaine '+isoWeek(t))+'</div></header><main>'
-    +alerts+top
+    +alerts+top+(!off?cjHTML():'')
     +(!off&&injOn()?injCardHTML(t):'')
     +(todo.length?'<div class="card"><h2>À compléter <span>effort non noté</span></h2>'+todo.map(sLine).join('')+'</div>':'')
     +(extra.length?'<div class="card"><h2>Aussi aujourd\'hui</h2>'+extra.map(sLine).join('')+'</div>':'')
@@ -3135,7 +3204,7 @@ function vGate(){
     +authFormHTML('Un compte garde ton plan et tes séances en sécurité, et te permet de les retrouver sur un autre téléphone. Ton prénom personnalise l\'app.')
     +syncLineHTML()+versionLineHTML()+'</div></main>';
 }
-const APP_VERSION='v73';   /* généré depuis sw.js par tools/build.py */
+const APP_VERSION='v74';   /* généré depuis sw.js par tools/build.py */
 function versionLineHTML(){return '<div class="mini" id="ver" style="margin-top:12px;text-align:center;opacity:.7">Ascend '+APP_VERSION+' · moteur de plan v2</div>';}
 /* compare la page chargée au cache du service worker : signale un déploiement pas encore actif */
 function checkVersion(){if(!('caches' in window))return;caches.keys().then(ks=>{const c=ks.filter(k=>/^ascend-v\d+$/.test(k)).map(k=>+k.slice(8)).sort((a,b)=>b-a)[0],el=document.getElementById('ver');
@@ -3240,6 +3309,9 @@ const app=window.app={
   pconfirm(d,lab){if(!S.profile.planStart){S.profile=normProfile(d);save();render();return;}
     const diff=planDiff(S.profile,d);if(!diff.length){S.profile=normProfile(d);save();render();return;}
     PCONF=d;$('#sheet').innerHTML=pconfHTML(diff,lab);},
+  cjOui(){const c=CJ;if(!c)return;const Q=cjProfil(S.profile,c.keys,c.jour);Q.conseilJours=Object.assign({},Q.conseilJours||{},{[c.key]:'oui'});
+    S.profile=normProfile(Q);save();render();flash('Course ajoutée le '+DOWN[c.jour].toLowerCase());},
+  cjNon(){const c=CJ;if(!c)return;S.profile.conseilJours=Object.assign({},S.profile.conseilJours||{},{[c.key]:'non'});save();render();},
   pconfOk(){if(!PCONF)return;S.profile=normProfile(PCONF);PCONF=null;$('#sheet').innerHTML='';save();render();},
   pconfNo(){PCONF=null;$('#sheet').innerHTML='';render();},
   paddIR(){const R=S.profile.races||(S.profile.races=[]);R.push({name:'',date:'',dist:null,dplus:null,prio:'B'});Object.keys(POPEN).forEach(k=>{if(k.startsWith('ir:'))delete POPEN[k];});POPEN['ir:'+(R.length-1)]=true;save();render();},
