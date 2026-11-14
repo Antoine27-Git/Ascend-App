@@ -120,3 +120,5 @@ séance, mais ce n'est pas elle qui définit la zone.
 | « fatigue » seul | *décroissance-fatigue* (intra-séance) ou *charge* qualifiée |
 | « plan générique » | interdit par R-ENT-001 — il n'en existe pas |
 | « test » pour une séance d'évaluation | *effort franc* (D-07) — écarté comme protocole en D-18 |
+
+**Week-end choc** (avant le 14/11/2026 : « week-end de choc ») : deux jours de course enchaînés, la sortie longue puis une sortie moyenne le lendemain. Rare dans le plan (D-70, D-105).

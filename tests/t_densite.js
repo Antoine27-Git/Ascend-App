@@ -16,8 +16,8 @@ const rS=on.info.inter&&on.info.inter[0];
 t('la course intermédiaire est repérée, à 38 m de D+ par km',!!rS&&Math.round(rS.mkm)===38,rS?Math.round(rS.dens)+' m/h':'absente');
 t('plus gros D+ en sortie longue avant le 50 km : plus haut qu\'avant',maxDp(on,'2027-04-24')>maxDp(off,'2027-04-24'),maxDp(off,'2027-04-24')+' → '+maxDp(on,'2027-04-24')+' m');
 t('… et au moins 1 000 m',maxDp(on,'2027-04-24')>=1000);
-const ch=o=>o.sessions.filter(x=>x.title==='Week-end de choc'&&x.date<'2027-05-08');
-t('week-end de choc avant le 50 km : la veille passe à pleine densité',ch(on).length>0&&ch(on)[0].dplus>ch(off)[0].dplus,ch(off).map(x=>x.dur+' min/'+x.dplus+' m').join()+' → '+ch(on).map(x=>x.dur+' min/'+x.dplus+' m').join());
+const ch=o=>o.sessions.filter(x=>x.title==='Week-end choc'&&x.date<'2027-05-08');
+t('week-end choc avant le 50 km : la veille passe à pleine densité',ch(on).length>0&&ch(on)[0].dplus>ch(off)[0].dplus,ch(off).map(x=>x.dur+' min/'+x.dplus+' m').join()+' → '+ch(on).map(x=>x.dur+' min/'+x.dplus+' m').join());
 const dpH=x=>x.dplus/(x.dur/60);
 t('la veille de choc est à la densité de la sortie longue (±15 %)',ch(on).length>0&&dpH(ch(on)[0])>=0.85*dpH(avant(on,'2027-05-08').filter(x=>x.date>ch(on)[0].date)[0]||{dplus:0,dur:1}));
 
@@ -33,7 +33,7 @@ t('la densité ne dépasse pas celle de l\'objectif principal',d4.every(v=>v<=on
 
 /* 3. Rien d'autre ne bouge */
 const dur=o=>JSON.stringify(o.sessions.map(x=>[x.date,x.type,x.dur]));
-/* avant le bloc spécifique (juin 2027) : les week-ends de choc de l'objectif principal, plus tard, passent aussi à pleine densité */
+/* avant le bloc spécifique (juin 2027) : les week-ends choc de l'objectif principal, plus tard, passent aussi à pleine densité */
 const tot=o=>JSON.stringify(o.sessions.filter(x=>x.date<'2027-06-01'));
 t('durées des séances inchangées',dur(on)===dur(off));
 const sans=mod=>{mod.races=[];};

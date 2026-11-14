@@ -3535,6 +3535,8 @@ c. **Montée** = mètres montés par heure sur les seules montées (> +3 %), ram
 
 **Sources.** Bellinger 2020, PMID 32064575 ; Khassetarash et coll. 2021, PMC9189713 ; Campus, campus.coach/blog/week-end-choc-trail-long ; Koop, trainright.com/longest-run-ultramarathon-training/.
 
+**Amendement du 14/11/2026 (v73, décisions d'Antoine).** (1) Le terme affiché devient « week-end choc » (code, textes, tests ; les documents antérieurs gardent l'ancien terme). (2) « Si deux week-ends passent, on en met deux pour le 80 km » : avant l'objectif principal, deux week-ends choc, 9 et 5 semaines avant (T−7 : sortie longue au niveau atteint, 4 h 35 + 3 h ; T−3 : deuxième sortie clé, 5 h 30 + 3 h), à 4 semaines d'écart, tous deux à 5 semaines ou plus de la course. Si le premier ne passe pas (enchaînement non activé, semaine allégée, sortie longue gelée ou sous le niveau), un seul, sur la première sortie clé possible (7 ou 5 semaines avant). La sortie de 6 h, 20 jours avant, reste seule. `CONV.chocsPrincipal` 2. Avis donné à Antoine avant sa décision : un seul me paraissait suffisant pour un premier 80 km à trois courses par semaine ; aucune étude ne tranche. Résultat mesuré : S−9 8 h 35, S−8 5 h 25, S−7 8 h (5 h seule), S−6 allégée, S−5 9 h 30, S−4 6 h, S−3 9 h (6 h seule).
+
 ### D-106 — L'app recommande d'ajouter un jour de course avant une phase exigeante (proposée le 14/11/2026 ; à valider par Antoine)
 **Demande d'Antoine (14/11/2026).** « Quand on attaque une phase à x semaines de la course ou du week-end de choc, l'appli recommande d'augmenter le nombre de jours de course », puisque le nombre de jours se règle déjà phase par phase.
 

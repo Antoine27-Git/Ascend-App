@@ -18,7 +18,7 @@ ETAPES = [
     ("Bilan de séance, étage A (D-99)", ['node', 't_bilan.js'], T, None),
     ("D+ calé sur la course intermédiaire la plus proche (D-102)", ['node', 't_densite.js'], T, None),
     ("Fin de préparation : sorties clés, niveau tenu, affûtage (D-103)", ['node', 't_fin.js'], T, None),
-    ("Week-end de choc selon les avis d'experts (D-105)", ['node', 't_choc.js'], T, None),
+    ("Week-end choc selon les avis d'experts (D-105)", ['node', 't_choc.js'], T, None),
     ("Indicateurs seconde par seconde et zones de Karvonen (D-100)", ['node', 't_flux.js'], T, None),
     ("Invariants sur 120 scénarios tirés au hasard (audit, fuseau UTC)", ['node', 't_invariants.js'], T, None),
 ]
