@@ -72,6 +72,8 @@ se contredisent pas sur l'ordre des phases — c'est la condition pour les combi
 | dont **pic** | 3 dernières semaines du bloc | plus hautes charges spécifiques |
 | **Affûtage** | 3 semaines (D-25, D-63k7) | 70 / 55 / 40 % du volume de référence |
 
+> **Amendé le 14/11/2026 par D-103.** Les sorties clés se placent à rebours, 7, 5 et 3 semaines avant la course : le pic porte bien les plus hautes charges. Avant la première sortie clé, le bloc tient le niveau de sortie longue atteint en fond. Semaine moyenne en bloc et en pic : 75 % du niveau, 4 h au plus. Affûtage : sortie longue à 50 % du niveau, puis un tiers 6 jours avant la course.
+
 Semaines allégées : grille à rebours depuis l'affûtage (T−4, T−8…), règle 3:1 (D-57b,
 D-63f). Semaine allégée ≈ 60 % du volume, sortie longue raccourcie.
 
