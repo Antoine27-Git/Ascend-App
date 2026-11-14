@@ -141,6 +141,29 @@ Aucun code n'est modifié par ce document. Chaque proposition attend sa validati
 
 ---
 
+## 6. Le week-end de choc (ajouté le 14/11/2026, suite de la revue)
+
+**Ce que fait l'app (v70).** Si l'enchaînement samedi-dimanche est activé : une sortie moyenne la veille de la sortie longue, 2/3 de sa durée et 3 h au plus, à pleine densité de D+ (D-102). Un week-end de choc avant un objectif intermédiaire exigeant, 4 à 6 semaines avant ; deux avant l'objectif principal, sur les sorties clés de S−7 et S−5 (D-103). Plan simulé d'Antoine : 2 h 50 + 4 h 10 cinq semaines avant le 50 km ; 3 h + 5 h puis 3 h + 5 h 30 avant le 80 km. La séance de qualité de la semaine est maintenue.
+
+**Ce que disent les sources.**
+- **Non vérifié.** Je n'ai trouvé aucune étude comparant deux sorties enchaînées à une seule sortie longue, ni mesurant l'effet d'un week-end de choc sur la performance ou les blessures.
+- **Étude** (revue, Bellinger 2020). Les réponses à une surcharge courte varient beaucoup d'un athlète à l'autre. Les athlètes qui basculent dans la baisse de performance s'adaptent moins bien que ceux qui suivent le même programme sans y basculer. Aller jusqu'à la fatigue marquée n'est donc pas nécessaire, et peut coûter.
+- **Étude** (laboratoire, Khassetarash 2021 ; Scientific Reports 2020). Une première séance de descente protège les muscles lors des suivantes, pendant au moins deux semaines. C'est le mécanisme invoqué pour le week-end de choc ; il vaut pour toute exposition à la descente, pas seulement pour deux jours enchaînés.
+- **Avis d'expert.** Millet, repris par Campus : pour un 80 km, 8 à 10 h sur 2 jours à 2 jours et demi ; deux week-ends de choc suffisent sur 12 à 16 semaines ; au moins 3 à 4 semaines entre deux, jamais toutes les deux semaines ; 4 à 6 semaines avant la course, 3 semaines au plus tard ; jours précédents allégés de 30 à 40 % ; semaine suivante très allégée ; déconseillé sans 3 à 4 séances par semaine et une saison de trail, ou au retour d'une blessure. Le plus long jour vient en premier dans leurs exemples. La seule étude qu'ils citent porte sur l'effet protecteur de la répétition.
+- **Avis d'expert.** Koop, Vert, UltraRunning Magazine : utile pour certains, jamais nécessaire ; la régularité compte plus.
+
+**Verdict : non vérifiable, et à ajuster sur quatre points où l'app s'écarte des avis d'experts qui fondent la pratique.**
+1. **Espacement.** Deux week-ends de choc à deux semaines d'écart avant le 80 km. Les experts demandent 3 à 4 semaines.
+2. **Semaine du choc.** La séance de qualité est maintenue en plus des deux jours. Les experts allègent les jours qui précèdent.
+3. **Ordre des jours.** L'app place la sortie moyenne la veille et la plus longue le lendemain, sur des jambes fatiguées. Les exemples d'experts font l'inverse.
+4. **Profil.** L'app ne dit rien des conditions pour s'y engager.
+
+Le volume, lui, est conforme : 8 h à 8 h 30 pour le 80 km, 7 h pour le 50 km.
+
+**Proposition : spec D-105.**
+
+---
+
 ## Ce que la revue a fait apparaître
 
 Trois écarts, mesurés sur les plans simulés (profil à 4 jours et profil à 3 jours enchaînés). Ils comptent plus que les cinq conventions.
@@ -185,4 +208,6 @@ Trois écarts, mesurés sur les plans simulés (profil à 4 jours et profil à 3
 
 **Mise à jour du 14/11 (avec Antoine).** Wang 2023 et Martinez 2023 lus en texte intégral : verdicts inchangés, précisions ajoutées aux points 2 et 4. Frandsen 2025 : texte intégral toujours bloqué par le site ; billet des auteurs et communiqué lus. Programmes de La Clinique du Coureur : rien d'exploitable trouvé.
 
-**Suite.** Écarts 1 à 3 : spec D-103 (docs/SPEC.md).
+**Suite.** Écarts 1 à 3 : spec D-103, codée en v70. Point 4 : spec D-104, en attente. Points 1, 3 et 5 : hypothèses requalifiées et texte de l'app corrigé en v71. Point 6 : spec D-105.
+
+**Sources ajoutées (point 6).** Bellinger P. Functional overreaching in endurance athletes: a necessity or cause for concern? Sports Med, 2020, PMID 32064575. Khassetarash A. et coll. Neuromuscular, biomechanical, and energetic adjustments following repeated bouts of downhill running. J Sport Health Sci, 2021, PMC9189713. A single bout of downhill running attenuates subsequent level running-induced fatigue. Sci Rep, 2020, PMC7606541. Campus, week-end choc : https://www.campus.coach/blog/week-end-choc-trail-long. UltraRunning Magazine : https://ultrarunning.com/featured/back-to-back-long-training-runs-friend-or-foe/. Vert : https://vert.run/whats-back-to-back-training/.
