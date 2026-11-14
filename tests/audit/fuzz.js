@@ -67,7 +67,7 @@ function rejoue(sc,V){
     const vus={};o.sessions.forEach(s=>{if(s.type==='cf')return;
       if(!(Number.isFinite(s.dur)&&s.dur>0&&Math.round(s.dur)===s.dur))viol('I6 durée invalide',s.date+' '+s.type+' '+s.dur);
       if(vus[s.date])viol('I6 deux courses le même jour',s.date+' '+vus[s.date]+'+'+s.type);vus[s.date]=s.type;
-      if(s.type==='ef'&&s.title!=='Week-end de choc'&&s.dur>90)viol('I6 endurance > 90 min',s.date+' '+s.dur);
+      if(s.type==='ef'&&s.title!=='Week-end choc'&&s.dur>90)viol('I6 endurance > 90 min',s.date+' '+s.dur);
       if(s.date>=mon&&s.date<add(mon,7)&&s.dur<20)viol('I6b séance de moins de 20 min prescrite (plancher de 30 min non tenu)',s.date+' '+s.type+' '+s.dur+' min ('+o.weeks.find(k=>k.w===w).type+')');
       if(s.steps){const t=s.steps.reduce((a,x)=>a+(x.rep?x.rep*(x.on.sec+x.off.sec)/60:x.min),0);if(Math.abs(t-s.dur)>1.01)viol('I6 déroulé ≠ durée',s.date+' '+s.title+' '+Math.round(t)+' ≠ '+s.dur);}});
     /* I9 affûtage (repère S-COU-006, pas une règle du moteur) : mesuré en fin de boucle */

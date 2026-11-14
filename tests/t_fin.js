@@ -29,8 +29,8 @@ for(const [nom,mod,today] of [['profil de base (4 jours)',null],['profil d\'Anto
   const charge=o.weeks.filter(k=>k.w<T&&k.type==='charge').slice(-3).map(k=>vol(o,k)),ref=charge.reduce((a,x)=>a+x,0)/3;
   const baisse=aff.map(k=>Math.round((1-vol(o,k)/ref)*100)),bm=baisse.reduce((a,x)=>a+x,0)/baisse.length;
   t('affûtage : baisse moyenne du volume entre 41 et 60 %',bm>=41&&bm<=60,baisse.map(x=>'−'+x+' %').join(', ')+' ; moyenne −'+Math.round(bm)+' %');
-  const chocs=o.weeks.filter(k=>k.phase!=='fond'&&sem(o,k).some(x=>x.title==='Week-end de choc')).map(k=>k.w);
-  t('deux week-ends de choc au plus avant l\'objectif principal, jamais sur la dernière sortie clé',chocs.length<=2&&!chocs.includes(T-1),chocs.length?'semaines '+chocs.join(', '):'aucun (enchaînement non activé)');
+  const chocs=o.weeks.filter(k=>k.phase!=='fond'&&sem(o,k).some(x=>x.title==='Week-end choc')).map(k=>k.w);
+  t('deux week-ends choc au plus avant l\'objectif principal, jamais sur la dernière sortie clé',chocs.length<=2&&!chocs.includes(T-1),chocs.length?'semaines '+chocs.join(', '):'aucun (enchaînement non activé)');
   /* règle des 30 jours : aucune sortie longue au-delà de +10 % (arrondi 5 min) de la plus longue des 30 jours */
   const S=o.sessions.filter(x=>x.type!=='cf');let pire=0;
   S.filter(x=>x.type==='long'&&x.date>=W(Math.min(...o.weeks.filter(k=>k.phase==='bloc').map(k=>k.w))).mon).forEach(x=>{const tt=new Date(x.date).getTime(),mx=Math.max(0,...S.filter(y=>new Date(y.date).getTime()<tt&&new Date(y.date).getTime()>=tt-30*864e5).map(y=>y.dur));pire=Math.max(pire,x.dur-Math.ceil(1.1*mx/5)*5);});

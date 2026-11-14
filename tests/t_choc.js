@@ -1,4 +1,4 @@
-/* D-105 : week-end de choc selon les avis d'experts (H-69). Lance : node t_choc.js */
+/* D-105 : week-end choc selon les avis d'experts (H-69). Lance : node t_choc.js */
 const E=require('./engine.js'),base=require('./t_prof.json');
 const isRun=s=>['ef','long','qual','desc'].includes(s.type);
 const antoine=p=>{p.planStart='2026-11-02';p.goalDplus=5000;p.races[0].dplus=1900;p.start.pastRaces=[{dur:390,dist:42,dplus:1300,date:'2025-09-20'}];
@@ -11,12 +11,15 @@ const h=m=>Math.floor(m/60)+' h '+String(m%60).padStart(2,'0');
 const o=plan(true),T=o.info.cal.T,N=o.info.cal.N,W=w=>o.weeks.find(k=>k.w===w);
 const chocs=o.weeks.filter(k=>k.choc);
 const princ=chocs.filter(k=>k.phase!=='fond');
-t('un seul week-end de choc avant l\'objectif principal, 7 semaines avant',princ.length===1&&princ[0].w===T-5,'S'+princ.map(k=>k.w).join(',')+' ; course en S'+N);
-t('la semaine qui le suit est une semaine allégée',W(T-4).type==='relache');
-t('un week-end de choc avant le 50 km, 4 à 6 semaines avant',chocs.filter(k=>k.phase==='fond').length===1,chocs.filter(k=>k.phase==='fond').map(k=>'S'+k.w).join());
+t('deux week-ends choc avant l\'objectif principal, 9 et 5 semaines avant',princ.length===2&&princ[0].w===T-7&&princ[1].w===T-3,'S'+princ.map(k=>k.w).join(', S')+' ; course en S'+N);
+t('aucun à moins de 5 semaines de la course, la sortie de 6 h reste seule',princ.every(k=>N-k.w>=5)&&!W(T-1).choc);
+/* si le premier créneau ne passe pas (pas d'enchaînement avant le pic), un seul, sur la première sortie clé possible */
+const tard=plan(true,p=>{p.orgs=[{from:'pic',enchaine:true,days:{run:[3,6,0],long:0,cf:[2],time:{}}}];}),pt=tard.weeks.filter(k=>k.choc&&k.phase!=='fond');
+t('enchaînement activé seulement au pic : un seul week-end choc, 5 semaines avant',pt.length===1&&pt[0].w===tard.info.cal.T-3,pt.map(k=>'S'+k.w).join()||'aucun');
+t('un week-end choc avant le 50 km, 4 à 6 semaines avant',chocs.filter(k=>k.phase==='fond').length===1,chocs.filter(k=>k.phase==='fond').map(k=>'S'+k.w).join());
 const ecart=chocs.slice(1).map((k,i)=>k.w-chocs[i].w);
-t('au moins 4 semaines entre deux week-ends de choc',ecart.every(e=>e>=4),'écarts : '+ecart.join(', ')+' semaines');
-for(const k of chocs){const s=sem(o,k),L=s.find(x=>x.type==='long'),M=s.find(x=>x.title==='Week-end de choc');
+t('au moins 4 semaines entre deux week-ends choc',ecart.every(e=>e>=4),'écarts : '+ecart.join(', ')+' semaines');
+for(const k of chocs){const s=sem(o,k),L=s.find(x=>x.type==='long'),M=s.find(x=>x.title==='Week-end choc');
   const jj=Math.round((new Date(M.date)-new Date(L.date))/864e5);
   t('S'+k.w+' : la plus longue d\'abord, la moyenne le lendemain',jj===1,h(L.dur)+' puis '+h(M.dur));
   t('S'+k.w+' : moyenne ≤ 2/3 de la longue et 3 h au plus',M.dur<=Math.ceil(L.dur*2/3/5)*5&&M.dur<=180);
@@ -27,7 +30,7 @@ for(const k of chocs){const s=sem(o,k),L=s.find(x=>x.type==='long'),M=s.find(x=>
   t('S'+k.w+' : le texte dit qu\'aucune étude ne le démontre',/Aucune étude/.test(M.why||''));}
 /* le reste */
 const off=plan(false),d0=chocs[0].mon;
-t('rien ne change avant le premier week-end de choc',JSON.stringify(o.sessions.filter(x=>x.date<d0))===JSON.stringify(off.sessions.filter(x=>x.date<d0)));
+t('rien ne change avant le premier week-end choc',JSON.stringify(o.sessions.filter(x=>x.date<d0))===JSON.stringify(off.sessions.filter(x=>x.date<d0)));
 t('règles v1 : plan identique',JSON.stringify(plan(true,null,'v1').sessions)===JSON.stringify(plan(false,null,'v1').sessions));
-t('sans enchaînement : aucun week-end de choc',plan(true,p=>{p.orgs=[];}).weeks.every(k=>!k.choc));
+t('sans enchaînement : aucun week-end choc',plan(true,p=>{p.orgs=[];}).weeks.every(k=>!k.choc));
 if(!ok)process.exitCode=1;
