@@ -18,7 +18,9 @@ const CONV={
   samRatio:2/3,              /* samedi d'un week-end de choc : au plus 2/3 de la sortie longue */
   samMax:d=>d>=1200?240:180, /* … et au plus 3 h (4 h pour une course de 20 h ou plus) */
   secPart:0.5,secMax:270,    /* objectif secondaire : sortie longue cible = 50 % de sa durée, 4 h 30 au plus */
-  chocsPrincipal:2,          /* D-103 : week-ends de choc avant l'objectif principal, sur les premières sorties clés ; jamais sur la dernière (3 avant D-103) */
+  chocsPrincipal:1,          /* D-105 : un seul week-end de choc avant l'objectif principal, sur la première sortie clé (2 en D-103, 3 avant) */
+  chocExperts:true,          /* D-105, H-69 : false = week-end de choc d'avant (comparaison dans les tests) */
+  chocEfMax:60,              /* D-105 : semaine du choc et semaine suivante, les autres courses sont des endurances d'1 h au plus, sans qualité */
   chocsSecondaire:1,         /* avant un objectif secondaire exigeant, 4 à 6 semaines avant */
   secExigeant:(dur,dist,dplus)=>dur>=240||(dist>0&&dplus/dist>=30),
   efMax:{'4-8h':90,'8-20h':90},
@@ -308,7 +310,7 @@ function build(inp){
     G(1,'Tes montées les plus longues sont courtes et tu n\'as pas d\'accès régulier à la montagne : le bloc spécifique s\'appuiera sur des répétitions de côte, et quelques sorties en moyenne montagne pendant le bloc feront une vraie différence.');
   if(tcap(longDow)&&tcap(longDow)<tr.cible[0])G(1,'Temps disponible le '+['dimanche','lundi','mardi','mercredi','jeudi','vendredi','samedi'][longDow]+' : '+tcap(longDow)+' min, pour une sortie clé de '+tr.cible[0]+' min au moins.');
 
-  let niv=null,enW=false,lrGel=0,chocsP=0;const chocsS={};   /* D-67 : niveau de sortie longue atteint */
+  let niv=null,enW=false,lrGel=0,chocsP=0,chocPrec=false;const chocsS={};   /* D-67 : niveau de sortie longue atteint */
   let derniereRel=0,charges=0,clesFaites=0,derniereCle=-99,lrPrec=null,arretC=0,ref=null,ref2=null,volsCharge=[],dernierExec=null,reprise=null,maxAvant=0,maxSec=0;
   const cnt={};const cntDone={};
   /* D-94 : l'écart n° 5 (repère de reprise dégressif, H-48) est remplacé par la mémoire de ref30 : la sortie déclarée est une séance à sa date */
@@ -383,9 +385,9 @@ function build(inp){
     if(V2&&lrW&&lrGel>0&&!relache&&!gele&&!cle)lrGel--;
     /* week-end enchaîné : la veille de la sortie longue devient une sortie moyenne (≤ 2/3, H-42), hors budget des endurances */
     /* D-70 : week-end de choc — objectif principal : semaines de sortie clé (3 au plus) ; objectif secondaire exigeant : 1, 4 à 6 semaines avant */
-    let choc=null;
-    if(V2&&enW&&lrW&&!aff&&!sAff&&!sRec&&!relache){
-      if(cle&&chocsP<CONV.chocsPrincipal&&(!FIN||w<c.T-1))choc={dur:dMain||600,p:true};
+    let choc=null;const CX=V2&&CONV.chocExperts;
+    if(V2&&enW&&lrW&&!aff&&!sAff&&!sRec&&!relache&&!(CX&&lrGel>0)){   /* D-105 : pas de week-end de choc si la sortie longue est gelée par le ressenti */
+      if(cle&&chocsP<(CX?CONV.chocsPrincipal:2)&&(!FIN||w<c.T-1))choc={dur:dMain||600,p:true};
       else{const s=secs.find(s=>s.statut==='objectif'&&s.exigeant&&(chocsS[s.w]||0)<CONV.chocsSecondaire&&w>=s.w-6&&w<=s.w-4&&(lrW>=0.9*(niv||0)||w===s.w-4));
         if(s)choc={dur:s.dur,s:s.w};}}
     const veille=choc?jours.find(d=>off(d)===offSL-1):null;if(veille==null)choc=null;else{if(choc.p)chocsP++;else chocsS[choc.s]=(chocsS[choc.s]||0)+1;}if(veille!=null)jours=jours.filter(d=>d!==veille);   /* hors choc, la veille reste une endurance normale */
@@ -403,14 +405,16 @@ function build(inp){
     const aut=V2?reste/Math.max(1,nb):(courseSem||(secIci&&sAff))?V*60/Math.max(1,nb):Math.max(0,V*60-lr0)/Math.max(1,nb);
     const h=hist.slice(),rx=[];
     jours.forEach(d=>{const jour=(w-1)*7+off(d);const cap=Math.max(PLANCHER,R30(h,jour));
-      let dur=arrondi(Math.min(aut,cap,V2?(CONV.efMax[trName]||90):1e9),cap);   /* D-29 : endurance plafonnée selon l'objectif */const tc=tcap(d);if(tc&&dur>tc)dur=arrondi(tc,tc);
+      let dur=arrondi(Math.min(aut,cap,V2?(CONV.efMax[trName]||90):1e9,CX&&(choc||chocPrec)?CONV.chocEfMax:1e9),cap);   /* D-29 : endurance plafonnée selon l'objectif */const tc=tcap(d);if(tc&&dur>tc)dur=arrondi(tc,tc);
       if(dur>0){rx.push({dow:d,jour,dur,kind:'ef'});h.push({j:jour,d:dur,t:'rx'});}});
     const jourSL=(w-1)*7+offSL;
     if(secIci&&(w===secIci.w)){rx.push({dow:D(secIci.date).getDay(),jour:jourOf(secIci.date),dur:Math.round(secIci.dur),kind:'race',name:secIci.name,statut:secIci.statut});}
     else if(courseSem){rx.push({dow:D(P.goalDate).getDay(),jour:jourOf(P.goalDate),dur:Math.round(dMain||600),kind:'goal'});}
     if(V2&&lrW){if(veille!=null){const jv=(w-1)*7+off(veille),cv=Math.max(PLANCHER,R30(h,jv));let dv=arrondi(Math.min(CONV.samRatio*lrW,CONV.samMax(choc.dur),cv),cv);const tc=tcap(veille);if(tc&&dv>tc)dv=arrondi(tc,tc);
-        if(dv>0){rx.push({dow:veille,jour:jv,dur:dv,kind:'ef',moyen:true});h.push({j:jv,d:dv,t:'rx'});}}
-      rx.push({dow:longDow,jour:jourSL,dur:lrW,kind:cle?'cle':'long'});}
+        const inv=CX&&dv>0&&!(tc&&lrW>tc);   /* D-105 : la plus longue d'abord, sur des jambes fraîches ; la moyenne le lendemain (sauf si le temps disponible la veille ne le permet pas) */
+        if(inv){rx.push({dow:veille,jour:jv,dur:lrW,kind:cle?'cle':'long',choc:true});h.push({j:jv,d:lrW,t:'rx'});rx.push({dow:longDow,jour:jourSL,dur:dv,kind:'ef',moyen:true,apres:true});}
+        else{if(dv>0){rx.push({dow:veille,jour:jv,dur:dv,kind:'ef',moyen:true});h.push({j:jv,d:dv,t:'rx'});}rx.push({dow:longDow,jour:jourSL,dur:lrW,kind:cle?'cle':'long'});}}
+      else rx.push({dow:longDow,jour:jourSL,dur:lrW,kind:cle?'cle':'long'});}
     else if(!V2&&!(secIci)&&!courseSem){const mx=R30(hist,jourSL);let lr=cibleLr(mx);if(slMax!=null)lr=slForce!=null?slForce:Math.min(lr,slMax);
       const cap=Math.max(PLANCHER,SEUIL*mx);lr=arrondi(lr,cap,true);const tc=tcap(longDow);if(tc&&lr>tc)lr=arrondi(tc,tc);
       if(lr>0)rx.push({dow:longDow,jour:jourSL,dur:lr,kind:cle?'cle':'long'});}
@@ -419,7 +423,7 @@ function build(inp){
     for(let i=rx.length-1;i>=0;i--){const x=rx[i];if(x.kind!=='race'&&x.kind!=='goal'&&raceDates.has(add(monW,off(x.dow))))rx.splice(i,1);}
     /* qualité (gabarit) : une journée dure, pas collée à la sortie longue, de préférence un jour de renforcement */
     let qk=null;
-    if(!relache&&!sRec&&!(courseSem&&false)){
+    if(!relache&&!sRec&&!(courseSem&&false)&&!(CX&&(choc||chocPrec))){   /* D-105 : pas de qualité la semaine du choc ni la suivante */
       if(aff&&!courseSem)qk='rappel';
       else if(!gele&&ph==='fond'){if(sp==='F2')qk=renfo2?null:((cnt.sprint||0)<6?'sprint':'courtes');else if(sp==='F3')qk='me';else if(sp==='F4')qk='inter';}
       else if(!gele&&(ph==='bloc'||ph==='pic'))qk=((w-c.fond)%2)?'tempo':'spe';}
@@ -472,7 +476,7 @@ function build(inp){
     hist=hist.concat(execH).filter(e=>e.j>=(w-1)*7+6-(V2?MEMO:FENETRE)-1);
     if(r!==undefined){   /* la semaine en cours n'ajuste rien : ses séances sont à venir */
       if(!gele){if(V2){const efP=rx.filter(x=>(x.kind==='ef'||x.kind==='qual')&&!x.moyen).reduce((a,x)=>a+x.dur,0),eq=efP/60/(1-partK);
-          ajuste(m,r,saut,relache,eq);if(m.etat==='sympt')lrGel=2;else if(m.etat==='maintien'&&!relache)lrGel=Math.max(lrGel,1);if(!relache&&efP<budgetEf-3)m.volume=Math.min(m.volume,Math.max(eq,0.5)*(1+m.cap));}
+          ajuste(m,r,saut,relache,eq);if(m.etat==='sympt')lrGel=2;else if(m.etat==='maintien'&&!relache)lrGel=Math.max(lrGel,1);if(!relache&&efP<budgetEf-3&&!(CX&&(choc||chocPrec)))m.volume=Math.min(m.volume,Math.max(eq,0.5)*(1+m.cap));}
         else{ajuste(m,r,saut,relache,volPrevu);if(!relache&&volPrevu<V-0.05)m.volume=Math.min(m.volume,Math.max(volPrevu,0.5)*(1+m.cap));}}
       else{m.sdr=0;m.relDem=false;}
     }
@@ -482,13 +486,15 @@ function build(inp){
       const l=past?reelL:(lrObj.length?lrObj[0].dur:0);if(l>0)niv=Math.max(niv||0,l);if(past&&reelL>0)lrPrec=reelL;}
     if(cle&&lrObj.length){clesFaites++;derniereCle=w;}
     const typ=aff?'affutage':sAff?'aff_sec':sRec?'recup_sec':relache?'relache':'charge';
-    out.weeks.push({w,mon:monW,phase:ph,sous:sp,type:typ,V,volPrevu,cle,sympt:m.sympt&&!gele,dens:dz,jours:V2?(DyW.run||[]).slice():undefined,enchaine:V2?enW:undefined,niv:V2?niv:undefined});
+    chocPrec=!!choc;
+    out.weeks.push({w,mon:monW,phase:ph,sous:sp,type:typ,choc:V2?!!choc:undefined,V,volPrevu,cle,sympt:m.sympt&&!gele,dens:dz,jours:V2?(DyW.run||[]).slice():undefined,enchaine:V2?enW:undefined,niv:V2?niv:undefined});
     /* séances datées */
     const why=x=>{const b=[];
       if(x.kind==='cle')b.push('Sortie clé du bloc spécifique : elle se rapproche de ta course.');
+      if(x.choc)b.push('Week-end de choc : la plus longue aujourd\'hui, sur des jambes fraîches. Demain, une sortie moyenne sur la fatigue.');
       else if(x.kind==='long')b.push(ph==='fond'?'Sortie longue : la seule séance qui progresse cette semaine (environ +10 % sur la plus longue des 30 derniers jours, durée arrondie aux 5 min supérieures).':'Sortie longue.');
       else if(x.kind==='qual')b.push({F2:'Base aérobie : travail de force en côte, car ton renforcement ne le couvre pas.',F3:'Endurance musculaire : les jambes, pas le souffle, limitent la montée. C\'est la qualité qui manque le plus en ultra de montagne.',F4:'Intensité en côte : elle relève ton plafond aérobie avant le bloc spécifique.',bloc:'Bloc spécifique : effort de course en montée.',pic:'Pic : effort de course en montée.',affutage:'Affûtage : garder le rythme sans fatigue.'}[aff?'affutage':(sp||ph)]||'Séance de qualité.');
-      else if(x.moyen)b.push('Week-end de choc : sortie moyenne la veille de ta sortie longue, pour courir le lendemain sur des jambes déjà fatiguées. Il y en a peu dans la préparation : c\'est l\'un d\'eux.');
+      else if(x.moyen)b.push(x.apres?'Week-end de choc : sortie moyenne le lendemain de ta sortie longue, sur des jambes déjà fatiguées. Aucune étude ne montre que c\'est mieux qu\'une sortie longue seule : il sert à courir fatigué et à répéter ta nutrition. Si tu es très fatigué ce matin, raccourcis ou supprime cette sortie.':'Week-end de choc : sortie moyenne la veille de ta sortie longue, pour courir le lendemain sur des jambes déjà fatiguées. Il y en a peu dans la préparation : c\'est l\'un d\'eux.');
       else if(x.kind==='ef')b.push('Endurance facile : elle construit le volume sans fatigue.');
       if(x.dplus&&(x.kind==='long'||x.kind==='cle'||x.moyen)){   /* D-102 : densité de la course, et descentes */
         const sp0=secs.find(s=>s.densSpe&&w>=s.w-CONV.fenetreSpe&&w<s.w),refD=sp0?sp0.densSpe:(ph!=='fond'||w>=c.fond?densC:null),mk=sp0?sp0.mkm:(P.goalDist&&P.goalDplus?P.goalDplus/P.goalDist:null);
