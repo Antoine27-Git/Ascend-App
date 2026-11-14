@@ -1136,8 +1136,8 @@ function svReady(B){
   const bd=svLn('Prévu à cette date',pL?svD(pL):'—','niveau que le plan visait')
     +(nx?svLn('Prochaine sortie longue',svD(nx.dur),svDay(nx.date)):'')
     +(decl&&decl.date<start?svLn('Avant la reprise',svD(decl.dur),'déclarée le '+fmtS(decl.date)):'')
-    +svN(MN?['Visée : la plus longue sortie que le plan te fait faire avant le '+fmtS(NX.date)+' ('+svD(pMax)+', 2 semaines avant au plus tard).','Minimum conseillé : ≈ la moitié de ta durée de course estimée ('+(nxE?durR(nxE):'—')+'), soit '+(nxV?svD(nxV):'—')+'.','On plafonne la sortie longue vers 5 à 6 h, quelle que soit la course : au-delà, la récupération coûte plus qu\'elle ne rapporte (habitude d\'entraîneur).']
-      :['Visée : '+zl+' pour ta plus longue sortie, pendant le bloc spécifique.','Ta course dure ≈ '+(E.info.dureeMain?durR(E.info.dureeMain):'—')+' : la visée en représente '+(pc?pc.replace('≈ ','').replace(' de ta course',''):'—')+'.','On plafonne la sortie longue vers 5 à 6 h, quelle que soit la course : au-delà, la récupération coûte plus qu\'elle ne rapporte (habitude d\'entraîneur).','La fin de course se prépare autrement : week-ends enchaînés (par exemple 5 h le samedi, 3 h le dimanche).'])
+    +svN(MN?['Visée : la plus longue sortie que le plan te fait faire avant le '+fmtS(NX.date)+' ('+svD(pMax)+', 2 semaines avant au plus tard).','Repère (avis d\'expert) : ≈ la moitié de ta durée de course estimée ('+(nxE?durR(nxE):'—')+'), soit '+(nxV?svD(nxV):'—')+'.','Plafond de 5 à 6 h, quelle que soit la course.','Aucune étude ne fixe ce plafond : c\'est un avis d\'expert, dans la fourchette de pratique (20 à 80 % de la course).','Ce que les études désignent, c\'est ton volume par semaine et ta régularité.']
+      :['Visée : '+zl+' pour ta plus longue sortie, pendant le bloc spécifique.','Ta course dure ≈ '+(E.info.dureeMain?durR(E.info.dureeMain):'—')+' : la visée en représente '+(pc?pc.replace('≈ ','').replace(' de ta course',''):'—')+'.','Plafond de 5 à 6 h, quelle que soit la course.','Aucune étude ne fixe ce plafond : c\'est un avis d\'expert, dans la fourchette de pratique (20 à 80 % de la course).','Ce que les études désignent, c\'est ton volume par semaine et ta régularité.','La fin de course se prépare aussi par un week-end enchaîné : une sortie moyenne la veille de la sortie longue.'])
     +(ec&&!MN?svN('<b style="color:var(--coralT)">À ce rythme, le plan n\'atteint pas la visée</b> : '+svD(ec.atteint)+' au lieu de '+svD(ec.cible)+' avant le '+fmtS(ec.limite)+'.'):'');
   out.push(svRow('duree','terrain','s','Ta sortie longue',vt,vc,'','',bd,true,
     svCases([['Plus longue',rL?svD(rL):'—'],['Prochaine',nx?svD(nx.dur):'—'],['Visée',MN?svD(pMax):svD(c[0]).replace(/\u00a0h$/,'')+'–'+svD(c[1]),pc]])));
@@ -3122,7 +3122,7 @@ function vGate(){
     +authFormHTML('Un compte garde ton plan et tes séances en sécurité, et te permet de les retrouver sur un autre téléphone. Ton prénom personnalise l\'app.')
     +syncLineHTML()+versionLineHTML()+'</div></main>';
 }
-const APP_VERSION='v70';   /* généré depuis sw.js par tools/build.py */
+const APP_VERSION='v71';   /* généré depuis sw.js par tools/build.py */
 function versionLineHTML(){return '<div class="mini" id="ver" style="margin-top:12px;text-align:center;opacity:.7">Ascend '+APP_VERSION+' · moteur de plan v2</div>';}
 /* compare la page chargée au cache du service worker : signale un déploiement pas encore actif */
 function checkVersion(){if(!('caches' in window))return;caches.keys().then(ks=>{const c=ks.filter(k=>/^ascend-v\d+$/.test(k)).map(k=>+k.slice(8)).sort((a,b)=>b-a)[0],el=document.getElementById('ver');

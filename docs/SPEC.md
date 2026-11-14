@@ -3507,3 +3507,29 @@ c. **Montée** = mètres montés par heure sur les seules montées (> +3 %), ram
 
 **Sources.** Costa et coll. 2017 ; Miall et coll. 2018, DOI 10.1111/sms.12912 ; Martinez et coll. 2023, DOI 10.1007/s40279-023-01841-0 ; King et coll. 2022, PMC9105618.
 
+### D-105 — Week-end de choc : un seul avant l'objectif principal, semaine allégée autour (proposée le 14/11/2026 ; touche le plan ; à valider par Antoine)
+**Constat (revue du 14/11/2026, point 6).** Aucune étude ne porte sur le week-end de choc. La pratique repose sur des avis d'experts (Millet, Campus), et l'app s'en écarte sur quatre points : deux week-ends de choc à deux semaines d'écart avant l'objectif principal ; séance de qualité maintenue la même semaine ; plus longue sortie le deuxième jour ; aucune condition d'engagement.
+
+**Ce que disent les sources.**
+- **Étude.** Bellinger 2020 (revue) : pousser la surcharge jusqu'à la baisse de performance n'est pas nécessaire et peut réduire l'adaptation. Khassetarash 2021 : une exposition à la descente protège lors des suivantes.
+- **Avis d'expert.** Millet, Campus : 3 à 4 semaines au moins entre deux week-ends de choc ; 4 à 6 semaines avant la course ; jours précédents allégés de 30 à 40 % ; semaine suivante très allégée ; déconseillé sans base régulière. Koop, Vert : jamais nécessaire.
+- **Non vérifié.** Le nombre, l'ordre des jours, les durées.
+
+**Règles (moteur v2).**
+1. **Un seul week-end de choc avant l'objectif principal**, sur la première sortie clé (7 semaines avant). La semaine suivante est déjà une semaine allégée de la grille. Les sorties clés de S−5 et S−3 se font seules. `CONV.chocsPrincipal = 1`. Celui de l'objectif intermédiaire est inchangé (un, 4 à 6 semaines avant) : les deux sont ainsi séparés de plusieurs mois.
+2. **Semaine du choc sans séance de qualité.** L'autre course de la semaine est une endurance, 1 h au plus.
+3. **Semaine suivante sans séance de qualité** si ce n'est pas déjà une semaine allégée (cas de l'objectif intermédiaire).
+4. **Condition d'engagement.** Le week-end de choc n'est programmé que si la sortie longue n'est pas gelée par le ressenti (D-67). Sinon la semaine reste une semaine de sortie longue simple.
+5. **Ordre des jours : inchangé pour l'instant** (moyenne la veille, longue le lendemain). Les exemples d'experts font l'inverse ; aucune étude ne tranche. **Question ouverte pour Antoine.**
+6. **Inchangé.** Durée de la veille (2/3 de la sortie longue, 3 h au plus), pleine densité de D+, activation par l'organisation.
+
+**Affichage.** À l'activation de l'enchaînement, et sur la fiche de la séance : « Aucune étude ne montre qu'un week-end de choc fait mieux qu'une sortie longue seule. Il sert à courir sur des jambes fatiguées et à répéter ta nutrition. Il demande au moins trois courses par semaine tenues depuis deux mois. Si tu es fatigué, fais seulement la sortie longue. »
+
+**Effet attendu sur le profil d'Antoine.** Avant le 80 km : S−7 passe de 9 h 30 à 9 h environ (qualité remplacée par 1 h d'endurance) ; S−5 de 10 h à 7 h environ (plus de veille). Avant le 50 km : semaine du choc de 8 h 30 à 8 h environ. Chiffres à mesurer au codage.
+
+**Limites (H-69).** Toutes les règles sont des avis d'experts ou des choix de prudence. Moins de volume en pic : assumé.
+
+**Mise en œuvre prévue.** `tests/engine.js` : `CONV.chocsPrincipal`, type de l'autre séance en semaine de choc et la suivante, condition de gel. Texte dans `index.html`. Tests : `t_fin.js` (un seul choc, jamais à moins de 7 semaines), test dédié des semaines de choc, parité v1 à 0 écart.
+
+**Sources.** Bellinger 2020, PMID 32064575 ; Khassetarash et coll. 2021, PMC9189713 ; Campus, campus.coach/blog/week-end-choc-trail-long ; Koop, trainright.com/longest-run-ultramarathon-training/.
+
