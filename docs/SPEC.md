@@ -3435,3 +3435,50 @@ c. **Montée** = mètres montés par heure sur les seules montées (> +3 %), ram
 **Résultat sur le profil d'Antoine (80 km à 3 000 m, sa sortie de référence).** Plus gros D+ en sortie longue avant le 50 km : 850 m → 1 000 m (4 h 35). Week-end de choc de fin mars : 2 h 50 + 4 h 10, soit 600 + 1 050 m (avant : 250 + 1 050). **Correction de l'exemple de la spec** : « ≈ 1 100 m » supposait une course de 8 h ; le moteur estime ≈ 8 h 15 pour son 50 km (38 m/km, soit ≈ 230 m/h) et plafonne à la densité de l'80 km (≈ 220 m/h si le profil est à 3 000 m), d'où 1 000 m sur 4 h 35. À 4 000 m de D+ pour l'80 km, la rampe d'avant atteignait déjà la densité de course : le changement ne joue alors que sur le week-end de choc.
 
 **Sources.** Koop, trainright.com/?p=26580 et /hierarchy-ultramarathon-training-needs-jason-koop/ ; Genitrini et al. 2022, PMC9680470 ; Bontemps et al. 2025, Eur J Sport Sci 25(3) ; Martinez-Navarro et al. 2026, PMC12846201 ; La Clinique du Coureur, fiche « Quantification du stress ».
+
+### D-103 — Fin de préparation : sorties clés à rebours, niveau tenu en bloc, affûtage qui baisse vraiment (proposée le 14/11/2026 ; touche le plan ; à valider par Antoine)
+**Constat (revue du 14/11/2026, docs/REVUE-CONVENTIONS-2026-11.md).** Sur les plans produits (v69) : (1) les trois sorties clés tombent dans les 5 premières semaines du bloc, la dernière à 7 semaines de la course ; (2) ensuite la sortie longue retombe à 3 h, le volume des dernières semaines est bas ; (3) l'affûtage ne baisse que de 10 à 15 %, la sortie longue y monte, et une sortie de 3 h 20 tombe 6 jours avant la course.
+
+**Ce que disent les sources.**
+- **Étude.** Wang 2023 (méta-analyse, 14 études, texte intégral lu) : gain avec une baisse de volume de 41 à 60 %, intensité et fréquence maintenues, sur 21 jours au plus. Au-delà de 21 jours : pas de gain. Bosquet 2007 (S-COU-006) : même fourchette. Aucune étude sur l'ultra ni le trail (contre-la-montre de 40 km au plus).
+- **Étude** (observationnelle). Tanda et Knechtle 2015 : sur 100 km, le volume hebdomadaire prédit la performance mieux que l'allure.
+- **Avis d'expert.** Koop : une ou deux sorties proches du maximum par mois, les autres à 50–75 % ; affûtage de 2 à 3 semaines avec une dernière semaine très légère ; repère de 9 h par semaine pendant 6 semaines à partir de 9 semaines avant un 100 km.
+- **Non vérifié.** La date de la dernière sortie clé, la durée exacte des sorties d'affûtage, le nombre de week-ends de choc.
+
+**Choix d'Antoine (14/11/2026).** Pour relever le volume des dernières semaines : des sorties longues au-delà de 3 h les week-ends sans sortie clé, pas de 4e jour de course.
+
+**Règles (moteur v2 seulement ; règles v1 inchangées).**
+1. **Sorties clés à rebours.** Les sorties clés se placent 7, 5 et 3 semaines avant la course (semaines T−5, T−3, T−1), dans l'ordre croissant (5 h, 5 h 30, 6 h pour une course de 8 à 20 h). La dernière tombe 20 jours avant la course : l'affûtage dure 3 semaines, pas 7. Une sortie clé manquée (semaine allégée à la demande, arrêt) n'est pas rattrapée : la suivante reprend la progression permise par la règle des 30 jours.
+2. **Niveau tenu jusqu'à la première sortie clé.** En bloc, avant la première sortie clé, la sortie longue continue l'alternance du fond : une semaine au niveau atteint, une semaine moyenne. Sans cela, la règle des 30 jours interdirait la première sortie clé.
+3. **Semaine moyenne en bloc et en pic.** Sortie longue à 75 % du niveau atteint (haut de la fourchette de Koop), 4 h au plus (3 h aujourd'hui). `CONV.moyenneBloc = 0.75`, `CONV.moyenneMaxBloc = 240`. Le fond n'est pas modifié (2/3, 3 h).
+4. **Affûtage.** Sortie longue à 50 % du niveau 13 jours avant la course, puis un tiers 6 jours avant (3 h puis 2 h pour le 80 km ; environ 2 h 20 puis 1 h 30 pour le 50 km). Elle ne monte jamais pendant l'affûtage. Les autres séances gardent leur nombre et leur intensité. S'applique aussi à l'affûtage d'un objectif intermédiaire.
+5. **Week-ends de choc de l'objectif principal.** Deux au lieu de trois (H-44) : sur les deux premières sorties clés. La dernière sortie clé (6 h, 20 jours avant) se fait seule, sans sortie la veille. `CONV.chocsPrincipal = 2`. Prudence, **non vérifiée**.
+6. **Inchangé.** Règle des 30 jours, semaines allégées, endurances (1 h 30 au plus), densité de D+ (D-102), gel sur fatigue, objectif intermédiaire (cible et week-end de choc).
+
+**Effet attendu** (prototype sur le profil proche de celui d'Antoine, 3 jours de course en période spécifique ; règles 1 à 4, avant la règle 5) :
+
+| Semaine avant le 80 km | Aujourd'hui | Avec D-103 |
+|---|---|---|
+| S−11 | 9 h 30 · longue 5 h | 7 h 35 · longue 4 h 35 |
+| S−10 (allégée) | 4 h 05 · 3 h | 5 h · 3 h |
+| S−9 | 10 h · 5 h 30 | 7 h 35 · 4 h 35 |
+| S−8 | 4 h 50 · 3 h | 6 h 25 · 3 h 25 |
+| S−7 | 10 h 30 · 6 h | 9 h 30 · **5 h** |
+| S−6 (allégée) | 4 h 05 · 3 h | 4 h 05 · 3 h |
+| S−5 | 4 h 40 · 3 h | 10 h · **5 h 30** |
+| S−4 | 5 h · 3 h | 5 h 50 · 4 h |
+| S−3 | 5 h 20 · 3 h | 10 h 30 · **6 h** |
+| S−2 (affûtage) | 4 h 50 · 3 h 20 | 4 h 20 · 3 h |
+| S−1 (affûtage) | 4 h 30 · 3 h 20 | 3 h · 2 h |
+
+- Volume moyen des 9 semaines avant l'affûtage : 6 h 25 → 7 h 25. Sur la fenêtre de Koop (6 semaines à partir de S−9) : 6 h 30 → 7 h 15. Le repère de 9 h n'est pas atteint avec 3 jours de course : limite assumée.
+- Affûtage : −51 % puis −66 % par rapport aux 3 dernières semaines de charge, −58 % en moyenne (fourchette des études : 41 à 60 %).
+- La règle 5 retire 3 h à la semaine S−3.
+
+**Limites (H-67).** Les études d'affûtage ne portent pas sur l'ultra. Placer 6 h à 20 jours de la course, 75 % et 4 h pour la semaine moyenne, 50 % et un tiers pour l'affûtage, deux week-ends de choc : choix de conception appuyés sur des avis d'experts, pas sur des études. Charge plus tardive : si le ressenti se dégrade en pic, le gel de la sortie longue (D-67) et la semaine allégée à la demande restent les garde-fous.
+
+**Mise en œuvre (v70, validée par Antoine le 14/11/2026).** `tests/engine.js` : `creneauCle` (T−5, T−3, T−1), utilisé dans la boucle et dans `doitMonter` ; `cibleLr2` (niveau tenu avant la première clé, semaine moyenne, affûtage) ; `CONV.finPrepa` (interrupteur de comparaison), `moyenneBloc` 0,75, `moyenneMaxBloc` 240, `affLongue` [0,5 ; 1/3], `chocsPrincipal` 2. En affûtage, la sortie longue vaut un tiers du niveau la semaine qui précède la course et 50 % avant, sans jamais dépasser la précédente ; même règle pour l'affûtage d'un objectif intermédiaire, quelle que soit sa durée (2 ou 3 semaines). Règles v1 inchangées (parité 0 écart). Test dédié : `tests/t_fin.js` (12 contrôles sur deux profils). Rien ne change dans le plan avant l'affûtage du 50 km.
+**Résultat mesuré.** Profil d'Antoine : sorties clés en S−7, S−5, S−3 (5 h, 5 h 30, 6 h), la dernière 20 jours avant ; week-ends de choc sur les deux premières ; affûtage 3 h puis 2 h, volume −46 % puis −62 % (moyenne −54 %). Profil à 4 jours : −33 % puis −53 % (moyenne −43 %). Affûtage du 50 km : 2 h 20 puis 1 h 30 (avant : 3 h 10 puis 2 h 30). GABARIT-TRAIL.md aligné (§ 2).
+
+**Sources.** Wang et coll. 2023, PLOS ONE 18(5):e0282838 ; Bosquet et coll. 2007 (S-COU-006) ; Tanda et Knechtle 2015, PMC4425319 ; Koop, trainright.com/longest-run-ultramarathon-training/, /tapering-ultrarunning-prevent-taper-tantrum, /ultramarathon-training-time-required/.
+

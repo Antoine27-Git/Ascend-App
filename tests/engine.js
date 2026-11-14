@@ -18,12 +18,15 @@ const CONV={
   samRatio:2/3,              /* samedi d'un week-end de choc : au plus 2/3 de la sortie longue */
   samMax:d=>d>=1200?240:180, /* … et au plus 3 h (4 h pour une course de 20 h ou plus) */
   secPart:0.5,secMax:270,    /* objectif secondaire : sortie longue cible = 50 % de sa durée, 4 h 30 au plus */
-  chocsPrincipal:3,          /* week-ends de choc avant l'objectif principal, sur les semaines de sortie clé */
+  chocsPrincipal:2,          /* D-103 : week-ends de choc avant l'objectif principal, sur les premières sorties clés ; jamais sur la dernière (3 avant D-103) */
   chocsSecondaire:1,         /* avant un objectif secondaire exigeant, 4 à 6 semaines avant */
   secExigeant:(dur,dist,dplus)=>dur>=240||(dist>0&&dplus/dist>=30),
   efMax:{'4-8h':90,'8-20h':90},
   memPente:0.01,             /* D-94, H-40 : une sortie sortie de la fenêtre des 30 jours garde un repère qui baisse de 1 % par jour (0 au 130e jour) */
   memSeance:60,              /* D-94 : la mémoire n'autorise pas de séance de plus d'1 h (= 2 × le plancher de 30 min) ; au-delà, règle des 30 jours stricte */
+  finPrepa:true,             /* D-103, H-67 : false = fin de préparation d'avant (comparaison dans les tests) */
+  moyenneBloc:0.75,moyenneMaxBloc:240,   /* D-103 : semaine moyenne en bloc et en pic = 75 % du niveau, 4 h au plus */
+  affLongue:[0.5,1/3],       /* D-103 : sortie longue d'affûtage = 50 % du niveau 13 jours avant, puis un tiers */
   densCourse:true,           /* D-102 : false = sans la densité de la course intermédiaire (comparaison dans les tests) */
   fenetreSpe:8,              /* D-102, H-66 : 8 semaines avant un objectif intermédiaire, la densité de D+ des sorties longues vaut au moins celle de la course */
   densVeille:1,              /* D-102, H-66 : la veille d'un week-end de choc est à pleine densité (0,5 avant) */
@@ -121,6 +124,8 @@ function Calendrier(N,tr){
   c.sous=w=>{if(w>c.fond)return null;if(w<=f1)return 'F1';if(w<=f1+f2)return 'F2';if(w<=f1+f2+f3)return 'F3';return 'F4';};
   return c;
 }
+/* D-103 : les sorties clés se placent à rebours, toutes les 2 semaines, la dernière en T−1 (3 semaines avant la course) */
+const creneauCle=(c,tr,x)=>(c.T-1-x)%2===0&&x>=c.T-1-2*(tr.n_cles-1);
 function relachesPrevues(c,w,derniere,charges,forcees){
   const out=new Set();
   for(let x=w;x<c.T;x++){
@@ -227,7 +232,7 @@ function build(inp){
   let DyW=Dy;const tcap=dow=>{if(inp.regles!=='v1')return null;const t=(DyW.time||{})[dow];return t?+t:null;};   /* D-71 : ignoré en v2 (l'endurance est plafonnée par CONV.efMax, la sortie longue par sa progression) */
   const strength=!!(P.modules&&P.modules.strength);let cfDays=strength?(Dy.cf||[]).slice():[],renfo2=strength&&cfDays.length>=2;
   /* D-68 : organisation par phase (attachée aux phases, pas aux dates) et versions passées (le passé ne se réécrit jamais) */
-  const V2=inp.regles!=='v1';SUP=V2&&CONV.arrondiSup;const ORD=['F1','F2','F3','F4','bloc','pic','affutage'];
+  const V2=inp.regles!=='v1',FIN=V2&&CONV.finPrepa;SUP=V2&&CONV.arrondiSup;const ORD=['F1','F2','F3','F4','bloc','pic','affutage'];
   const okOrg=o=>o&&ORD.includes(o.from)&&o.days&&(o.days.run||[]).length;
   const cfgNow={days:Dy,orgs:V2&&Array.isArray(P.orgs)?P.orgs.filter(okOrg):[]};
   /* versions passées : {until, days, orgs} ; une semaine antérieure à until garde l'organisation de sa version */
@@ -332,12 +337,12 @@ function build(inp){
       if(m.conso&&m.gel==null&&m.casse==null){m.gel=(!V2&&dernierExec)?Math.min(m.volume,dernierExec):m.volume;m.volume=m.gel;}
       V=m.volume*(relache?0.6:1);if(relache)V=Math.max(V,Math.min(m.volume,2*PLANCHER/60));}
     const gele=aff||sAff||sRec,courseSem=w===N&&aff;
-    let cle=false;if(!gele&&!relache&&(ph==='bloc'||ph==='pic'))cle=tr.n_cles>clesFaites&&w-derniereCle>=2&&w<=c.T-1;
+    let cle=false;if(!gele&&!relache&&(ph==='bloc'||ph==='pic'))cle=tr.n_cles>clesFaites&&w-derniereCle>=2&&w<=c.T-1&&(!FIN||creneauCle(c,tr,w));
     const secIci=secs.find(s=>s.w===w)||null;
     const part=p=>Math.max(PART[p],1/n);
     const doitMonter=mx=>{
       const futRel=relachesPrevues(c,w,derniereRel,charges,forcees),charge=[];for(let x=w;x<c.T;x++)if(!futRel.has(x)&&!forcees.has(x))charge.push(x);
-      const clesPrev=[];let dern=derniereCle;for(const x of charge)if((c.phase(x)==='bloc'||c.phase(x)==='pic')&&clesPrev.length<tr.n_cles-clesFaites&&x-dern>=2){clesPrev.push(x);dern=x;}
+      const clesPrev=[];let dern=derniereCle;for(const x of charge)if((c.phase(x)==='bloc'||c.phase(x)==='pic')&&clesPrev.length<tr.n_cles-clesFaites&&x-dern>=2&&(!FIN||creneauCle(c,tr,x))){clesPrev.push(x);dern=x;}
       const ech=[];if(clesPrev.length)ech.push([clesPrev[clesPrev.length-1],tr.cible[0]/SEUIL]);
       secs.forEach(s=>{if(V2&&s.statut!=='objectif')return;if(s.w>=w){const lim=s.statut==='objectif'?Math.min(s.w,...Object.keys(secAff).map(Number).filter(x=>x<=s.w&&x>s.w-4)):s.w;ech.push([lim,V2?Math.min(CONV.secPart*s.dur,CONV.secMax)/SEUIL:echeance(s.dur)]);}});
       for(const [sem,besoin] of ech){if(mx>=besoin-EPS)continue;
@@ -359,12 +364,15 @@ function build(inp){
       return Math.min(cap,part(ph)*V*60);};
     /* D-67 : la sortie longue suit sa propre progression ; le volume de la semaine en est la conséquence */
     const cibleLr2=mx=>{const cap=Math.max(PLANCHER,SEUIL*mx);if(niv==null)niv=Math.max(PLANCHER,Math.min(mx,cap));
-      if(aff)return Math.min(cap,niv*tr.aff[Math.min(w-c.T,tr.aff.length-1)]);
-      if(sAff)return Math.min(cap,niv*secAff[w]);
+      const affL=sem=>CONV.affLongue[sem<=1?1:0];   /* D-103 : semaines avant la course → un tiers la dernière (6 jours avant), 50 % avant */
+      if(aff)return FIN?Math.min(cap,lrPrec!=null?lrPrec:cap,niv*affL(N-w)):Math.min(cap,niv*tr.aff[Math.min(w-c.T,tr.aff.length-1)]);
+      if(sAff){if(FIN){const s0=secs.find(s=>s.statut==='objectif'&&s.w>=w);return Math.min(cap,lrPrec!=null?lrPrec:cap,niv*affL(s0?s0.w-w:1));}return Math.min(cap,niv*secAff[w]);}
       if(sRec){const k=[...secRec].filter(x=>x<=w&&secRec.has(x)).length;return Math.min(cap,niv*[0.35,0.55,0.75][Math.min(k,3)-1]);}   /* récupération progressive après l'objectif (convention) */
       if(relache)return Math.min(cap,0.65*niv,CONV.moyenneMax);
       if(cle)return Math.min(cap,tr.cible[1]);
       const longueAvant=lrPrec!=null&&lrPrec>GRANDE&&lrPrec>=0.9*niv;   /* au-delà de 3 h : une semaine sur deux (D-22a, convention H-27) */
+      if(ph!=='fond'&&FIN){if(clesFaites===0&&!longueAvant)return Math.min(cap,niv);   /* D-103 : niveau tenu jusqu'à la première sortie clé */
+        return Math.min(cap,Math.max(PLANCHER,Math.min(CONV.moyenneBloc*niv,CONV.moyenneMaxBloc)));}
       if(ph!=='fond')return Math.min(cap,Math.max(PLANCHER,Math.min(2/3*niv,CONV.moyenneMax)));
       if(longueAvant&&Math.min(cap,niv)>GRANDE)return Math.min(cap,Math.max(PLANCHER,Math.min(2/3*niv,CONV.moyenneMax)));
       const dm=lrGel===0?doitMonter(mx):false;if(dm)return Math.min(cap,Math.max(niv,dm*SEUIL));   /* on monte jusqu'à la cible, pas au-delà */   /* un signal de fatigue gèle la progression (D-67) */
@@ -377,7 +385,7 @@ function build(inp){
     /* D-70 : week-end de choc — objectif principal : semaines de sortie clé (3 au plus) ; objectif secondaire exigeant : 1, 4 à 6 semaines avant */
     let choc=null;
     if(V2&&enW&&lrW&&!aff&&!sAff&&!sRec&&!relache){
-      if(cle&&chocsP<CONV.chocsPrincipal)choc={dur:dMain||600,p:true};
+      if(cle&&chocsP<CONV.chocsPrincipal&&(!FIN||w<c.T-1))choc={dur:dMain||600,p:true};
       else{const s=secs.find(s=>s.statut==='objectif'&&s.exigeant&&(chocsS[s.w]||0)<CONV.chocsSecondaire&&w>=s.w-6&&w<=s.w-4&&(lrW>=0.9*(niv||0)||w===s.w-4));
         if(s)choc={dur:s.dur,s:s.w};}}
     const veille=choc?jours.find(d=>off(d)===offSL-1):null;if(veille==null)choc=null;else{if(choc.p)chocsP++;else chocsS[choc.s]=(chocsS[choc.s]||0)+1;}if(veille!=null)jours=jours.filter(d=>d!==veille);   /* hors choc, la veille reste une endurance normale */

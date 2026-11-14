@@ -17,6 +17,7 @@ ETAPES = [
     ("Arrondi supérieur de la séance qui bute sur +10 % (D-96)", ['node', 't_arrondi.js'], T, None),
     ("Bilan de séance, étage A (D-99)", ['node', 't_bilan.js'], T, None),
     ("D+ calé sur la course intermédiaire la plus proche (D-102)", ['node', 't_densite.js'], T, None),
+    ("Fin de préparation : sorties clés, niveau tenu, affûtage (D-103)", ['node', 't_fin.js'], T, None),
     ("Indicateurs seconde par seconde et zones de Karvonen (D-100)", ['node', 't_flux.js'], T, None),
     ("Invariants sur 120 scénarios tirés au hasard (audit, fuseau UTC)", ['node', 't_invariants.js'], T, None),
 ]
