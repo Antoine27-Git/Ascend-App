@@ -3482,3 +3482,28 @@ c. **Montée** = mètres montés par heure sur les seules montées (> +3 %), ram
 
 **Sources.** Wang et coll. 2023, PLOS ONE 18(5):e0282838 ; Bosquet et coll. 2007 (S-COU-006) ; Tanda et Knechtle 2015, PMC4425319 ; Koop, trainright.com/longest-run-ultramarathon-training/, /tapering-ultrarunning-prevent-taper-tantrum, /ultramarathon-training-time-required/.
 
+### D-104 — Entraînement du ventre : exposer plus souvent, dès 1 h (proposée le 14/11/2026 ; module nutrition ; à valider par Antoine)
+**Constat (revue du 14/11/2026, point 4).** L'app affiche déjà une cible de glucides dès qu'une course dure 1 h. Mais la progression (+6 g/h par semaine) ne compte que les sorties de 1 h 30 ou plus. Pour un coureur à 2 ou 3 courses par semaine, le ventre n'est donc « entraîné » qu'une fois par semaine, et la deuxième course ne compte pas.
+
+**Ce que disent les sources.**
+- **Étude.** Costa 2017 (25 coureurs) et Miall 2018 (18 coureurs), essais randomisés : 2 semaines d'exposition répétée pendant des courses d'1 h réduisent les symptômes digestifs d'environ 60 % et améliorent un test de course face au placebo.
+- **Étude.** Martinez 2023 (revue systématique, 8 études, texte intégral lu) : l'inconfort baisse, la malabsorption baisse dans 2 études sur 3 ; pas de protocole standard ; aucune étude ne teste une hausse hebdomadaire progressive. King 2022 : effets mineurs chez des athlètes déjà habitués.
+- **Non vérifié.** Le rythme de +6 g/h par semaine (H-11), le nombre d'expositions nécessaires par semaine, la durée de la période d'exposition avant une course.
+
+**Règles.**
+1. **Toute course nourrie d'1 h ou plus compte** pour la progression (1 h 30 aujourd'hui). **Étude** (séances d'1 h dans les essais).
+2. **Un seul palier par semaine**, comme aujourd'hui : +6 g/h si aucune course nourrie de la semaine n'a été mal digérée, gel sinon. Deux courses nourries dans la semaine ne font pas monter deux fois. **Non vérifié**, prudent.
+3. **Fenêtre d'exposition.** Pendant les 10 semaines qui précèdent chaque course de statut « objectif », la deuxième course de la semaine d'1 h ou plus porte la mention « Entraînement du ventre », avec la même cible en g/h que la sortie longue. Hors fenêtre, la cible reste affichée sans mention. La durée de 10 semaines est **non vérifiée** (traduction pratique déjà citée dans S-NUT-002 : 8 à 10 semaines).
+4. **Inchangé.** Départ selon le profil (15, 35 ou 55 g/h), plafond de 60 g/h sous 2 h et 90 g/h au-delà, cible de course de 60 à 90 g/h, saisie après la séance, hydratation.
+
+**Affichage.**
+- Fiche de séance, dans la fenêtre : « Entraînement du ventre : 41 g de glucides par heure. Ce n'est pas pour l'énergie de cette séance, c'est pour habituer ton ventre avant la course. »
+- Suivi, « Ton ventre » : « Prévu à cette date » compte les semaines avec une course d'1 h ou plus (1 h 30 aujourd'hui). Texte : « +6 g/h par semaine où tu manges en courant sans gêne ».
+- Analyse de séance (assistant) : pas de conseil de glucides pour l'énergie sous 1 h 15, sauf si la séance porte la mention « Entraînement du ventre » ; dans ce cas l'assistant peut le rappeler.
+
+**Limites (H-68).** Les essais donnent d'emblée 90 g/h, presque chaque jour ; nous montons par paliers, 2 à 3 fois par semaine au mieux. Rien ne dit que notre version produit le même effet. Elle coûte peu en cas d'erreur.
+
+**Mise en œuvre prévue.** `index.html` (hors moteur) : `nutriTarget` (seuil 60 min), `nutriFor` (mention dans la fenêtre), `svReady` (ventre), fiche de séance. `supabase/functions/analyze-session` : consigne (à recoller une fois par Antoine, avec les corrections déjà prévues). Tests d'interface : cible et mention sur une course d'1 h dans la fenêtre, palier unique sur une semaine à deux courses nourries. HYPOTHESES : H-11 reformulée (« +6 g/h par semaine, non vérifié »).
+
+**Sources.** Costa et coll. 2017 ; Miall et coll. 2018, DOI 10.1111/sms.12912 ; Martinez et coll. 2023, DOI 10.1007/s40279-023-01841-0 ; King et coll. 2022, PMC9105618.
+
