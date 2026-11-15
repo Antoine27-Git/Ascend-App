@@ -21,6 +21,8 @@ with sync_playwright() as p:
     pg.get_by_text('Noter mon effort').first.click();pg.wait_for_timeout(600)
     pg.screenshot(path=OUT+'/fiche.png',full_page=True)
     txt=pg.locator('#sheet').inner_text()
+    chk('Étape 2 sur 3 · Confirmation' in txt and 'Sortie longue' in txt,'v75 (D-107) : confirmation en lecture seule, type de la séance prévue')
+    pg.locator('#sheet button',has_text='Corriger').click();pg.wait_for_timeout(400);txt=pg.locator('#sheet').inner_text()   # v75 : « Corriger » rouvre le formulaire complet
     chk('Type : Sortie longue' in txt,'type de la séance prévue (Sortie longue), pas déduit de la durée')
     vals=pg.locator('#sheet input[type=number]').evaluate_all('l=>l.map(x=>x.value)')
     chk('150' in vals,'D− lu dans intervals.icu : '+str(vals))

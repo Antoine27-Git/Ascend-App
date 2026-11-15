@@ -32,7 +32,8 @@ const CONV={
   densCourse:true,           /* D-102 : false = sans la densité de la course intermédiaire (comparaison dans les tests) */
   fenetreSpe:8,              /* D-102, H-66 : 8 semaines avant un objectif intermédiaire, la densité de D+ des sorties longues vaut au moins celle de la course */
   densVeille:1,              /* D-102, H-66 : la veille d'un week-end choc est à pleine densité (0,5 avant) */
-  arrondiSup:true};          /* D-96, H-58 : la séance de progression qui bute sur la limite de +10 % est arrondie au multiple de 5 min supérieur (dès 50 min), dépassement < 5 min ; false = minute inférieure (D-65d) */
+  arrondiSup:true,          /* D-96, H-58 : la séance de progression qui bute sur la limite de +10 % est arrondie au multiple de 5 min supérieur (dès 50 min), dépassement < 5 min ; false = minute inférieure (D-65d) */
+  plafondSaut:true};         /* D-107, H-71 (convention) : une séance réelle ne relève la référence des 30 jours que de +10 % au plus (ce que le plan avait prévu compte en entier) ; false = la séance compte en entier */
 /* ressenti : RPE moyen des séances faciles → échelle du simulateur. 1 point de RPE = dérive 0,12 (H-38, à calibrer). */
 const RPE_REF=3,RPE_K=0.12;
 const DAY=864e5;
@@ -227,7 +228,7 @@ function build(inp){
   if(!dMain)G(1,'Distance de l\'objectif manquante : tranche 8–20 h par défaut.');
   if(!refC)G(1,'Aucune course ou sortie de référence déclarée : la durée de ton objectif est estimée à 7 km-effort par heure.');
   const tr=TRANCHES[trName],c=Calendrier(N,tr);
-  out.info={N,start,trName,dureeMain:dMain,cal:c,refUsed:races.length>1?refC:undefined,cible:tr.cible.slice()};   /* D-92 : cible de sortie clé (sortie seule) */
+  out.info={plafonds:[],N,start,trName,dureeMain:dMain,cal:c,refUsed:races.length>1?refC:undefined,cible:tr.cible.slice()};   /* D-92 : cible de sortie clé (sortie seule) */
   if(N<tr.min)G(1,'Préparation de '+N+' semaines pour la tranche '+trName+' : en dessous du minimum de '+tr.min+' semaines (D-21). Le plan est compressé.');
   let n=run.length,longDow=run.includes(+Dy.long)?+Dy.long:run[run.length-1],offSL=off(longDow);
   let autresDows=run.filter(d=>d!==longDow).sort((a,b)=>off(a)-off(b));
@@ -474,7 +475,14 @@ function build(inp){
       rx.forEach(x=>{if(x.kind==='race'||x.kind==='goal')return;const dt=add(monW,off(x.dow));if(isOff(dt)||dt<from)return;
         if(!reels.some(s=>s.date===dt)&&(!V2||(P.manques||{})[dt]==='fatigue'))saut++;});   /* D-72 : en v2, seule une séance manquée « pour fatigue » est un signal */
       saut=Math.min(saut,3);exec=reels.reduce((a,s)=>a+(s.dur||0),0)/60;
-      execH=reels.map(s=>({j:jourOf(s.date),d:s.dur||0,t:'reel'}));
+      execH=reels.map(s=>({j:jourOf(s.date),d:s.dur||0,t:'reel',date:s.date,ty:s.type}));
+      /* D-107 (H-71, convention) : une séance réelle ne relève la référence des 30 jours que de +10 % au plus.
+         Ce que le plan avait prévu cette semaine-là (sortie clé, week-end choc, course) compte en entier : le plan ne plafonne pas ses propres séances. */
+      if(V2&&CONV.plafondSaut){const maxRx=Math.max(0,...rx.map(x=>x.dur||0)),hh=hist.slice();
+        execH.slice().sort((a,b)=>a.j-b.j).forEach(e=>{const r0=ref30(hh,e.j);
+          if(r0>0){const lim=Math.max(PLANCHER,maxRx,SEUIL*r0);
+            if(e.d>lim+EPS){out.info.plafonds.push({date:e.date,dur:e.d,retenu:Math.round(lim),ref:Math.round(r0)});e.d=lim;}}
+          hh.push(e);});}
       rx.forEach(x=>{if(x.kind==='qual'){const dt=add(monW,off(x.dow));if(reels.some(s=>s.date===dt))cntDone[x.qk]=(cntDone[x.qk]||0)+1;}});
     }else{rx.forEach(x=>{if(x.kind==='qual')cntDone[x.qk]=(cntDone[x.qk]||0)+1;});r=cur?null:(m.base!=null?m.base:1);if(cur)r=undefined;}
     hist=hist.concat(execH).filter(e=>e.j>=(w-1)*7+6-(V2?MEMO:FENETRE)-1);
@@ -486,7 +494,7 @@ function build(inp){
     }
     if(relache||gele){derniereRel=w;charges=0;}else{charges++;volsCharge.push(V);dernierExec=volPrevu;}
     const lrObj=rx.filter(x=>x.kind==='long'||x.kind==='cle');if(lrObj.length)lrPrec=lrObj[0].dur;
-    if(V2&&!relache&&!gele){const reelL=past?Math.max(0,...reels.filter(s=>s.type==='long').map(s=>s.dur||0)):0;
+    if(V2&&!relache&&!gele){const reelL=past?Math.max(0,...execH.filter(e=>e.ty==='long').map(e=>e.d||0)):0;   /* D-107 : durée retenue (plafonnée) */
       const l=past?reelL:(lrObj.length?lrObj[0].dur:0);if(l>0)niv=Math.max(niv||0,l);if(past&&reelL>0)lrPrec=reelL;}
     if(cle&&lrObj.length){clesFaites++;derniereCle=w;}
     const typ=aff?'affutage':sAff?'aff_sec':sRec?'recup_sec':relache?'relache':'charge';
@@ -658,6 +666,9 @@ function bilan(inp,sid){
   if(!zones&&!zonesKO&&s.hrZ&&Array.isArray(s.hrZ.t)){const t=s.hrZ.t.map(x=>+x||0),tot=t.reduce((a,b)=>a+b,0);
     if(tot>0){zones=t.map((x,i)=>({z:i+1,haut:s.hrZ.b&&s.hrZ.b[i]!=null?s.hrZ.b[i]:null,pct:Math.round(100*x/tot)}));
       dessus=t.slice(BILAN.baseZ).reduce((a,b)=>a+b,0)/tot;}}
+  const hm=x=>{x=Math.round(x);const h=Math.floor(x/60),mn=x%60;return h?(h+' h'+(mn?' '+String(mn).padStart(2,'0'):'')):mn+' min';};
+  const pl=((avec.info||{}).plafonds||[]).find(x=>x.date===s.date&&x.dur===s.dur)||null,refN=pl?pl.ref:ref;   /* D-107 : saut retenu par le moteur */
+  const nouv=!!pl||(isR(s)&&ref>0&&s.dur>ref*SEUIL+5);   /* durée nettement au-delà de la plus longue des 30 jours */
   const SYM={'fc-haute':'▲','fc-basse':'▲','30j':'▲','depart':'▲','descente':'▲'},msgs=[],m=(code,txt,sym)=>msgs.push({code,txt,sym:sym||SYM[code]||'○'});
   if(zonesKO)m('zones-decalees','Les zones de FC de cette activité ne sont pas celles que tu as réglées (zone de base jusqu\'à '+zonesKO.act+' bpm au lieu de '+zonesKO.att+') : le temps par zone n\'est pas fiable pour cette séance.');
   if(dessus!=null&&s.rpe!=null&&s.rpe<=BILAN.rpeBas&&dessus>BILAN.haut)m('fc-haute','Ta FC a travaillé plus que ton ressenti : '+Math.round(dessus*100)+' % du temps au-dessus de ton allure facile.');
@@ -669,15 +680,26 @@ function bilan(inp,sid){
     m('descente','FC presque aussi haute en descente ('+F.terrain.descente.fc+') qu\'en montée ('+F.terrain.montee.fc+') : peu de récupération dans les descentes.');
   if(F&&F.derive){const d=F.derive,at=x=>Math.floor(x/60)+':'+String(x%60).padStart(2,'0');
     if(Math.abs(d.pct)<FLUX.deriveSeuil)m('derive','Pas de dérive : à pente corrigée, ta FC et ton allure tiennent du début à la fin ('+(d.pct>0?'+':'')+d.pct+' %).','✓');
-    else if(d.pct>0&&d.fc2>=d.fc1)m('derive','Dérive cardiaque : à allure égale (pente corrigée), ta FC monte en 2e partie ('+d.fc1+' → '+d.fc2+'). Souvent chaleur ou hydratation.','▲');
+    else if(d.pct>0&&d.fc2>=d.fc1){const dd='Dérive cardiaque : à allure égale (pente corrigée), ta FC monte en 2e partie ('+d.fc1+' → '+d.fc2+'). ';
+      /* D-107 : une cause n'est donnée que si la donnée la montre (durée au-delà de l'habitude) ; sinon le constat seul, en information */
+      if(nouv)m('derive',dd+'Cause la plus probable : une durée encore nouvelle pour toi ('+hm(s.dur)+', contre '+hm(refN)+' au plus ce mois-ci).','▲');
+      else m('derive',dd+'Une seule sortie ne dit pas pourquoi : à suivre sur les prochaines.');}
     else if(d.pct>0)m('derive','Fatigue des jambes : ta FC baisse ('+d.fc1+' → '+d.fc2+') mais ton allure équivalente plat chute davantage ('+at(d.eq1)+' → '+at(d.eq2)+' /km). Ce sont les muscles qui limitent, pas le cardio.','▲');
     else m('derive','Meilleure efficacité en 2e partie ('+d.pct+' %) : départ prudent ou échauffement long.');}
   if(veille&&isR(s)&&veille.cfJ&&veille.cfJ!=='non')m('veille-cf','CrossFit la veille ('+(veille.cfJ==='fort'?'jambes très sollicitées':'jambes un peu sollicitées')+') : jambes déjà entamées au départ.');
-  if(isR(s)&&ref>0&&s.dur>ref*SEUIL+5)m('30j','Au-delà de +10 % de ta plus longue sortie des 30 jours ('+ref+' min) : la prochaine sortie longue en tiendra compte.');
+  if(pl)m('30j','Au-delà de +10 % de ta plus longue sortie des 30 jours ('+hm(refN)+') : voir l\'effet sur le plan.');
   /* un indicateur expliqué (texte fixe) */
   const ind=F&&F.terrain?'terrain':zones?'zones':(s.dplus&&s.dur)?'dplus-h':'charge';
   const effet={prochaine:pA?{date:pA.date,dur:pA.dur,dplus:pA.dplus||null}:null,sans:pS?{date:pS.date,dur:pS.dur}:null,
     change:!!(pA&&pS&&(pA.date!==pS.date||pA.dur!==pS.dur)),ecarts:(avec.ecarts||[]).map(e=>e.obj)};
+  /* D-107 : pourquoi le plan change (ou non), en une ligne */
+  if(pl)effet.saut={ref:pl.ref,dur:pl.dur,retenu:pl.retenu,pct:Math.round(100*(pl.dur/pl.ref-1))};
+  effet.raison=!effet.prochaine?null:pl?'saut':!effet.change?(msgs.some(x=>x.code==='plus-court')?'inchange':'clous'):(isR(s)&&s.dur>refN&&pA.dur>pS.dur)?'progression':'recalcul';
+  if(effet.raison==='saut')effet.txt='Ta sortie dépasse de '+effet.saut.pct+' % ta plus longue du mois. Le plan limite à +10 % l\'évolution de ta plus longue sortie : c\'est un garde-fou pour limiter le risque de blessure.';
+  else if(effet.raison==='progression')effet.txt='Nouvelle plus longue sortie du mois ('+hm(s.dur)+'), dans la limite de +10 % : règle des 30 jours.';
+  else if(effet.raison==='recalcul')effet.txt='Le plan s\'est recalculé avec cette séance.';
+  else if(effet.raison==='clous')effet.txt='Séance dans les clous : ton plan continue comme prévu.';
+  else if(effet.raison==='inchange')effet.txt='Ton plan continue comme prévu.';
   return {id:s.id,date:s.date,type:s.type,dur:s.dur||null,durTot:s.durTot||null,dist:s.dist||null,dplus:s.dplus||null,dminus:s.dminus||null,
     hrAvg:s.hrAvg||null,hrMax:s.hrMax||null,rpe:s.rpe!=null?s.rpe:null,zones,dessusBase:dessus!=null?Math.round(dessus*100):null,
     prevu:prevu?{type:prevu.type,dur:prevu.dur,dplus:prevu.dplus||null}:null,ref30:ref||null,
