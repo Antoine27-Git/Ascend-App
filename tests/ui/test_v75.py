@@ -37,8 +37,10 @@ with sync_playwright() as p:
     pg.clock.set_fixed_time(JOUR+'T17:00:00+01:00');pg.goto('file://'+ROOT+'/index.html');pg.wait_for_timeout(4000)
     chk(pg.locator('#view button',has_text='Ajouter').count()>=1,'la montre est lue en silence à l\'ouverture (activité proposée sur l\'accueil)')
     # étape 1
-    chk('Noter mon effort' in pg.locator('#view').inner_text(),'accueil : la séance du jour propose la sortie de la montre')
-    pg.locator('#view button',has_text="Ajouter une autre séance").first.click();pg.wait_for_timeout(400)
+    v=pg.locator('#view').inner_text()
+    chk('Valider ma séance' in v and 'Noter mon effort' not in v,'accueil : bouton « Valider ma séance »')
+    chk('Ta montre' not in v and '11,6' not in v and 'Lozanne' not in v,'accueil : rien de la montre avant l\'étape 1')
+    pg.locator('#view button',has_text="Valider ma séance").first.click();pg.wait_for_timeout(400)
     t=pg.locator('#sheet').inner_text();pg.locator('#sheet .in').screenshot(path=OUT+'/1-source.png')
     chk('Étape 1 sur 3 · Source' in t and 'SÉANCE DÉTECTÉE SUR TA MONTRE' in t.upper(),'étape 1 : source')
     chk('Lozanne Trail' in t and '1 h 15' in t and '11,6 km' in t and '180 m' in t and '160 bpm' in t,'étape 1 : nom de la sortie et mesures')

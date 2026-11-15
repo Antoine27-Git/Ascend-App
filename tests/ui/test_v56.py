@@ -18,7 +18,8 @@ with sync_playwright() as p:
     pg=ctx.new_page();pg.on('pageerror',lambda e:errs.append(str(e)))
     pg.clock.set_fixed_time('2026-11-11T13:00:00+01:00');pg.goto('file://'+ROOT+'/index.html');pg.wait_for_timeout(5000);print(pg.locator('main').inner_text().replace('\n',' | ')[:600])
     pg.screenshot(path=OUT+'/aujourdhui.png',full_page=True)
-    pg.get_by_text('Noter mon effort').first.click();pg.wait_for_timeout(600)
+    pg.get_by_text('Valider ma séance').first.click();pg.wait_for_timeout(500)   # v75 : étape 1 (source), puis « Utiliser »
+    pg.get_by_role('button',name='Utiliser').first.click();pg.wait_for_timeout(600)
     pg.screenshot(path=OUT+'/fiche.png',full_page=True)
     txt=pg.locator('#sheet').inner_text()
     chk('Étape 2 sur 3 · Confirmation' in txt and 'Sortie longue' in txt,'v75 (D-107) : confirmation en lecture seule, type de la séance prévue')
