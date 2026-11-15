@@ -25,7 +25,7 @@ with sync_playwright() as p:
     pg.locator('nav').get_by_text('Semaine').click();pg.wait_for_timeout(500);pg.locator('.wd:not(.rest)').filter(has_text='Sortie longue').first.click();pg.wait_for_timeout(1500)
     t=pg.locator('#sheet').inner_text()
     chk(len(req)==1 and json.loads(req[0]).get('id')=='i1','une seule lecture du détail, identifiant sans « icu: »')
-    chk('Terrain' in t and 'Ce que ça dit' in t and 'Pour la suite' in t,'blocs : Terrain, Ce que ça dit, Pour la suite')
+    chk('TERRAIN' in t.upper() and "LES CONSTATS D'ASCEND" in t.upper() and 'EFFET SUR LE PLAN' in t.upper(),'blocs : Terrain, Les constats d\'Ascend, Effet sur le plan (v75, D-107)')
     chk('FC stabilisée' in t and '162' in t,'FC stabilisée (162) au lieu de la moyenne')
     chk('65' in t and 'Hors allure facile' in t,'65 % au-dessus de 158 (zones de l\'appli, pas celles figées d\'intervals.icu)')
     chk('ne sont pas celles' not in t,'plus d\'avertissement sur les zones figées')
@@ -34,7 +34,7 @@ with sync_playwright() as p:
     chk(pg.locator('#sheet details summary',has_text='Par km').count()==1 and not pg.locator('#sheet details',has_text='Par km').first.evaluate('e=>e.open'),'détail par km replié')
     pg.locator('#sheet div',has_text='Hors allure facile').last.scroll_into_view_if_needed();pg.wait_for_timeout(300);pg.screenshot(path=OUT+'/seance.png')
     pg.locator('#sheet details summary',has_text='Par km').click();pg.wait_for_timeout(300);pg.screenshot(path=OUT+'/km.png')
-    pg.locator('#sheet h3',has_text='Ce que ça dit').scroll_into_view_if_needed();pg.wait_for_timeout(300);pg.screenshot(path=OUT+'/constats.png')
+    pg.locator('#sheet h3',has_text='Les constats').scroll_into_view_if_needed();pg.wait_for_timeout(300);pg.screenshot(path=OUT+'/constats.png')
     s=json.loads(pg.evaluate('localStorage.getItem("trail-state-v1")'));x=[z for z in s['sessions'] if z['id']=='x1'][0]
     chk(x.get('flux',{}).get('v')==3 and 'time' not in x['flux'],'résumé enregistré avec la séance, sans la trace brute (%d o)'%len(json.dumps(x.get('flux'))))
     pg.evaluate('app.close()');pg.wait_for_timeout(300);pg.locator('.wd:not(.rest)').filter(has_text='Sortie longue').first.click();pg.wait_for_timeout(800)

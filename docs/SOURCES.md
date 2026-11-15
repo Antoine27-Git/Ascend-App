@@ -448,6 +448,26 @@ niveau ne réduisent sensiblement leur volume que dans les 7 à 10 derniers jour
 faible à modéré** (élites, piste et route ; synthèse, pas un essai).
 → fonde D-63a ; appuie D-63e (sortie longue maintenue en début d'affûtage)
 
+### S-COU-014 — Dérive cardiaque à l'effort prolongé
+Coyle E.F., González-Alonso J. *Cardiovascular drift during prolonged exercise: new perspectives.*
+Exercise and Sport Sciences Reviews, 2001. https://pubmed.ncbi.nlm.nih.gov/11337829/
+
+À puissance constante, la FC monte et le volume d'éjection baisse au fil d'un effort prolongé ; le phénomène est lié à la
+hausse de la température corporelle et à la déshydratation.
+**Niveau : modéré** — revue de référence. **Réserve du 15/11/2026 :** résumé non relu ce jour (référence déjà citée dans
+l'appli depuis D-100, absente de ce fichier) ; revue, volume et pages à revérifier.
+→ fonde le constat « dérive cardiaque » du bilan (D-100, D-107)
+
+### S-COU-015 — Chaleur, déshydratation et performance aérobie
+Cheuvront S.N., Kenefick R.W., Montain S.J., Sawka M.N. *Mechanisms of aerobic performance impairment with heat stress
+and dehydration.* Journal of Applied Physiology, 109(6):1989-1995, 2010. https://pubmed.ncbi.nlm.nih.gov/20689090/
+
+La contrainte cardiovasculaire liée à une peau et un corps chauds explique l'essentiel de la baisse de performance à la
+chaleur ; la déshydratation s'y ajoute au-delà d'environ 2 % de la masse corporelle.
+**Niveau : modéré** — mini-revue. Ne dit rien d'une « endurance encore courte » comme cause de dérive : cette lecture est un
+avis d'expert (H-71).
+→ contextualise D-107 (texte de dérive sans cause devinée)
+
 ## TRA — Spécificités trail
 
 ### S-TRA-001 — Coût de course en côte : variabilité individuelle — **VÉRIFIÉE**

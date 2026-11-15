@@ -27,10 +27,11 @@ def flow(pg,logs):
     btn=pg.get_by_role('button',name='Vers ma montre').first
     btn.click(); pg.wait_for_timeout(600)
     logs.append('après envoi: '+str(pg.get_by_role('button',name='Sur la montre ✓').count()))
-    pg.get_by_role('button',name='Noter mon effort').nth(1).click(); pg.wait_for_timeout(500)
+    pg.get_by_role('button',name='Valider ma séance').nth(1).click(); pg.wait_for_timeout(500)   # v75 : étape 1 (source), puis la séance de la montre
+    pg.get_by_role('button',name='Utiliser').first.click(); pg.wait_for_timeout(500)
     pg.screenshot(path=OUT+'/flow_saisie.png')
     pg.locator('.scale.r10 button').nth(3).click(); pg.wait_for_timeout(150)
-    pg.get_by_role('button',name='Enregistrer',exact=True).click(); pg.wait_for_timeout(900)
+    pg.get_by_role('button',name='Valider',exact=True).click(); pg.wait_for_timeout(900)
     pg.screenshot(path=OUT+'/flow_apres.png')
     logs.append('toast: '+pg.locator('#toast').inner_text().replace('\n',' / '))
     st=json.loads(pg.evaluate('localStorage.getItem("trail-state-v1")'))

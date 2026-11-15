@@ -3571,3 +3571,40 @@ c. **Montée** = mètres montés par heure sur les seules montées (> +3 %), ram
 - **Test** : `tests/ui/test_v74.py` (historique simulé, séances prévues faites), 16 contrôles. Captures : `captures/ui/v74/`.
 - **Résultat sur un profil proche de celui d'Antoine** : début février, 2 → 3 jours : volume hebdo moyen 4 h 15 → 5 h 40, max 5 h 20 → 6 h 50, samedi 1 h 30. Mi-juin, 3 → 4 jours : +4 h sur les 9 dernières semaines (61 h → 65 h), lundi 1 h. Le gain avant le 80 km est plus faible que dans les maquettes (exemple fictif de +9 h).
 
+### D-107 — Bilan de séance : saisie en 3 étapes, effet sur le plan, un saut ne relève la référence que de +10 % (validée sur maquettes le 15/11/2026, v75)
+**Pourquoi.** Trois constats d'Antoine sur le bilan du 15/11 (1 h 15 faite pour 1 h de référence) : le texte de dérive (« Souvent chaleur ou hydratation ») n'était pas crédible ; le bilan ne disait pas ce que la séance change au plan ni pourquoi ; et la règle récompensait le saut (1 h 15 faite → sortie longue suivante à 1 h 20).
+
+**1. Un saut ne relève la référence des 30 jours que de +10 % (moteur, v2, réglage `CONV.plafondSaut`).**
+- Une séance réelle compte toujours comme faite. Pour la référence des 30 jours (`ref30`) et pour le niveau de sortie longue atteint, sa durée est retenue à **+10 % au plus de l'ancienne référence** (au moins 30 min).
+- Ce que le plan avait prévu cette semaine-là compte en entier (sortie clé, week-end choc, course) : le plan ne plafonne pas ses propres séances.
+- Sans référence (aucune course connue), rien n'est plafonné.
+- Conséquence : après un saut, le plan reprend exactement là où l'aurait mené la hausse permise. Exemple du test : référence 60 min, sortie de 75 ou de 180 min → retenue 66 min, même sortie longue suivante qu'après 66 min.
+- Les sauts retenus sont exposés dans `info.plafonds` (`date`, `dur`, `retenu`, `ref`).
+- **Niveau.** Étude : dépasser de plus de 10 % sa plus longue sortie des 30 jours augmente le risque (Frandsen 2025, S-BLE-004). **Convention** (H-71) : la façon dont le plan réagit après le saut ; l'étude ne dit rien là-dessus. Remplace la proposition P-12 de l'audit (« D-107 provisoire » dans `docs/audit/propositions.md`).
+- Règles v1 inchangées (parité à 0 écart).
+
+**2. Bloc « Effet sur le plan », sous les constats** (`bilan().effet` : `raison`, `txt`, `saut`).
+- Le plan change : « Prochaine sortie longue, <date> : <durée> au lieu de <durée sans la séance>. » puis une ligne de raison.
+  - `saut` : « Ta sortie dépasse de N % ta plus longue du mois. Le plan limite à +10 % l'évolution de ta plus longue sortie : c'est un garde-fou pour limiter le risque de blessure. » Suivi du principe d'Éric Lacroix (cité, cas du saut seulement) et d'un bloc replié « Le calcul » (plus longue du mois, sortie, référence retenue « +10 % au max »), qui dit que le plafonnement est une convention.
+  - `progression` : « Nouvelle plus longue sortie du mois (…), dans la limite de +10 % : règle des 30 jours. »
+  - `recalcul` : « Le plan s'est recalculé avec cette séance. »
+- Rien ne change : « Séance dans les clous : ton plan continue comme prévu. » (« Ton plan continue comme prévu. » si la séance était plus courte que prévu), puis la prochaine sortie longue.
+- Le constat des 30 jours ne s'affiche que si le moteur a retenu un saut, et renvoie à ce bloc.
+
+**3. Dérive cardiaque : deux textes** (remplace « Souvent chaleur ou hydratation »).
+- Durée nettement au-delà de la plus longue des 30 jours : « Cause la plus probable : une durée encore nouvelle pour toi (…, contre … au plus ce mois-ci). » Signalé « ! ».
+- Sinon : le constat seul, en information : « Une seule sortie ne dit pas pourquoi : à suivre sur les prochaines. »
+- Pas de température : l'appli ne la lit pas (décision d'Antoine, 15/11).
+- **Niveau.** Chaleur et déshydratation : étude (S-COU-014, S-COU-015). « Durée nouvelle » comme cause : **avis d'expert**, non vérifié par une étude (H-71).
+
+**4. Saisie en 3 étapes** (interface seule).
+- **Étape 1, source** : « Séance détectée sur ta montre » (nom donné par la montre, durée, distance, D+, FC moyenne) avec « Utiliser », ou bouton « Saisir à la main ». Affichée quand la lecture de la montre est active (D-77, lecture en silence conservée) ; sinon le formulaire s'ouvre directement, comme avant. Sur l'accueil et dans « Séances non saisies », le bouton « Valider ma séance » ouvre l'étape 1 ; **rien de ce que la montre a envoyé n'est affiché avant cette étape** (décision d'Antoine, 15/11/2026). Sans activité de la montre, le bouton reste « J'ai fait ma séance » (formulaire direct).
+- **Étape 2, confirmation** : mesures en lecture seule (« Lu sur ta montre »), ligne « Compte pour » (séance prévue rattachée seule, lien « Changer »), lien « Corriger » (rouvre le formulaire complet), puis « Ta perception » : effort ressenti, note, et les champs déjà existants (douleur, nutrition, chaussures). Bouton « Valider ».
+- **Étape 3, bilan** : affiché tout de suite après une nouvelle séance de course : tuiles, terrain, « Les constats d'Ascend », « Effet sur le plan », « L'analyse » (bouton « Analyser la séance »), « Pour comprendre ». **L'analyse par IA n'est jamais lancée seule.**
+- Vocabulaire retenu avec Antoine : « Ta perception » (ce que lui seul sait), « Les constats d'Ascend » (faits calculés), « L'analyse » (l'IA, la seule à porter ce nom ; elle reçoit la perception et les constats).
+
+**5. « Pour comprendre » en blocs repliables** (indicateur « terrain ») : Pente (mini-tableau des 5 catégories), Allure équivalente plat, Dérive cardiaque, Vitesse de montée, Limites des mesures ; conventions étiquetées ; sources en petit en bas.
+
+**Tests.** `tests/t_plafond.js` (11 contrôles, dans `tools/test.py`) ; `tests/ui/test_v75.py` (29 contrôles : les 3 étapes, aucun appel à l'IA sans appui, rien ne dépasse à 360 px) ; `test_v56.py` et `test_v60.py` mis à jour (confirmation en lecture seule, nouveaux titres). Maquettes : `docs/maquettes/screens_bilan2.py`.
+
+**Écart connu.** Les chiffres de la maquette (1 h 15 au lieu de 1 h 05) étaient indicatifs : le moteur donne la valeur réelle, qui peut être plus basse quand le plan tient un niveau au lieu de monter.
