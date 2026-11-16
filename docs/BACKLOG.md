@@ -11,7 +11,14 @@ Ce ne sont pas des décisions. Chaque idée sera rouverte, challengée et tranch
 - **Condition pour démarrer :** que le formulaire minimal soit en place et utilisé.
 
 ## Priorités issues de l'audit du 15/11/2026 (`docs/audit/AUDIT-2026-11-15.md`)
-Ordre proposé, à valider par Antoine.
+**Ordre validé par Antoine le 16/11/2026.** Aucun nouvel indicateur d'analyse avant la fin du point 3.
+
+Décisions du 16/11/2026 :
+- **Photo de WOD : abandonnée.** À retirer au lot « ménage » : fonction `analyze-wod` (jamais déployée), `docs/PHOTO-WOD.md`, restes de l'ancien formulaire de WOD dans `index.html`.
+- **Journal de renforcement : gelé**, gardé comme évolution à faire plus tard.
+- **Règles v1 : à retirer du moteur dans une version à part** (avec `sim8.py`, `sim3.py`, `serie11.py` et la parité), rien d'autre dans cette version.
+- **Connaissances du Projet claude.ai** : copies de septembre supprimées le 16/11 (le dépôt fait foi). `MOTEUR-V0.md` gardé : il n'existe pas dans le dépôt.
+- Antoine a exporté un fichier JSON de ses données le 16/11.
 1. **Fiabilité** : P-23 (profil écrasé après effacement du navigateur), P-24 (restauration sûre), P-27 (rappel d'export), P-07 (heure d'été, avant le 28/03/2027), P-08 (sortie longue fantôme).
 2. **Ménage sans changement de comportement** : code jamais appelé, statuts de SPEC.md, AGENTS.md, tests d'interface dans la batterie, 155 bpm en dur, Connaissances du Projet.
 3. **Régularité** : semaine chargée (P-02), question hebdomadaire sur la sortie longue (P-31), alerte avant de perdre son niveau (P-05).
