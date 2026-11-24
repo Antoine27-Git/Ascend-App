@@ -17,8 +17,10 @@ with sync_playwright() as p:
     pg.locator('.wd:not(.rest)').filter(has_text='Sortie longue').first.click();pg.wait_for_timeout(500)
     pg.locator('#sheet').get_by_text('Déplacer').first.click();pg.wait_for_timeout(400)
     pg.screenshot(path=OUT+'/deplacer.png',full_page=True)
-    btn=pg.locator('#sheet button').filter(has_text='échange')
-    chk(btn.count()==1,'le mercredi (déjà couru) est proposé en échange')
+    pg.locator('#sheet .wk.pick button[aria-label="Aujourd\'hui"]').click();pg.wait_for_timeout(400)   # v77 : on touche le jour dans le calendrier
+    chk('échange' in pg.locator('#sheet').inner_text(),'le mercredi (déjà couru) est proposé en échange')
+    pg.locator('#sheet .wk.pick').scroll_into_view_if_needed();pg.wait_for_timeout(200);pg.screenshot(path=OUT+'/deplacer-choisi.png')
+    btn=pg.locator('#sheet button',has_text="Déplacer à aujourd'hui")
     if btn.count():btn.first.click();pg.wait_for_timeout(600)
     d=json.loads(pg.evaluate('localStorage.getItem("trail-state-v1")'))['profile'].get('decal',{})
     chk(d=={'2026-11-15':'2026-11-11','2026-11-11':'2026-11-15'},'décalages enregistrés dans les deux sens : '+json.dumps(d))

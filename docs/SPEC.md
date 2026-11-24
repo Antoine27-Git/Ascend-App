@@ -3625,3 +3625,16 @@ c. **Montée** = mètres montés par heure sur les seules montées (> +3 %), ram
 **Tests.** `tests/ui/test_v76.py` (navigateur vidé puis connexion ; serveur vide ; appareil déjà synchronisé) ; il échoue sur la v75. `tests/audit/sync_scenarios.py`, scénario 1 au vert.
 
 **Aussi dans la v76 — P-07, heure d'été.** Les numéros de semaine (`todayW`, `runsW` dans le moteur, position dans le plan dans l'appli) se comptent en jours entiers, puis en semaines. Avant : un lundi d'heure d'été (dès le 28/03/2027) était compté dans la semaine précédente, la semaine écoulée n'était pas lue comme passée. Correction sans nouvelle règle. Test : `tests/audit/t_audit_heure_ete.js`, ajouté à `tools/test.py`.
+
+### D-107, complément v77 (24/11/2026) — saisie et déplacement, retours d'Antoine sur la v75
+Maquettes validées le 24/11 : `docs/maquettes/screens_saisie3.py` (2A, 1a/1b, 3, 4, 6).
+1. **Un seul libellé, « Valider ma séance »**, sur l'accueil, les séances non saisies et la fiche séance. Avec une montre, il ouvre l'étape 1 ; sans montre déclarée (`hasWatch` faux), le formulaire directement.
+2. **Étape 1 : la montre est relue à l'ouverture** si la dernière lecture date de plus de 2 min (« Recherche de ta sortie… »). Rien trouvé : « Pas encore arrivée » (Garmin → intervals.icu peut prendre quelques minutes), « Réessayer », « Saisir à la main ». L'appli relit aussi la montre en silence au retour au premier plan (plus de 5 min depuis la dernière lecture, aucune fenêtre ouverte).
+3. **Étape 2 : mesures en cases** (durée, distance, D+, FC moyenne), sous « ✓ nom de la sortie ». L'étape 1 garde sa liste : les deux écrans ne se ressemblent plus.
+4. **Un seul texte libre, « Ta perception »** (champ « Ce que tu as ressenti », la note de la séance) : multi-ligne, grandit en écrivant, 600 caractères au plus (300 avant). Le champ « lecture » du bilan disparaît ; une ancienne « lecture » sert encore si la note est vide.
+   - Bilan, bloc « L'analyse » : la perception s'affiche (retours à la ligne gardés, lien « Modifier ») ; sinon « Ta perception : non renseignée · Ajouter », qui ouvre le champ sur place. Pas de fenêtre de confirmation avant l'analyse (choix d'Antoine).
+   - IA (`analyze-session`, à redéployer à la main) : perception présente → l'IA dit où elle concorde avec les données et où elle ne concorde pas ; absente → données et effort ressenti seulement. Le champ est envoyé sous `perception` et, tant que l'ancienne fonction tourne, aussi sous `lecture`.
+5. **Semaine : deux séances le même jour.** La course reste en grand, l'autre séance s'ajoute en pastille dans le coin. Avant : la 2e séance disparaissait de la case.
+6. **Déplacer : on touche le jour dans le calendrier de la semaine** (icônes des séances prévues, jours impossibles grisés), une ligne dit la conséquence (jour libre, avec ton renforcement, échange, veille de ta sortie longue), puis « Déplacer à … ». Noms de jour : Aujourd'hui, Demain, puis le jour, sans date (aussi dans « Séance manquée »).
+   - Déplacer une course sur un jour de renforcement n'échange rien : les deux le même jour restent possibles (confirmé par Antoine).
+**Tests.** `tests/ui/test_v77.py` ; `test_v55.py` et `test_v75.py` adaptés.
