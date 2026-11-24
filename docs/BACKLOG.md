@@ -28,7 +28,7 @@ Autres propositions ouvertes de l'audit du 11/11 : P-01, P-03 à P-06, P-09, P-1
 
 ## « Résistance » détaillée (15/11/2026) — spec validée, pas codée
 - Trois repères, 1re moitié contre 2e moitié : cardio, montée, descente. Sorties d'au moins 1 h 30. Cadence laissée de côté. Affichée dans Suivi sous la ligne « Résistance » (nom dans le code : `tenue`). Aucun effet sur le plan.
-- Spec : document du Projet `claude/SPEC-DURABILITE-brouillon.md`. Numéros à prendre : D-108, H-72.
+- Spec : document du Projet `claude/SPEC-DURABILITE-brouillon.md`. Numéros à prendre : D-109, H-72 (D-108 pris par la synchro, v76).
 - Audit du 15/11 : facultatif ; rien d'exploitable avant fin janvier (première sortie d'1 h 30 vers le 20/12 sur un profil proche).
 
 ## Segments comparés par GPS (15/11/2026) — spec à écrire

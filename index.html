@@ -1709,8 +1709,10 @@ function build(inp){
   let vDep=vol0;if(vol0*60<Math.min(3,n)*PLANCHER-EPS)vDep=Math.min(3,n)*PLANCHER/60;   /* D-65b */
   const m=Modele(vDep,tr.plafond_pic);
   /* réalisé par semaine */
-  const todayW=Math.floor((D(today)-D(start))/(7*DAY))+1;
-  const runsW={};sessions.forEach(s=>{if(!isRun(s))return;const w=Math.floor((D(s.date)-D(start))/(7*DAY))+1;(runsW[w]=runsW[w]||[]).push(s);});
+  /* P-07 (16/11/2026) : jours entiers d'abord (Math.round), puis semaines : un lundi d'heure d'été n'est plus compté dans la semaine d'avant */
+  const semDe=x=>Math.floor(Math.round((D(x)-D(start))/DAY)/7)+1;
+  const todayW=semDe(today);
+  const runsW={};sessions.forEach(s=>{if(!isRun(s))return;const w=semDe(s.date);(runsW[w]=runsW[w]||[]).push(s);});
   /* densité de D+ (m/h) : sorties réelles récentes → déclaration → 150 ; rejoint celle de la course à la fin du fond */
   /* D-75 : en v2, point de départ figé — sorties longues et courses des 8 semaines AVANT le démarrage du plan.
      Après le démarrage, le D+ réalisé suit ce que le plan prescrit (endurances sur terrain roulant, repère de D+ en sortie longue) :
@@ -2852,7 +2854,7 @@ function refRace(P){const races=((P.start||{}).pastRaces||[]).map((r,i)=>({r,i})
 const fmtMY=s=>s?parseISO(s).toLocaleDateString('fr-FR',{month:'long',year:'numeric'}):'';
 /* ---- accueil ---- */
 const PHCOL={F1:'#7fd8a8',F2:'#3cbf7f',F3:'#1f9d63',F4:'#e9a23b',bloc:'#e07a3a',pic:'#c9542e',affutage:'#8a6cf0'};
-function planPos(){const o=eng();if(!o||!o.ok||!o.info||!o.info.cal)return null;const N=o.info.cal.N,w=Math.floor((parseISO(todayISO())-parseISO(o.info.start))/(7*864e5))+1;return {N,w:Math.max(1,Math.min(N,w)),start:o.info.start};}
+function planPos(){const o=eng();if(!o||!o.ok||!o.info||!o.info.cal)return null;const N=o.info.cal.N,w=Math.floor(Math.round((parseISO(todayISO())-parseISO(o.info.start))/864e5)/7)+1;   /* P-07 : insensible au changement d'heure */return {N,w:Math.max(1,Math.min(N,w)),start:o.info.start};}
 function heroObj(){const P=S.profile;if(!P.goalDate)return '';const j=daysTo(P.goalDate),ph=phasesPlan(),pp=planPos(),t=todayISO();
   const nb=(P.races||[]).filter(r=>r.date&&r.date>=t).sort((a,b)=>a.date<b.date?-1:1)[0];
   const chips=[P.goalDist?P.goalDist+' km':null,P.goalDplus!=null?fmtN(P.goalDplus)+' m D+':null,nb?'jalon '+fmtS(nb.date).replace(/\.$/,''):null].filter(Boolean).map(x=>'<span>'+x+'</span>').join('');
@@ -3143,10 +3145,14 @@ function snapshot(){
   return m;
 }
 function splitKey(k){const i=k.indexOf('|');return {kind:k.slice(0,i),key:k.slice(i+1)};}
+/* P-23 (16/11/2026) : un profil jamais démarré (pas d'onboarding, pas d'objectif) n'est jamais marqué « modifié » :
+   sinon, navigateur vidé puis connexion, ce profil vide écrasait celui du compte. */
+function profilVierge(p){return !p||(!p.onboarded&&!p.goalDate);}
 function markChanges(){
   const now=snapshot(),sh=sync.shadow,t=Date.now();let n=0;
+  if(profilVierge(S.profile))delete now['profile|me'];
   Object.keys(now).forEach(k=>{const j=JSON.stringify(now[k]);if(sh[k]!==j){sync.ts[k]=t;n++;}if(sync.del[k])delete sync.del[k];});
-  Object.keys(sh).forEach(k=>{if(!(k in now)){if(!sync.del[k]){sync.del[k]=t;n++;}delete sync.ts[k];}});
+  Object.keys(sh).forEach(k=>{if(!(k in now)&&k!=='profile|me'){if(!sync.del[k]){sync.del[k]=t;n++;}delete sync.ts[k];}});
   if(n)saveSync();
   return n;
 }
@@ -3198,7 +3204,10 @@ function applyRemote(row){
   return true;
 }
 
+/* P-23 : premier pull de cet appareil (état de synchro vide ou illisible) : lecture complète, et le serveur gagne
+   pour toute clé qu'il contient. Ce qui n'existe qu'en local est gardé et sera poussé. */
 async function pull(full){
+  const first=!sync.lastPull;if(first)full=true;
   let since=full?null:sync.lastPull, got=0, maxTs=since?Date.parse(since):0, changed=0;
   for(let page=0;page<20;page++){
     let u='/rest/v1/trail_items?select=kind,key,payload,deleted,updated_at&order=updated_at.asc&limit=500';
@@ -3209,14 +3218,14 @@ async function pull(full){
       const k=r.kind+'|'+r.key, rt=Date.parse(r.updated_at);
       if(rt>maxTs)maxTs=rt;
       const localTs=sync.ts[k]||sync.del[k];
-      if(localTs&&localTs>=rt)return;          // édition locale plus récente : elle gagne, on la poussera
+      if(!first&&localTs&&localTs>=rt)return;   // édition locale plus récente : elle gagne, on la poussera (sauf au premier pull : P-23)
       if(applyRemote(r))changed++;
     });
     got=rows.length;
     since=rows[rows.length-1].updated_at;
     if(got<500)break;
   }
-  if(maxTs)sync.lastPull=new Date(maxTs).toISOString();
+  sync.lastPull=new Date(maxTs||0).toISOString();   /* P-23 : même un serveur vide clôt le premier pull */
   return changed;
 }
 
@@ -3293,7 +3302,7 @@ function vGate(){
     +authFormHTML('Un compte garde ton plan et tes séances en sécurité, et te permet de les retrouver sur un autre téléphone. Ton prénom personnalise l\'app.')
     +syncLineHTML()+versionLineHTML()+'</div></main>';
 }
-const APP_VERSION='v75';   /* généré depuis sw.js par tools/build.py */
+const APP_VERSION='v76';   /* généré depuis sw.js par tools/build.py */
 function versionLineHTML(){return '<div class="mini" id="ver" style="margin-top:12px;text-align:center;opacity:.7">Ascend '+APP_VERSION+' · moteur de plan v2</div>';}
 /* compare la page chargée au cache du service worker : signale un déploiement pas encore actif */
 function checkVersion(){if(!('caches' in window))return;caches.keys().then(ks=>{const c=ks.filter(k=>/^ascend-v\d+$/.test(k)).map(k=>+k.slice(8)).sort((a,b)=>b-a)[0],el=document.getElementById('ver');
@@ -3726,7 +3735,7 @@ Object.assign(app,{
     flash('Prêt pour un nouvel utilisateur');render();},
   syncNow(){doSync(true);},
   resync(btn){if(!btn.dataset.armed){btn.dataset.armed='1';btn.textContent='Confirmer';return;}
-    sync.lastPull=null;saveSync();doSync(true,true);},
+    doSync(true,true);},   /* relecture complète ; garde « l'édition locale plus récente gagne » (pas le premier pull de P-23) */
   togglePw(id,btn){const el=$('#'+id);if(!el)return;const show=el.type==='password';el.type=show?'text':'password';btn.innerHTML=mi(show?'eye_off':'eye');btn.setAttribute('aria-label',show?'Masquer le mot de passe':'Afficher le mot de passe');},
   async forgotPw(){
     const email=(authForm.email||'').trim();

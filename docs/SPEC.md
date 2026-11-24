@@ -3608,3 +3608,20 @@ c. **Montée** = mètres montés par heure sur les seules montées (> +3 %), ram
 **Tests.** `tests/t_plafond.js` (11 contrôles, dans `tools/test.py`) ; `tests/ui/test_v75.py` (29 contrôles : les 3 étapes, aucun appel à l'IA sans appui, rien ne dépasse à 360 px) ; `test_v56.py` et `test_v60.py` mis à jour (confirmation en lecture seule, nouveaux titres). Maquettes : `docs/maquettes/screens_bilan2.py`.
 
 **Écart connu.** Les chiffres de la maquette (1 h 15 au lieu de 1 h 05) étaient indicatifs : le moteur donne la valeur réelle, qui peut être plus basse quand le plan tient un niveau au lieu de monter.
+
+### D-108 — Connexion sur un téléphone vierge : le serveur d'abord (v76, 24/11/2026 ; proposition P-23 de l'audit du 11/11)
+**Pourquoi.** Défaut rejoué le 15/11 sur la v75 : navigateur vidé (ou nouveau téléphone), puis connexion. Le profil vide, marqué « modifié maintenant » au démarrage, écrasait le profil du compte, en local et sur le serveur. Antoine efface souvent ses données de navigation et a déjà tout perdu une fois.
+
+**Règle.**
+1. Un profil jamais démarré (pas d'onboarding, pas de date d'objectif) n'est jamais marqué « modifié », ni « supprimé ».
+2. Premier pull d'un appareil (état de synchro vide ou illisible) : lecture complète du serveur, et **le serveur gagne pour toute clé qu'il contient**. Ce qui n'existe qu'en local (séance saisie avant d'avoir un compte) est gardé et envoyé.
+3. Après ce premier pull, même sur un serveur vide, l'appareil revient à la règle habituelle : la modification la plus récente gagne.
+4. Le bouton « Resynchroniser » (dépannage) relit tout, mais garde la règle habituelle : il ne fait pas gagner le serveur.
+
+**Limite connue.** Une modification locale faite avant la toute première connexion sur une clé que le serveur a déjà (le profil, le plus souvent) est remplacée par celle du serveur. C'est voulu : le compte fait foi.
+
+**Hors de cette décision (étape 1 suite, backlog).** Restauration sûre (P-24), profil fusionné par rubrique (P-25), horodatage serveur (P-26), rappel d'export (P-27). Rejoué le 24/11 : scénarios 1 et 2 conformes, 2b, 3 et 4 toujours rouges.
+
+**Tests.** `tests/ui/test_v76.py` (navigateur vidé puis connexion ; serveur vide ; appareil déjà synchronisé) ; il échoue sur la v75. `tests/audit/sync_scenarios.py`, scénario 1 au vert.
+
+**Aussi dans la v76 — P-07, heure d'été.** Les numéros de semaine (`todayW`, `runsW` dans le moteur, position dans le plan dans l'appli) se comptent en jours entiers, puis en semaines. Avant : un lundi d'heure d'été (dès le 28/03/2027) était compté dans la semaine précédente, la semaine écoulée n'était pas lue comme passée. Correction sans nouvelle règle. Test : `tests/audit/t_audit_heure_ete.js`, ajouté à `tools/test.py`.

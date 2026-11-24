@@ -279,8 +279,10 @@ function build(inp){
   let vDep=vol0;if(vol0*60<Math.min(3,n)*PLANCHER-EPS)vDep=Math.min(3,n)*PLANCHER/60;   /* D-65b */
   const m=Modele(vDep,tr.plafond_pic);
   /* réalisé par semaine */
-  const todayW=Math.floor((D(today)-D(start))/(7*DAY))+1;
-  const runsW={};sessions.forEach(s=>{if(!isRun(s))return;const w=Math.floor((D(s.date)-D(start))/(7*DAY))+1;(runsW[w]=runsW[w]||[]).push(s);});
+  /* P-07 (16/11/2026) : jours entiers d'abord (Math.round), puis semaines : un lundi d'heure d'été n'est plus compté dans la semaine d'avant */
+  const semDe=x=>Math.floor(Math.round((D(x)-D(start))/DAY)/7)+1;
+  const todayW=semDe(today);
+  const runsW={};sessions.forEach(s=>{if(!isRun(s))return;const w=semDe(s.date);(runsW[w]=runsW[w]||[]).push(s);});
   /* densité de D+ (m/h) : sorties réelles récentes → déclaration → 150 ; rejoint celle de la course à la fin du fond */
   /* D-75 : en v2, point de départ figé — sorties longues et courses des 8 semaines AVANT le démarrage du plan.
      Après le démarrage, le D+ réalisé suit ce que le plan prescrit (endurances sur terrain roulant, repère de D+ en sortie longue) :
