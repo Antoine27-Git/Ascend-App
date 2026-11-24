@@ -21,6 +21,7 @@ ETAPES = [
     ("Week-end choc selon les avis d'experts (D-105)", ['node', 't_choc.js'], T, None),
     ("Indicateurs seconde par seconde et zones de Karvonen (D-100)", ['node', 't_flux.js'], T, None),
     ("Un saut ne relève la référence que de +10 % (D-107)", ['node', 't_plafond.js'], T, None),
+    ("Numéro de semaine juste le lundi en heure d'été (P-07)", ['node', 'audit/t_audit_heure_ete.js'], T, None),
     ("Invariants sur 120 scénarios tirés au hasard (audit, fuseau UTC)", ['node', 't_invariants.js'], T, None),
 ]
 echecs = 0
