@@ -1943,7 +1943,7 @@ const BILAN={baseZ:2,baseHaut:null,   /* ménage 25/11 : plus de valeur propre �
 
 /* ---------- D-100 : zones de Karvonen et indicateurs tirés des données seconde par seconde ---------- */
 const KARV=[0.6,0.7,0.8,0.9];   /* bornes hautes des zones 1 à 4, en part de la FC de réserve (zone 5 au-delà) */
-const FLUX={pente:3,fauxPlat:1,fenetreM:200,lissage:7,depart:600,plateau:0.95,ecartTerrain:5,deriveMin:2400,deriveSeuil:5};   /* H-60, H-62, H-63 */
+const FLUX={pente:3,fauxPlat:1,fenetreM:200,fenetreFauxPlatM:400,lissage:7,depart:600,plateau:0.95,ecartTerrain:5,deriveMin:2400,deriveSeuil:5};   /* H-60, H-62, H-63 */
 /* Minetti et al. 2002 : coût énergétique de la course (J/kg/m) selon la pente i (fraction, −0,45 à +0,45). */
 function minetti(i){i=Math.max(-0.45,Math.min(0.45,i));return 155.4*i**5-30.4*i**4-43.3*i**3+46.3*i**2+19.5*i+3.6;}
 const TERRAIN=[['montee',0.03,1],['fpm',0.01,0.03],['plat',-0.01,0.01],['fpd',-0.03,-0.01],['descente',-1,-0.03]];
@@ -2014,9 +2014,15 @@ function flux(st,zones){
   if(Al&&hasD){const g=new Array(n).fill(null),W=FLUX.fenetreM/2;let a=0,b=0;
     for(let i=0;i<n;i++){while(a<i&&Dd[a]<Dd[i]-W)a++;while(b<n-1&&Dd[b]<Dd[i]+W)b++;
       const dd=Dd[b]-Dd[a];if(dd>=FLUX.fenetreM*0.6&&Al[a]!=null&&Al[b]!=null)g[i]=(Al[b]-Al[a])/dd;}
+    /* v81 (H-63) : un faux plat (1 à 3 %) ne compte que si la pente se confirme, même sens et au moins 1 %, sur 400 m centrés (4 m de dénivelé) ;
+       sinon, c'est du plat, y compris pour l'allure équivalente (pente non confirmée = bruit de mesure). Sur 200 m, 1 % = 2 m : l'ordre de l'erreur d'altitude de la montre. */
+    const g4=new Array(n).fill(null),W4=FLUX.fenetreFauxPlatM/2;a=0;b=0;
+    for(let i=0;i<n;i++){while(a<i&&Dd[a]<Dd[i]-W4)a++;while(b<n-1&&Dd[b]<Dd[i]+W4)b++;
+      const dd=Dd[b]-Dd[a];if(dd>=FLUX.fenetreFauxPlatM*0.6&&Al[a]!=null&&Al[b]!=null)g4[i]=(Al[b]-Al[a])/dd;}
+    const fp=FLUX.fauxPlat/100,catDe=(gi,g4i)=>Math.abs(gi)<fp||Math.abs(gi)>=FLUX.pente/100?gi:(g4i!=null&&Math.sign(g4i)===Math.sign(gi)&&Math.abs(g4i)>=fp?gi:0);
     const S={};TERRAIN.forEach(c=>S[c[0]]={t:0,d:0,de:0,h:0,hc:0,dz:0});const seg=[];
-    for(let i=1;i<n;i++){if(!ok(i)||g[i]==null)continue;const gi=g[i],c=TERRAIN.find(c=>gi>=c[1]&&gi<c[2])||(gi>=0.03?TERRAIN[0]:TERRAIN[4]);
-      const x=S[c[0]],dt=T[i]-T[i-1],ds=Math.max(0,Dd[i]-Dd[i-1]),de=ds*minetti(gi)/3.6;
+    for(let i=1;i<n;i++){if(!ok(i)||g[i]==null)continue;const gi=g[i],gc=catDe(gi,g4[i]),c=TERRAIN.find(c=>gc>=c[1]&&gc<c[2])||(gc>=0.03?TERRAIN[0]:TERRAIN[4]);
+      const x=S[c[0]],dt=T[i]-T[i-1],ds=Math.max(0,Dd[i]-Dd[i-1]),de=ds*minetti(gc)/3.6;
       x.t+=dt;x.d+=ds;x.de+=de;if(H[i]>0){x.h+=H[i];x.hc++;}if(Al[i-1]!=null)x.dz+=Al[i]-Al[i-1];
       if(gi>=-FLUX.fauxPlat/100&&T[i]-T[0]>=FLUX.depart)seg.push([dt,de,H[i]]);}
     terrain={};TERRAIN.forEach(c=>{const k=c[0],x=S[k];terrain[k]=x.t>=60&&x.d>0?{min:Math.round(x.t/60),kmh:Math.round(x.d/x.t*36)/10,allure:Math.round(x.t/(x.d/1000)),
@@ -3264,7 +3270,7 @@ function vGate(){
     +authFormHTML('Un compte garde ton plan et tes séances en sécurité, et te permet de les retrouver sur un autre téléphone. Ton prénom personnalise l\'app.')
     +syncLineHTML()+versionLineHTML()+'</div></main>';
 }
-const APP_VERSION='v80';   /* généré depuis sw.js par tools/build.py */
+const APP_VERSION='v81';   /* généré depuis sw.js par tools/build.py */
 function versionLineHTML(){return '<div class="mini" id="ver" style="margin-top:12px;text-align:center;opacity:.7">Ascend '+APP_VERSION+' · moteur de plan v2</div>';}
 /* compare la page chargée au cache du service worker : signale un déploiement pas encore actif */
 function checkVersion(){if(!('caches' in window))return;caches.keys().then(ks=>{const c=ks.filter(k=>/^ascend-v\d+$/.test(k)).map(k=>+k.slice(8)).sort((a,b)=>b-a)[0],el=document.getElementById('ver');
