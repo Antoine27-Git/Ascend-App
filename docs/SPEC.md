@@ -8,6 +8,21 @@ dans le modèle. On ne réécrit pas l'historique : une décision abandonnée pa
 `[abandonnée]` avec la date et le motif, elle ne disparaît pas — et garde son
 identifiant, jamais réattribué.
 
+## État des décisions récentes (tenu à jour au ménage du 25/11/2026)
+| Décision | Sujet | État |
+|---|---|---|
+| D-92 | Écran Suivi | en vigueur (v49) |
+| D-93 à D-98 | Redémarrage, reprise, arrondi, échange, import montre | en vigueur (D-95 écartée, remplacée par D-96) |
+| D-99, D-100, D-101 | Bilan de séance, indicateurs seconde par seconde, « Ta progression » | en vigueur (v57 à v69) |
+| D-102, D-103 | D+ par km, fin de préparation | en vigueur (v69, v70) |
+| D-104 | Entraînement du ventre | **reportée**, pas codée |
+| D-105, D-106 | Week-end choc, conseil d'ajouter un jour | en vigueur (v71 à v74) |
+| D-107 (+ compléments v77, v78) | Saisie en 3 étapes, effet sur le plan, plafond des sauts, renforcement | en vigueur (v75 à v78) |
+| D-108 | Connexion sur un téléphone vierge : le serveur d'abord | en vigueur (v76) |
+| D-109 | Réservé : « Résistance » détaillée (spec validée, pas codée) | en attente |
+
+Les numéros provisoires des rapports d'audit (`docs/audit/`, 11/11/2026 : « D-97 à D-121 », « H-59 à H-66 ») ne correspondent pas aux décisions de ce registre : seul ce fichier fait foi.
+
 ## Format des identifiants
 
 `G-CAT-nnn`, même logique que `R-CAT-nnn` (REGLES.md) et `S-CAT-nnn` (SOURCES.md) :
@@ -3160,7 +3175,7 @@ Amendement v48 (17/10/2026) : le fondu de sortie du lancement reste un point ouv
 ### D-91 — Mise à jour immédiate de l'appli (17/10/2026, v42)
 Constat : après une fusion, l'appli installée affichait l'ancienne version (« une version plus récente est prête ») pendant plusieurs minutes. Cause : GitHub Pages envoie `Cache-Control: max-age=600` ; le service worker lisait `index.html` à travers le cache HTTP du navigateur (réseau d'abord, mais sans contourner ce cache), et l'installation d'une nouvelle version pouvait y mettre en cache l'ancien fichier. Règle : le service worker contourne le cache HTTP, pour les pages (`fetch(url, {cache:'no-store'})`) et à l'installation (`new Request(url, {cache:'reload'})`). Une nouvelle version est donc visible dès le déploiement terminé (environ 1 minute après la fusion) et au lancement suivant, en fermant l'appli puis en la rouvrant. Le fichier `_headers` (hérité de Netlify) n'a aucun effet sur GitHub Pages.
 
-### D-92 — Écran Suivi : des questions, un verdict, un levier (17/10/2026, décidé, pas encore codé)
+### D-92 — Écran Suivi : des questions, un verdict, un levier (17/10/2026 ; codé en v49)
 Constat : l'écran Suivi (v28) montre des chiffres sans repère (charge « 420 », charge par jour, monotonie, tuiles de la semaine, minutes sur 12 semaines) et ne répond à aucune question de l'utilisateur. Les maquettes du 17/10 (PR #12) répondaient à trois questions tirées de la feuille de route, pas de l'utilisateur. Décision d'Antoine (17/10/2026) : partir des questions d'un coureur amateur à l'objectif ambitieux, puis dessiner.
 
 (a) *Filtre* : un élément n'entre dans Suivi que s'il (1) répond à une question que l'utilisateur se pose, (2) se lit sans être expert, (3) mène à un levier ou à « rien à faire, continue » (la conclusion la plus fréquente). Leviers d'un amateur : continuer, protéger la sortie longue, déplacer une séance, changer ses jours, noter son effort honnêtement, lever le pied ou consulter, revoir l'objectif. « Rattraper » n'en fait pas partie et n'est jamais suggéré. L'appli recommande, l'utilisateur décide.
@@ -3306,7 +3321,7 @@ Préalables : compte sur la console Anthropic avec crédit, clé en secret Supab
 - Étage B : fonction `supabase/functions/analyze-session` (Sonnet 5.5 par défaut, `profile.iaModele` pour Opus 5.5). Note envoyée seulement si Antoine l'a écrite (jamais le nom d'activité de la montre, `nomMontre`). Lecture d'Antoine envoyée pour qu'il ait un retour sur sa propre lecture.
 - Tests : `tests/t_bilan.js`, `tests/ui/test_v57.py`.
 
-### D-100 — Données de séance seconde par seconde : indicateurs calculés par l'appli (proposée le 11/11/2026, à valider ; suite de D-99)
+### D-100 — Données de séance seconde par seconde : indicateurs calculés par l'appli (11/11/2026, validée, codée en v58 à v64 ; suite de D-99)
 **Pourquoi.** Le bilan v57 se limite à des moyennes et à des temps par zone fournis par intervals.icu. Deux limites, vues le 11/11/2026 sur la sortie de 1 h : (1) intervals.icu fige les zones à l'import (15 % « au-dessus » affiché, 76 % réels, voir garde-fou v58) ; (2) une moyenne cache l'essentiel d'une sortie de trail (départ calme puis FC à 160 dès la première côte, FC quasi identique en montée et en descente, dénivelé concentré sur quelques kilomètres). Besoin d'Antoine : de l'analyse de données, pas un résumé de ce qu'il connaît déjà.
 
 **1. Source des données.**
@@ -3411,7 +3426,7 @@ c. **Montée** = mètres montés par heure sur les seules montées (> +3 %), ram
 
 **6. Versions.** v66 : repères dans le moteur, bloc « Ta progression », historique, deux objectifs. v67 et v68 : retours ci-dessus. v69 : « Par rapport à d'habitude » dans le bilan et IA avec historique (fonction `analyze-session` à recoller une fois).
 
-### D-102 — Le D+ des sorties se cale sur la course la plus proche, en dénivelé par km (proposée le 14/11/2026, validée par Antoine sur le principe ; touche le plan)
+### D-102 — Le D+ des sorties se cale sur la course la plus proche, en dénivelé par km (validée par Antoine le 14/11/2026, codée en v69 ; touche le plan)
 **Constat (Antoine, 13/11/2026).** Avant son 50 km / 1 900 m D+ du 8 mai, le plan ne prévoit qu'environ 800 m de D+ sur sa plus longue sortie (4 h 35). Cause : la densité de D+ (m par heure) monte lentement vers celle de l'objectif principal (H-41) et ignore les objectifs intermédiaires.
 
 **Ce que disent les sources (recherche du 14/11/2026).**
@@ -3436,7 +3451,7 @@ c. **Montée** = mètres montés par heure sur les seules montées (> +3 %), ram
 
 **Sources.** Koop, trainright.com/?p=26580 et /hierarchy-ultramarathon-training-needs-jason-koop/ ; Genitrini et al. 2022, PMC9680470 ; Bontemps et al. 2025, Eur J Sport Sci 25(3) ; Martinez-Navarro et al. 2026, PMC12846201 ; La Clinique du Coureur, fiche « Quantification du stress ».
 
-### D-103 — Fin de préparation : sorties clés à rebours, niveau tenu en bloc, affûtage qui baisse vraiment (proposée le 14/11/2026 ; touche le plan ; à valider par Antoine)
+### D-103 — Fin de préparation : sorties clés à rebours, niveau tenu en bloc, affûtage qui baisse vraiment (validée le 14/11/2026, codée en v70 ; touche le plan ; ex-« à valider par Antoine)
 **Constat (revue du 14/11/2026, docs/REVUE-CONVENTIONS-2026-11.md).** Sur les plans produits (v69) : (1) les trois sorties clés tombent dans les 5 premières semaines du bloc, la dernière à 7 semaines de la course ; (2) ensuite la sortie longue retombe à 3 h, le volume des dernières semaines est bas ; (3) l'affûtage ne baisse que de 10 à 15 %, la sortie longue y monte, et une sortie de 3 h 20 tombe 6 jours avant la course.
 
 **Ce que disent les sources.**
@@ -3482,7 +3497,7 @@ c. **Montée** = mètres montés par heure sur les seules montées (> +3 %), ram
 
 **Sources.** Wang et coll. 2023, PLOS ONE 18(5):e0282838 ; Bosquet et coll. 2007 (S-COU-006) ; Tanda et Knechtle 2015, PMC4425319 ; Koop, trainright.com/longest-run-ultramarathon-training/, /tapering-ultrarunning-prevent-taper-tantrum, /ultramarathon-training-time-required/.
 
-### D-104 — Entraînement du ventre : exposer plus souvent, dès 1 h (proposée le 14/11/2026 ; module nutrition ; à valider par Antoine)
+### D-104 — Entraînement du ventre : exposer plus souvent, dès 1 h (proposée le 14/11/2026 ; **reportée** : Antoine a remis la nutrition à plus tard le 14/11 ; pas codée ; à reprendre avant fin février 2027)
 **Constat (revue du 14/11/2026, point 4).** L'app affiche déjà une cible de glucides dès qu'une course dure 1 h. Mais la progression (+6 g/h par semaine) ne compte que les sorties de 1 h 30 ou plus. Pour un coureur à 2 ou 3 courses par semaine, le ventre n'est donc « entraîné » qu'une fois par semaine, et la deuxième course ne compte pas.
 
 **Ce que disent les sources.**

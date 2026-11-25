@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
-"""Lance toute la batterie de tests. Usage : python3 tools/test.py
-Code de sortie 0 si tout est vert, 1 sinon (utilisé par la CI GitHub Actions)."""
+"""Lance toute la batterie de tests.
+  python3 tools/test.py        moteur et outils (environ 1 min)
+  python3 tools/test.py --ui   en plus, tous les tests d'interface tests/ui/test_v*.py (Playwright, environ 8 min)
+Code de sortie 0 si tout est vert, 1 sinon. Pas de CI : la batterie se lance à la main avant chaque PR."""
 import pathlib, subprocess, sys
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
@@ -24,6 +26,9 @@ ETAPES = [
     ("Numéro de semaine juste le lundi en heure d'été (P-07)", ['node', 'audit/t_audit_heure_ete.js'], T, None),
     ("Invariants sur 120 scénarios tirés au hasard (audit, fuseau UTC)", ['node', 't_invariants.js'], T, None),
 ]
+if '--ui' in sys.argv:
+    for f in sorted((T / 'ui').glob('test_v*.py'), key=lambda x: int(x.stem[6:]) if x.stem[6:].isdigit() else 0):
+        ETAPES.append(("Interface : " + f.name, [PY, f.name], T / 'ui', None))   # certains tests lisent un voisin par chemin relatif
 echecs = 0
 for nom, cmd, cwd, verdict in ETAPES:
     r = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True)

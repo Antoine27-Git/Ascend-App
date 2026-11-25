@@ -551,7 +551,8 @@ function build(inp){
 }
 /* ---- D-99 : bilan de séance, étage A (calculé, déterministe ; ne modifie pas le plan) ----
    Seuils des messages : conventions (H-59), réglables ici. */
-const BILAN={baseZ:2,baseHaut:155,haut:0.40,bas:0.20,rpeBas:3,rpeHaut:7,ecart:0.25};
+const BILAN={baseZ:2,baseHaut:null,   /* ménage 25/11 : plus de valeur propre à Antoine (155) ; sans zones ni FC de base, pas de comparaison */
+  haut:0.40,bas:0.20,rpeBas:3,rpeHaut:7,ecart:0.25};
 
 /* ---------- D-100 : zones de Karvonen et indicateurs tirés des données seconde par seconde ---------- */
 const KARV=[0.6,0.7,0.8,0.9];   /* bornes hautes des zones 1 à 4, en part de la FC de réserve (zone 5 au-delà) */
@@ -664,7 +665,7 @@ function bilan(inp,sid){
   if(F&&F.zones){zones=F.zones.pct.map((p,i)=>({z:i+1,haut:F.zones.bornes[i]!=null?F.zones.bornes[i]:null,pct:p}));dessus=F.zones.dessusBase/100;}
   /* garde-fou (v58) : intervals.icu fige les zones à l'import de l'activité. Si la borne haute de la zone de base n'est pas celle réglée, les temps par zone ne sont pas fiables : on ne les affiche pas. */
   const hautBase=zk?zk[BILAN.baseZ-1]:(PP.fcBase||BILAN.baseHaut),bornes=s.hrZ&&s.hrZ.b,bAct=bornes?bornes[BILAN.baseZ-1]:null;
-  if(!zones&&s.hrZ&&bAct!=null&&Math.abs(bAct-hautBase)>1)zonesKO={act:bAct,att:hautBase};
+  if(!zones&&s.hrZ&&bAct!=null&&hautBase!=null&&Math.abs(bAct-hautBase)>1)zonesKO={act:bAct,att:hautBase};
   if(!zones&&!zonesKO&&s.hrZ&&Array.isArray(s.hrZ.t)){const t=s.hrZ.t.map(x=>+x||0),tot=t.reduce((a,b)=>a+b,0);
     if(tot>0){zones=t.map((x,i)=>({z:i+1,haut:s.hrZ.b&&s.hrZ.b[i]!=null?s.hrZ.b[i]:null,pct:Math.round(100*x/tot)}));
       dessus=t.slice(BILAN.baseZ).reduce((a,b)=>a+b,0)/tot;}}
@@ -676,7 +677,7 @@ function bilan(inp,sid){
   if(dessus!=null&&s.rpe!=null&&s.rpe<=BILAN.rpeBas&&dessus>BILAN.haut)m('fc-haute','Ta FC a travaillé plus que ton ressenti : '+Math.round(dessus*100)+' % du temps au-dessus de ton allure facile.');
   if(dessus!=null&&s.rpe!=null&&s.rpe>=BILAN.rpeHaut&&dessus<BILAN.bas&&s.type!=='qual')m('fc-basse','Ressenti dur mais FC basse : fatigue des jambes ou fatigue générale probable.');
   if(prevu&&prevu.dur&&s.dur){const e=s.dur/prevu.dur-1;if(e>BILAN.ecart)m('plus-long','Plus long que prévu (+'+Math.round(e*100)+' %).');else if(e<-BILAN.ecart)m('plus-court','Plus court que prévu ('+Math.round(e*100)+' %).');}
-  if(F&&F.croisiere&&F.croisiere.fc){const c=F.croisiere,ec=c.fc-hautBase;
+  if(F&&F.croisiere&&F.croisiere.fc&&hautBase!=null){const c=F.croisiere,ec=c.fc-hautBase;
     m('croisiere','FC stabilisée : '+c.fc+' bpm'+(c.depart?' (départ à '+c.depart+')':'')+(c.montee_s!=null?', atteint en '+Math.max(1,Math.round(c.montee_s/60))+' min':'')+' — '+(ec>0?ec+' bpm au-dessus':ec<0?(-ec)+' bpm en dessous':'pile à la limite')+' de ton allure facile ('+hautBase+').');}
   if(F&&F.terrain&&F.terrain.montee&&F.terrain.descente&&F.terrain.montee.fc&&F.terrain.descente.fc&&F.terrain.descente.fc>=F.terrain.montee.fc-FLUX.ecartTerrain)
     m('descente','FC presque aussi haute en descente ('+F.terrain.descente.fc+') qu\'en montée ('+F.terrain.montee.fc+') : peu de récupération dans les descentes.');
