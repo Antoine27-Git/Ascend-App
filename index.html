@@ -1460,7 +1460,7 @@ function planStatus(ps){
   const today=todayISO(),r=realizedOf(ps);
   if(r)return {k:'done',r};
   if(isOff(ps.date))return {k:'off'};
-  if(ps.date<today||(ps.date===today&&ps.gen&&isRun(ps)&&manqueDe(ps)))return {k:'missed'};   /* D-72 : manquée déclarée le jour même */if(ps.date===today)return {k:'today'};return {k:'next'};
+  if(ps.date<today||(ps.date===today&&ps.gen&&manqueDe(ps)))return {k:'missed'};   /* D-72 : manquée déclarée le jour même */if(ps.date===today)return {k:'today'};return {k:'next'};
 }
 /* ENGINE:BEGIN — copie générée depuis tests/engine.js par tools/build.py. Ne pas modifier ici : modifier tests/engine.js puis relancer tools/build.py. */
 /* ---------- moteur de plan (v1 : refonte D-67/D-68 ; règles v0 conservées derrière regles:'v1') ----------
@@ -2274,7 +2274,9 @@ const MQL={fatigue:'fatigue',autre:'agenda'};
 let REPROG=null,REPROG_SEL=null;
 /* v77 : nom du jour dans la semaine en cours : Aujourd'hui, Demain, puis le jour, sans date */
 function jourNom(d){const t=todayISO();if(d===t)return 'Aujourd\'hui';if(d===addDays(t,1))return 'Demain';return ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'][parseISO(d).getDay()];}
-const manqueDe=ps=>((S.profile.manques||{})[ps.decale||ps.date])||null;
+/* v78 : une séance hors course (renforcement) a sa propre clé « x:date » : le moteur ne la lit pas, le plan de course n'est pas modifié */
+const manqueCle=ps=>(isRun(ps)?'':'x:')+(ps.decale||ps.date);
+const manqueDe=ps=>((S.profile.manques||{})[manqueCle(ps)])||null;
 /* jours où une séance de course peut aller : semaine en cours, à partir d'aujourd'hui, sans autre course ce jour-là */
 function joursLibres(ps){const t=todayISO(),m0=monday(t);if(!ps.gen||!isRun(ps)||ps.type==='race'||monday(ps.date)!==m0&&monday(ps.decale||ps.date)!==m0)return [];
   const runs=allPlan().filter(p=>isRun(p)&&p.id!==ps.id),out=[];
@@ -2300,6 +2302,10 @@ function reprogHTML(ps){const L=joursLibres(ps);if(!L.length)return '<div class=
 let MQS=null;
 function vManque(){const ps=findPlan(MQS.id);if(!ps)return '';const k=manqueDe(ps),L=joursLibres(ps).filter(x=>!x.ech);
   const opt=(kk,t,d)=>'<button class="opt'+(k===kk?' on':'')+'" onclick="app.manqueChoix(\''+kk+'\')"><b>'+t+'</b><span>'+d+'</span></button>';
+  if(!isRun(ps))return '<div class="pad"><div class="row sbtw"><h3>Séance pas faite</h3><button class="btn x" onclick="app.close()" aria-label="fermer">×</button></div>'
+    +'<div class="mini" style="margin-top:4px">'+fmtD(ps.date)+' · '+esc(planTitle(ps))+'</div>'
+    +'<div style="margin-top:18px">'+opt('autre','Je ne l\'ai pas faite','Ton plan de course n\'est pas modifié.')+'</div>'
+    +(k?'<button class="btn full" style="margin-top:18px;background:transparent;color:var(--mut);font-weight:600" onclick="app.manqueFaite()">Finalement, je l\'ai faite</button>':'')+'</div>';
   return '<div class="pad"><div class="row sbtw"><h3>Séance manquée</h3><button class="btn x" onclick="app.close()" aria-label="fermer">×</button></div>'
     +'<div class="mini" style="margin-top:4px">'+fmtD(ps.date)+' · '+esc(planTitle(ps))+'</div>'
     +'<div class="lbl" style="margin-top:18px"><span>Pourquoi ?</span></div>'
@@ -2333,7 +2339,7 @@ function nextAfter(date){return allPlan().filter(p=>p.date>date&&!['done','off']
 function todayCard(ps,i){
   const st=planStatus(ps),cls=HDCLASS[ps.type]||'autre',run=isRun(ps),done=st.k==='done',r=st.r;
   const meta=[ps.dur?durTxt(ps.dur):null,run&&ps.type!=='race'?(ps.dplus?dpR(ps).s+' de D+':ps.dmax&&ps.gen?'moins de '+ps.dmax+' m de D+':null):null].filter(Boolean).join(' · ');
-  const pill=done?'<span class="pill">Fait</span>':st.k==='missed'?'<span class="pill red">Manquée'+(manqueDe(ps)?' · '+MQL[manqueDe(ps)]:'')+'</span>':st.k==='off'?'<span class="pill grey">Annulée</span>':'';
+  const pill=done?'<span class="pill">Fait</span>':st.k==='missed'?'<span class="pill red">'+(!isRun(ps)&&manqueDe(ps)?'Pas faite':'Manquée'+(manqueDe(ps)?' · '+MQL[manqueDe(ps)]:''))+'</span>':st.k==='off'?'<span class="pill grey">Annulée</span>':'';
   let body='';
   if(done){
     const f=[r.dur?durTxt(r.dur):null,r.dplus?r0(r.dplus)+' m D+':r.dist?r1(r.dist)+' km':null,r.rpe!=null?'effort '+r.rpe:null].filter(Boolean).join(' · ');
@@ -2352,7 +2358,7 @@ function todayCard(ps,i){
       +'<button class="btn '+(sec&&!w?'':'dark ')+'full" style="margin-top:14px" onclick="event.stopPropagation();app.newSession(\''+ps.id+'\')">Valider ma séance</button>';   /* D-107 : rien de la montre avant l'étape 1 ; v77 : un seul libellé */
     const L=[];
     if(run&&ps.type!=='race')L.push(sendLink(ps));
-    if(run&&ps.gen&&ps.type!=='race')L.push('<button onclick="event.stopPropagation();app.manqueOuvrir(\''+ps.id+'\')">Pas faite</button>');
+    if(ps.gen&&ps.type!=='race')L.push('<button onclick="event.stopPropagation();app.manqueOuvrir(\''+ps.id+'\')">Pas faite</button>');
     if(L.length)body+='<div class="tlinks">'+L.join('')+'</div>';
     if(WS[ps.id]&&WS[ps.id]!=='busy')body+='<div class="note" style="margin-top:10px">'+esc(WS[ps.id])+'</div>';
   }
@@ -2506,7 +2512,7 @@ function sessFacts(ps,r){
 function sessCard(ps,withBtn){
   const st=planStatus(ps),T=TYPES[ps.type]||TYPES.autre,adj=null;
   const cls=HDCLASS[ps.type]||'autre',r=st.r,nu=nutriFor(ps);
-  const pill=st.k==='done'?'<span class="pill">Fait</span>':st.k==='today'?'<span class="pill warn">Aujourd\'hui</span>':st.k==='missed'?'<span class="pill red">Manquée'+(manqueDe(ps)?' · '+MQL[manqueDe(ps)]:'')+'</span>':st.k==='off'?'<span class="pill grey">Annulée</span>':'';
+  const pill=st.k==='done'?'<span class="pill">Fait</span>':st.k==='today'?'<span class="pill warn">Aujourd\'hui</span>':st.k==='missed'?'<span class="pill red">'+(!isRun(ps)&&manqueDe(ps)?'Pas faite':'Manquée'+(manqueDe(ps)?' · '+MQL[manqueDe(ps)]:''))+'</span>':st.k==='off'?'<span class="pill grey">Annulée</span>':'';
   const sub=[fmtD(ps.date)+(ps.decale?' (décalée du '+DOWN[parseISO(ps.decale).getDay()].toLowerCase()+')':''),st.k==='done'&&st.r&&st.r.date!==ps.date?'faite le '+fmtD(st.r.date):null,nu&&st.k!=='done'?nu.perH+' g/h':null].filter(Boolean).join(' · ');
   return '<div class="sc '+(st.k==='today'?'today':st.k==='off'?'off':'')+'" onclick="app.openSess(\''+ps.id+'\')">'
    +'<div class="top"><div class="ic '+cls+'">'+mi(TICON[ps.type]||'run')+'</div>'
@@ -2580,10 +2586,10 @@ function vSessDetail(){
   const wm=isRun(ps)&&st.k!=='done'&&WT.list?watchNew().filter(o=>o.date===ps.date&&(o.type==='ef'||o.type==='long')).sort((a,b)=>Math.abs(a.dur-(ps.dur||0))-Math.abs(b.dur-(ps.dur||0)))[0]:null;
   let res='';
   if(st.k==='done'&&st.r)res='<div class="card"><h2>Réalisé</h2><div class="mini" style="color:var(--mintT);font-size:14px;margin-top:6px">'+[st.r.dur?durTxt(st.r.dur):null,st.r.dist?r1(st.r.dist)+' km':null,st.r.dplus?r0(st.r.dplus)+' m D+':null,st.r.hrAvg?'FC '+st.r.hrAvg:null,st.r.rpe!=null?'effort '+st.r.rpe:null].filter(Boolean).join(' · ')+(st.r.type==='cf'&&cfLine(st.r)?'<br>'+cfLine(st.r):'')+'</div><button class="btn full" style="margin-top:12px" onclick="app.edit(\''+st.r.id+'\')">Ouvrir la séance réalisée</button>'+(isRun(st.r)?bilanSeanceHTML(st.r):'')+'</div>';
-  else if(missRun&&manqueDe(ps))res='<div class="card"><div class="row sbtw"><div><h2 style="margin:0">Pas faite</h2><div class="mini" style="margin-top:4px">Raison : '+(manqueDe(ps)==='fatigue'?'fatigue':'agenda, imprévu')+'</div></div><button class="btn s" onclick="app.manqueOuvrir(\''+ps.id+'\')">Modifier</button></div></div>'
+  else if(ps.gen&&ps.type!=='race'&&manqueDe(ps))res='<div class="card"><div class="row sbtw"><div><h2 style="margin:0">Pas faite</h2><div class="mini" style="margin-top:4px">'+(!isRun(ps)?'Ton plan de course n\'est pas modifié.':'Raison : '+(manqueDe(ps)==='fatigue'?'fatigue':'agenda, imprévu'))+'</div></div><button class="btn s" onclick="app.manqueOuvrir(\''+ps.id+'\')">Modifier</button></div></div>'
     +fOpt('person','Valider ma séance','Je l\'ai faite finalement',"app.newSession('"+ps.id+"')");
-  else if(ps.date<=today&&st.k!=='off')res=fOpt(S.profile.hasWatch!==false?'timer':'person','Valider ma séance',S.profile.hasWatch!==false?'Depuis ta montre, ou à la main':ps.type==='cf'?'Durée, effort, jambes':'Durée, D+, effort',"app.newSession('"+ps.id+"')",true)
-    +(missRun?fOpt('calendar','Pas faite','Empêchement ou fatigue : le plan s\'adapte',"app.manqueOuvrir('"+ps.id+"')"):'');
+  else if(ps.date<=today&&st.k!=='off')res=fOpt(S.profile.hasWatch!==false&&isRun(ps)?'timer':'person','Valider ma séance',!isRun(ps)?'Durée, effort, jambes':S.profile.hasWatch!==false?'Depuis ta montre, ou à la main':'Durée, D+, effort',"app.newSession('"+ps.id+"')",true)
+    +(missRun?fOpt('calendar','Pas faite','Empêchement ou fatigue : le plan s\'adapte',"app.manqueOuvrir('"+ps.id+"')"):ps.gen&&ps.type!=='race'?fOpt('calendar','Pas faite','Ton plan de course n\'est pas modifié',"app.manqueOuvrir('"+ps.id+"')"):'');
   return '<div class="halo"><i class="b" style="left:-40px;right:auto"></i><i class="a" style="right:-60px;left:auto;background:#ffe0b8"></i></div>'
   +'<header><div class="row sbtw"><button class="btn" style="width:44px;height:44px;padding:0;border-radius:14px;background:#fff" onclick="app.close()" aria-label="fermer">×</button>'
   +(canMove?'<button class="btn" style="height:44px;padding:0 16px;border-radius:14px;background:#fff;font-size:14px;font-weight:700" onclick="app.reprog(\''+ps.id+'\')">'+(REPROG===ps.id?'Annuler':'Déplacer')+'</button>':'')+'</div>'
@@ -3353,7 +3359,7 @@ function vGate(){
     +authFormHTML('Un compte garde ton plan et tes séances en sécurité, et te permet de les retrouver sur un autre téléphone. Ton prénom personnalise l\'app.')
     +syncLineHTML()+versionLineHTML()+'</div></main>';
 }
-const APP_VERSION='v77';   /* généré depuis sw.js par tools/build.py */
+const APP_VERSION='v78';   /* généré depuis sw.js par tools/build.py */
 function versionLineHTML(){return '<div class="mini" id="ver" style="margin-top:12px;text-align:center;opacity:.7">Ascend '+APP_VERSION+' · moteur de plan v2</div>';}
 /* compare la page chargée au cache du service worker : signale un déploiement pas encore actif */
 function checkVersion(){if(!('caches' in window))return;caches.keys().then(ks=>{const c=ks.filter(k=>/^ascend-v\d+$/.test(k)).map(k=>+k.slice(8)).sort((a,b)=>b-a)[0],el=document.getElementById('ver');
@@ -3495,7 +3501,8 @@ const app=window.app={
     if(k==='rhr'||k==='weight'){const nm=$('#numsmini');if(nm)nm.innerHTML=numsMini(curDate);}},
   newSession(pid,direct){const ps=pid?findPlan(pid):null,t0=todayISO(),d0=ps?ps.date:curDate;E={id:null,date:d0>t0?t0:d0,type:ps?ps.type:'ef',dur:ps?ps.dur:null,dist:null,dplus:ps?ps.dplus:null,dminus:null,hrAvg:null,hrMax:null,rpe:null,legs:null,heelPost:null,shoe:'',carbs:null,fluids:null,gi:null,dip:null,note:'',track:null,plannedId:ps?ps.id:null,wodName:'',wodDur:null,scoreType:'none',score:null,scoreReps:null,rx:null,wod:[],lifts:[],impacts:[],stSrc:'externe',stQual:null,stDom:null,stEcc:null};
     /* D-107 : étape 1 (source) quand la lecture de la montre est active et que la séance peut en venir ; sinon saisie directe */
-    if(!direct&&auth&&S.profile.hasWatch!==false&&(WT.list||WT.busy)){WZ={pid:pid||null,src:true};openSource();
+    const pRun=pid&&findPlan(pid)?isRun(findPlan(pid)):true;   /* v78 : renforcement et autres séances hors course : saisie à la main directement */
+    if(!direct&&pRun&&auth&&S.profile.hasWatch!==false&&(WT.list||WT.busy)){WZ={pid:pid||null,src:true};openSource();
       if(!WT.busy&&(!WT.at||Date.now()-WT.at>120000))app.wzSync();   /* v77 : la montre est relue à l'ouverture de l'étape 1 */
       return;}
     if(!direct)WZ=null;openSheet(true);},
@@ -3607,11 +3614,11 @@ const app=window.app={
   planCopy(id){const ps=findPlan(id);if(!ps)return;const t=$('#plantxt');if(!t){flash('Ouvre l\'onglet Plan');return;}t.value=planText(ps);app.copy('#plantxt');},
   manqueOuvrir(id){PM=false;MQS={id,dec:false};openManque();},
   manqueDec(){MQS.dec=!MQS.dec;openManque();},
-  manqueChoix(k){const ps=findPlan(MQS.id);if(!ps)return;const P=S.profile,o=ps.decale||ps.date;P.manques=Object.assign({},P.manques,{[o]:k});
-    MQS=null;PE=null;$('#sheet').innerHTML='';save();render();setTimeout(()=>flash(k==='fatigue'?'Noté : fatigue, semaine prochaine allégée':'Noté : le plan continue'),450);},
+  manqueChoix(k){const ps=findPlan(MQS.id);if(!ps)return;const P=S.profile,o=manqueCle(ps);P.manques=Object.assign({},P.manques,{[o]:k});
+    MQS=null;PE=null;$('#sheet').innerHTML='';save();render();setTimeout(()=>flash(!isRun(ps)?'Noté : pas faite':k==='fatigue'?'Noté : fatigue, semaine prochaine allégée':'Noté : le plan continue'),450);},
   manqueDecaler(t){const ps=findPlan(MQS.id);if(!ps)return;const o=ps.decale||ps.date,P=S.profile;P.decal=Object.assign({},P.decal,{[o]:t});if(P.manques)delete P.manques[o];
     MQS=null;PE=null;$('#sheet').innerHTML='';save();render();setTimeout(()=>flash('Séance déplacée au '+DOWN[parseISO(t).getDay()].toLowerCase()),450);},
-  manqueFaite(){const ps=findPlan(MQS.id);MQS=null;if(!ps)return;const P=S.profile;if(P.manques&&P.manques[ps.decale||ps.date]){P.manques=Object.assign({},P.manques);delete P.manques[ps.decale||ps.date];save();}app.newSession(ps.id);},
+  manqueFaite(){const ps=findPlan(MQS.id);MQS=null;if(!ps)return;const P=S.profile,o=manqueCle(ps);if(P.manques&&P.manques[o]){P.manques=Object.assign({},P.manques);delete P.manques[o];save();}app.newSession(ps.id);},
   manque(d,k){const P=S.profile;P.manques=Object.assign({},P.manques);if(P.manques[d]===k)delete P.manques[d];else P.manques[d]=k;REPROG=null;save();
     flash(P.manques[d]==='fatigue'?'Noté : fatigue':P.manques[d]?'Noté : agenda':'Réponse retirée');render();refreshPE();},
   lecture(id,v){const r=S.sessions.find(x=>x.id===id);if(!r)return;r.lecture=String(v||'').slice(0,300)||null;save();},

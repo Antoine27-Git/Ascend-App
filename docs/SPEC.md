@@ -3638,3 +3638,8 @@ Maquettes validées le 24/11 : `docs/maquettes/screens_saisie3.py` (2A, 1a/1b, 3
 6. **Déplacer : on touche le jour dans le calendrier de la semaine** (icônes des séances prévues, jours impossibles grisés), une ligne dit la conséquence (jour libre, avec ton renforcement, échange, veille de ta sortie longue), puis « Déplacer à … ». Noms de jour : Aujourd'hui, Demain, puis le jour, sans date (aussi dans « Séance manquée »).
    - Déplacer une course sur un jour de renforcement n'échange rien : les deux le même jour restent possibles (confirmé par Antoine).
 **Tests.** `tests/ui/test_v77.py` ; `test_v55.py` et `test_v75.py` adaptés.
+
+### D-107, complément v78 (24/11/2026) — renforcement
+- « Valider ma séance » sur une séance hors course (renforcement…) ouvre directement la saisie à la main : la montre ne sert qu'aux courses.
+- « Pas faite » existe aussi pour le renforcement (accueil, fiche séance). Fenêtre courte, une seule réponse : « Je ne l'ai pas faite », « Ton plan de course n'est pas modifié ». Enregistrée sous la clé `x:date` dans `profile.manques` : le moteur ne la lit pas (il ne lit que la date des courses), donc aucun effet sur le plan, même si une course tombe le même jour.
+- Test : `tests/ui/test_v78.py`.
