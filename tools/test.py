@@ -24,6 +24,7 @@ ETAPES = [
     ("Indicateurs seconde par seconde et zones de Karvonen (D-100)", ['node', 't_flux.js'], T, None),
     ("Un saut ne relève la référence que de +10 % (D-107)", ['node', 't_plafond.js'], T, None),
     ("Numéro de semaine juste le lundi en heure d'été (P-07)", ['node', 'audit/t_audit_heure_ete.js'], T, None),
+    ("Déplacer un renforcement dans sa semaine (v80)", ['node', 't_renfo_decal.js'], T, None),
     ("Invariants sur 120 scénarios tirés au hasard (audit, fuseau UTC)", ['node', 't_invariants.js'], T, None),
 ]
 if '--ui' in sys.argv:
