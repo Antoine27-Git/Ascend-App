@@ -3658,3 +3658,10 @@ Maquettes validées le 24/11 : `docs/maquettes/screens_saisie3.py` (2A, 1a/1b, 3
 - « Valider ma séance » sur une séance hors course (renforcement…) ouvre directement la saisie à la main : la montre ne sert qu'aux courses.
 - « Pas faite » existe aussi pour le renforcement (accueil, fiche séance). Fenêtre courte, une seule réponse : « Je ne l'ai pas faite », « Ton plan de course n'est pas modifié ». Enregistrée sous la clé `x:date` dans `profile.manques` : le moteur ne la lit pas (il ne lit que la date des courses), donc aucun effet sur le plan, même si une course tombe le même jour.
 - Test : `tests/ui/test_v78.py`.
+
+### D-107, complément v80 (25/11/2026) — renforcement : même logique que les courses
+Maquettes validées le 25/11 : `docs/maquettes/screens_renfo.py` (1, 2, 3).
+1. **Un jour à deux séances** : toucher le jour dans « Cette semaine » ouvre la liste des séances du jour ; chacune ouvre sa fiche. Un jour à une séance ouvre sa fiche, comme avant.
+2. **Déplacer un renforcement** (moteur, règles v2) : dans sa semaine, sur un jour à venir sans autre renforcement, clé `P.decal['x:'+jour d'origine]`. Le contenu « haut du corps et gainage » est recalculé sur le nouveau jour (veille ou lendemain de la sortie longue, même règle qu'à la création). Les courses ne bougent pas. Lignes affichées : jour libre ; « jour de ton endurance (ou autre séance). Possible de faire les deux le même jour, si tu t'en sens capable » ; « veille de ta sortie longue. Choisis un renforcement qui épargne les jambes (haut du corps, gainage) » ; « le jour de ta sortie longue. Possible, après la sortie, en épargnant les jambes ». Le même texte « si tu t'en sens capable » s'affiche quand on déplace une course sur un jour de renforcement. **Convention**, pas d'étude.
+3. **« Pas faite » sur un renforcement** : deux choix, un appui chacun : « La faire un autre jour » (ouvre le calendrier de la fiche) ou « Je ne la ferai pas cette semaine ». S'il ne reste aucun jour possible, c'est noté sans fenêtre.
+**Tests.** `tests/t_renfo_decal.js` (moteur, 6 contrôles) ; `tests/ui/test_v80.py` (15 contrôles).

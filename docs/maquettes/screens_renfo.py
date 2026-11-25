@@ -40,21 +40,35 @@ def s4_2():
           + cal + '<div class="res"><b>Aujourd\'hui</b> : jour libre.</div><div class="btn pri" style="margin-top:12px">Déplacer à aujourd\'hui</div>', 'p') + '</div>')
     h += cas('B', 'Ce que dit la ligne selon le jour choisi')
     h += ('<div class="fr" style="margin-bottom:4px">' + card(
-          '<div class="res" style="border-top:0;margin-top:0;padding-top:0"><b>Samedi</b> : veille de ta sortie longue. Fais-le sans jambes lourdes (haut du corps, gainage).</div>'
-          '<div class="res"><b>Dimanche</b> : le jour de ta sortie longue. Possible, mais après la sortie.</div>'
+          '<div class="res" style="border-top:0;margin-top:0;padding-top:0"><b>Samedi</b> : veille de ta sortie longue. Choisis un renforcement qui épargne les jambes (haut du corps, gainage).</div>'
+          '<div class="res"><b>Dimanche</b> : le jour de ta sortie longue. Possible, après la sortie, en épargnant les jambes.</div>'
           '<div class="res"><b>Jeudi</b> : jour libre.</div>'
-          '<div class="res"><b>Un jour de course</b> : avec ta course. Possible, les deux le même jour.</div>', 'p') + '</div>')
+          '<div class="res"><b>Mardi</b>, jour de ton endurance : avec ton endurance. Possible, les deux le même jour.</div>', 'p') + '</div>')
     h += '<div class="mini" style="margin:0 4px">Même règle que pour une course : seulement dans la semaine en cours. Deux renforcements ne se mettent pas le même jour.</div>'
     return B2.doc(h)
 
 
+X5 = r"""
+.fopt{display:flex;align-items:center;gap:12px;width:100%;background:var(--card);border-radius:18px;padding:13px 14px;margin:0 0 8px;box-shadow:var(--shadow)}
+.fopt.pri{background:var(--accent);color:var(--accentInk);box-shadow:none}
+.fopt .foi{width:36px;height:36px;border-radius:11px;background:#e3f5ec;color:var(--mintT);display:grid;place-items:center;flex:none}
+.fopt.pri .foi{background:rgba(255,255,255,.55);color:inherit}
+.fopt .foi .mi{width:20px;height:20px}
+.fopt .fot{flex:1;min-width:0}.fopt .fot b{display:block;font-size:15px}.fopt .fot span{display:block;font-size:12.5px;color:var(--mut)}.fopt.pri .fot span{color:inherit;opacity:.8}
+.fopt .ch{color:var(--mut);font-size:20px}
+"""
+B2.X = B2.X + X5
+
+
+def fopt(icon, t, sub, pri=False):
+    return '<div class="fopt' + (' pri' if pri else '') + '"><span class="foi">' + (ic(icon) if icon != 'close' else '<span style="font-size:22px;font-weight:800;line-height:1">×</span>') + '</span><span class="fot"><b>' + t + '</b><span>' + sub + '</span></span><span class="ch">›</span></div>'
+
+
 def s4_3():
-    h = title('3', '« Pas faite » sur un renforcement : deux choix utiles, un seul appui')
-    h += ('<div class="fr" style="margin-bottom:4px">' + card('<div class="h2">Renforcement pas fait</div><div class="mini" style="margin-top:4px">mar. 24 nov. · 45 min</div>'
-          '<div class="opt" style="margin-top:14px;background:var(--card);border-radius:14px;box-shadow:var(--shadow);padding:12px 14px"><b>La faire un autre jour</b><div class="mini">Ouvre le calendrier de la semaine.</div></div>'
-          '<div class="opt" style="margin-top:10px;background:var(--card);border-radius:14px;box-shadow:var(--shadow);padding:12px 14px"><b>Je ne la ferai pas cette semaine</b><div class="mini">Noté tout de suite. Ton plan de course n\'est pas modifié.</div></div>', 'p') + '</div>')
-    h += '<div class="mini" style="margin:0 4px">S\'il n\'y a plus aucun jour possible dans la semaine, la fenêtre ne s\'ouvre pas : « Pas faite » est noté directement.</div>'
-    return B2.doc(h)
+    s = (head('Renforcement pas fait') + '<div class="mini" style="margin:-4px 4px 16px">mar. 24 nov. · 45 min</div>'
+         + fopt('calendar', 'La faire un autre jour', 'Choisis le jour dans ta semaine', True)
+         + fopt('close', 'Je ne la ferai pas cette semaine', 'Ton plan de course n\'est pas modifié'))
+    return pg(sheet(s), ('3', '« Pas faite » sur un renforcement : deux choix, style des choix de la fiche séance'), h=520)
 
 
 EXPORT = ['s4_1', 's4_2', 's4_3']

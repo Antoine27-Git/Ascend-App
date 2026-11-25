@@ -529,9 +529,15 @@ function build(inp){
       if(x.q){o.title=x.q.title;o.steps=x.q.steps;o.notes=x.q.notes;}
       if(x.accel)o.note='+ '+x.accel[0]+' × '+x.accel[1]+' s d\'accélérations en fin de séance';
       out.sessions.push(o);});
-    rf.forEach(x=>{const date=add(monW,off(x.dow));if(date<from)return;const key=aff?'affutage':(sp||ph);
+    /* v80 : un renforcement se déplace dans sa semaine (P.decal['x:'+jour d'origine]) ; jamais deux renforcements le même jour.
+       « near » (veille ou lendemain de la sortie longue) est recalculé sur le nouveau jour. */
+    const rfJ=rf.map(x=>add(monW,off(x.dow)));
+    rf.forEach((x,k)=>{const o0=rfJ[k];let date=o0,orig=null;
+      if(V2&&P.decal){const t=P.decal['x:'+o0];if(t&&t!==o0&&t>=monW&&t<=add(monW,6)&&!rfJ.some((d,j)=>j!==k&&d===t)){date=t;orig=o0;
+        x={...x,dow:D(t).getDay(),near:gap(D(t).getDay(),longDow)<=1};}}   /* même règle qu'à la création : à un jour de la sortie longue */
+      if(date<from)return;const key=aff?'affutage':(sp||ph);
       const libre=P.stMode==='libre';
-      out.sessions.push({id:'g'+date+'-cf',gen:true,date,type:'cf',dur:45,title:'Renforcement',
+      out.sessions.push({id:'g'+o0+'-cf',gen:true,date,type:'cf',dur:45,title:'Renforcement',...(orig?{decale:orig}:{}),
         note:libre?(x.near?'Séance libre, sans jambes lourdes (sortie longue à moins de 48 h)':'Séance libre'):(x.near?'Haut du corps et gainage : sortie longue à moins de 48 h':RENFO[key]),
         why:libre?'Tu gères ton renforcement : l\'app la compte dans ta charge.':'Contenu de la phase ('+(sp||ph)+').'});});
   }
