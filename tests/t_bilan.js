@@ -2,7 +2,7 @@
 const E=require('./engine.js');const base=require('./t_prof.json');
 const isRun=s=>['ef','long','qual','desc'].includes(s.type);
 let ok=true;const t=(nom,c,d)=>{console.log((c?'✓ ':'✗ ')+nom+(d?' ('+d+')':''));if(!c)ok=false;};
-const P=Object.assign({},base,{planStart:'2026-11-02',planFrom:'2026-11-02',races:[]});
+const P=Object.assign({},base,{planStart:'2026-11-02',planFrom:'2026-11-02',races:[],fcBase:155});   /* ménage 25/11 : le repli 155 en dur a disparu du moteur ; le profil de test le donne */
 const Z={t:[400,300,1200,1300,400,10,0],b:[140,155,160,165,170,180,200]};
 const mk=extra=>{const ses=[{id:'c',date:'2026-11-10',type:'cf',dur:60,rpe:6,cfJ:'fort'},Object.assign({id:'x',date:'2026-11-11',type:'long',dur:60,rpe:3,dplus:164,dminus:150,hrAvg:158,hrZ:Z},extra)];
   const o=E.build({profile:P,today:'2026-11-11',sessions:ses,isRun});const pl=o.sessions.find(x=>x.date==='2026-11-11'&&isRun(x));if(pl)ses[1].plannedId=pl.id;

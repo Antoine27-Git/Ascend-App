@@ -26,7 +26,8 @@ with sync_playwright() as p:
     chk('CrossFit la veille' in txt,'étage A : CrossFit la veille')
     chk('Prochaine sortie longue' in txt,'étage A : effet sur le plan')
     pg.screenshot(path=OUT+'/bilan.png',full_page=True)
-    pg.locator('#sheet input[placeholder^="Ex. :"]').fill('sortie facile');pg.locator('#sheet input[placeholder^="Ex. :"]').blur()
+    pg.locator('#sheet button.lk',has_text='Ajouter').click();pg.wait_for_timeout(300)   # v77 : un seul champ « Ta perception »
+    pg.locator('#sheet #percEdit textarea').fill('sortie facile');pg.locator('#sheet #percEdit textarea').blur();pg.wait_for_timeout(300)
     pg.get_by_text('Analyser la séance').click();pg.wait_for_timeout(900)
     txt=pg.locator('#sheet').inner_text()
     chk('marche dans les côtes' in txt,'étage B : texte affiché')

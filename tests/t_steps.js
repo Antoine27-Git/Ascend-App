@@ -1,7 +1,7 @@
 /* Vérifie que le déroulé de chaque séance de course prescrite fait exactement sa durée (toutes les semaines du plan). */
 const fs=require('fs'),E=require('./engine.js'),prof=require('./t_prof.json');
 const h=fs.readFileSync(__dirname+'/../index.html','utf8');
-const i=h.indexOf("const FC_NOTE"),j=h.indexOf("function planText");
+const i=h.indexOf("const FC_NOTE"),j=h.indexOf("function planStatus");   /* ménage 25/11 : planText (jamais appelée) retirée */
 const S={profile:prof};const sessionSteps=new Function('S',h.slice(i,j)+';return sessionSteps;')(S);
 const isRun=s=>['ef','long','qual','desc'].includes(s.type);
 const tot=st=>st.reduce((a,s)=>a+(s.rep?s.rep*(s.on.sec+s.off.sec)/60:s.min),0);

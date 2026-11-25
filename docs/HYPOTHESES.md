@@ -220,9 +220,10 @@ inscrire dans SOURCES.md.
 
 | H-49 | Une séance manquée sans réponse est un empêchement, pas une fatigue | D-72 | moyenne | moyenne — une fatigue réelle se lit aussi dans le RPE des endurances, mais celui-ci peut rester muet (H-46) | 2 |
 
-**À réintégrer** : H-38 (échelle RPE → dérive du simulateur) est citée dans le moteur, mais son
-texte est introuvable dans ce dossier au 29/09/2026 (probablement dans MOTEUR-V0.md, retiré des
-Connaissances). H-39 : non retrouvée. H-40 : réécrite le 09/11/2026 (D-94).
+**Réintégrées le 25/11/2026** depuis `MOTEUR-V0.md` (24/09/2026, document du Projet claude.ai) :
+- **H-38** — ressenti hebdomadaire = RPE moyen des endurances et sorties longues (endurances seules en règles v2) ; **1 point de RPE = dérive 0,12** ; alerte au-delà d'un point au-dessus de la référence, progression sous ~0,4 point. **Non simulé** : étalonnage à vérifier sur les premières semaines. Utilisée par le moteur (`RPE_K`).
+- **H-39** — durée de course estimée par km-effort et loi de Riegel (exposant 1,07) sur la course de référence déclarée. **Extrapolation.**
+H-40 : réécrite le 09/11/2026 (D-94).
 
 ## Hypothèses du chantier interface (octobre 2026)
 

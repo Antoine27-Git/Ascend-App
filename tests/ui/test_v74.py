@@ -25,7 +25,10 @@ def page(ctx,st,quand):
         const f=new Date(new Date(d).getTime()+7*864e5).toISOString().slice(0,10);
         E.sessions.filter(x=>runs.has(x.type)&&x.date>=d&&x.date<f&&x.date<q).forEach(x=>st.sessions.push({id:"h"+(n++),date:x.date,type:x.type,dur:x.dur,dplus:x.dplus||0,rpe:3,planId:x.id}));d=f;}
       localStorage.setItem("trail-state-v1",JSON.stringify(st));}''',quand)
-    pg.reload();pg.wait_for_timeout(3500);return pg
+    pg.reload();pg.wait_for_timeout(3500)
+    try:pg.wait_for_selector('#view .sc, #view .cj',timeout=15000);pg.wait_for_timeout(800)   # ménage 25/11 : l'historique de 7 mois peut dépasser 3,5 s (test instable)
+    except Exception:pass
+    return pg
 with sync_playwright() as p:
     b=p.chromium.launch()
     def ctx():
@@ -63,6 +66,8 @@ with sync_playwright() as p:
         pg.reload();pg.wait_for_timeout(3000);chk(pg.locator('.cj').count()==0,'pas de rappel après rechargement')
     # 4. Avant le bloc spécifique
     pg=page(ctx(),profil(),'2027-06-14')
+    try:pg.wait_for_selector('.cj',timeout=10000)
+    except Exception:pass
     n=pg.locator('.cj').count();chk(n==1,'mi-juin, 3 semaines avant le bloc : carte du bloc spécifique')
     if n:
         t=pg.locator('.cj').inner_text();print('   ---\n   '+t.replace('\n','\n   ')+'\n   ---')
