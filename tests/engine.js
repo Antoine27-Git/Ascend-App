@@ -498,6 +498,9 @@ function build(inp){
     const lrObj=rx.filter(x=>x.kind==='long'||x.kind==='cle');if(lrObj.length)lrPrec=lrObj[0].dur;
     if(V2&&!relache&&!gele){const reelL=past?Math.max(0,...execH.filter(e=>e.ty==='long').map(e=>e.d||0)):0;   /* D-107 : durée retenue (plafonnée) */
       const l=past?reelL:(lrObj.length?lrObj[0].dur:0);if(l>0)niv=Math.max(niv||0,l);if(past&&reelL>0)lrPrec=reelL;}
+    /* P-08 (v82, 25/11/2026) : semaine passée, la « sortie longue de la semaine d'avant » est la plus longue réellement courue, 0 si aucune.
+       Avant : une semaine avec une autre course mais sans sortie longue comptait la sortie longue prévue comme faite (semaine légère proposée ensuite). */
+    if(V2&&past)lrPrec=Math.max(0,...execH.filter(e=>e.ty==='long').map(e=>e.d||0));
     if(cle&&lrObj.length){clesFaites++;derniereCle=w;}
     const typ=aff?'affutage':sAff?'aff_sec':sRec?'recup_sec':relache?'relache':'charge';
     chocPrec=!!choc;

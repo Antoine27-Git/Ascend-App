@@ -21,6 +21,7 @@ identifiant, jamais réattribué.
 | D-108 | Connexion sur un téléphone vierge : le serveur d'abord | en vigueur (v76) |
 | D-109 | Réservé : « Résistance » détaillée (spec validée, pas codée) | en attente |
 | D-110 | Faux plat confirmé sur 400 m | en vigueur (v81) |
+| D-111 | Semaine passée : sortie longue réellement courue (P-08) | en vigueur (v82) |
 
 Les numéros provisoires des rapports d'audit (`docs/audit/`, 11/11/2026 : « D-97 à D-121 », « H-59 à H-66 ») ne correspondent pas aux décisions de ce registre : seul ce fichier fait foi.
 
@@ -3673,3 +3674,10 @@ Maquettes validées le 25/11 : `docs/maquettes/screens_renfo.py` (1, 2, 3).
 **Niveau.** 1 % garde un sens physiologique (coût d'environ +5 % ; un tapis à 1 % égale le coût de la course dehors, Jones & Doust 1996, étude) ; la fenêtre de 400 m est une **convention** (H-63).
 **Effets mesurés.** 24/11 : plus de faux plat descendant, 35 min de plat, 2 min de faux plat montant. 11/11 : faux plat montant 15 → 11 min ; allure facile à effort égal 6:34 → 6:38 /km.
 **Tests.** `tests/t_flux.js` (cas du 24/11 ajouté, données sans position) ; `test_v67.py` mis à jour.
+
+### D-111 — Semaine passée : la sortie longue faite est celle réellement courue (v82, 25/11/2026 ; proposition P-08, choix A d'Antoine)
+**Pourquoi.** Le plan alterne semaine de sortie longue et semaine plus légère. Une semaine passée où la sortie longue était manquée mais où une autre course avait été faite comptait la sortie longue prévue comme faite : la semaine suivante était la semaine légère. Cas rejoué (B2 de l'audit) : sortie longue de 3 h 50 manquée, endurance faite → 2 h 10 la semaine d'après, contre 3 h 30 si rien n'avait été couru. Faire son endurance pénalisait.
+**Règle.** Pour une semaine passée (règles v2), « la sortie longue de la semaine d'avant » est la plus longue sortie longue réellement courue (durée retenue après le plafond de D-107), 0 si aucune. Une sortie longue raccourcie sert donc de base à la suivante.
+**Non retenu.** Le choix B (une sortie clé ne compte que si 90 % de sa durée a été courue) : pas d'effet montré sur un cas réel ; à reprendre avant les sorties clés du printemps si besoin. Le cas B de l'audit (« sortie clé consommée ») n'est pas reproduit sur le moteur actuel.
+**Nature.** Correction de logique : « le passé ne se réécrit pas ».
+**Tests.** `tests/t_fantome.js` (échoue sans la correction : 130 contre 210 min).
