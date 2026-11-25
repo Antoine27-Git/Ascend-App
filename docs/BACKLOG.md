@@ -18,7 +18,7 @@ Décisions du 16/11/2026 :
 - **Règles v1 : à retirer du moteur dans une version à part** (avec `sim8.py`, `sim3.py`, `serie11.py` et la parité), rien d'autre dans cette version.
 - **Connaissances du Projet claude.ai** : copies de septembre supprimées le 16/11 (le dépôt fait foi). `MOTEUR-V0.md` gardé : il n'existe pas dans le dépôt.
 - Antoine a exporté un fichier JSON de ses données le 16/11.
-1. **Fiabilité** : P-23 (profil écrasé après effacement du navigateur), P-24 (restauration sûre), P-27 (rappel d'export), P-07 (heure d'été, avant le 28/03/2027), P-08 (sortie longue fantôme).
+1. **Fiabilité** : faits : P-23 (v76), P-07 (v76), P-08 (v82, choix A). Restent : P-24 (restauration sûre), P-27 (rappel d'export), P-25 et P-26 (synchro à deux téléphones, heure du téléphone).
 2. ~~**Ménage sans changement de comportement**~~ : **fait le 25/11/2026** (v79). Reste : retirer les règles v1 du moteur, dans une version à part.
 3. **Régularité** : semaine chargée (P-02), question hebdomadaire sur la sortie longue (P-31), alerte avant de perdre son niveau (P-05).
 4. **Avant fin février 2027** : nutrition (D-104, écrite, pas codée), signal de fatigue (P-10, P-17), reprise après maladie (P-11).

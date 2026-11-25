@@ -370,8 +370,8 @@ function build(inp){
     /* D-67 : la sortie longue suit sa propre progression ; le volume de la semaine en est la conséquence */
     const cibleLr2=mx=>{const cap=Math.max(PLANCHER,SEUIL*mx);if(niv==null)niv=Math.max(PLANCHER,Math.min(mx,cap));
       const affL=sem=>CONV.affLongue[sem<=1?1:0];   /* D-103 : semaines avant la course → un tiers la dernière (6 jours avant), 50 % avant */
-      if(aff)return FIN?Math.min(cap,lrPrec!=null?lrPrec:cap,niv*affL(N-w)):Math.min(cap,niv*tr.aff[Math.min(w-c.T,tr.aff.length-1)]);
-      if(sAff){if(FIN){const s0=secs.find(s=>s.statut==='objectif'&&s.w>=w);return Math.min(cap,lrPrec!=null?lrPrec:cap,niv*affL(s0?s0.w-w:1));}return Math.min(cap,niv*secAff[w]);}
+      if(aff)return FIN?Math.min(cap,lrPrec>0?lrPrec:cap,niv*affL(N-w)):Math.min(cap,niv*tr.aff[Math.min(w-c.T,tr.aff.length-1)]);
+      if(sAff){if(FIN){const s0=secs.find(s=>s.statut==='objectif'&&s.w>=w);return Math.min(cap,lrPrec>0?lrPrec:cap,niv*affL(s0?s0.w-w:1));}return Math.min(cap,niv*secAff[w]);}
       if(sRec){const k=[...secRec].filter(x=>x<=w&&secRec.has(x)).length;return Math.min(cap,niv*[0.35,0.55,0.75][Math.min(k,3)-1]);}   /* récupération progressive après l'objectif (convention) */
       if(relache)return Math.min(cap,0.65*niv,CONV.moyenneMax);
       if(cle)return Math.min(cap,tr.cible[1]);
@@ -498,6 +498,9 @@ function build(inp){
     const lrObj=rx.filter(x=>x.kind==='long'||x.kind==='cle');if(lrObj.length)lrPrec=lrObj[0].dur;
     if(V2&&!relache&&!gele){const reelL=past?Math.max(0,...execH.filter(e=>e.ty==='long').map(e=>e.d||0)):0;   /* D-107 : durée retenue (plafonnée) */
       const l=past?reelL:(lrObj.length?lrObj[0].dur:0);if(l>0)niv=Math.max(niv||0,l);if(past&&reelL>0)lrPrec=reelL;}
+    /* P-08 (v82, 25/11/2026) : semaine passée, la « sortie longue de la semaine d'avant » est la plus longue réellement courue, 0 si aucune.
+       Avant : une semaine avec une autre course mais sans sortie longue comptait la sortie longue prévue comme faite (semaine légère proposée ensuite). */
+    if(V2&&past)lrPrec=Math.max(0,...execH.filter(e=>e.ty==='long').map(e=>e.d||0));
     if(cle&&lrObj.length){clesFaites++;derniereCle=w;}
     const typ=aff?'affutage':sAff?'aff_sec':sRec?'recup_sec':relache?'relache':'charge';
     chocPrec=!!choc;
