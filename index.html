@@ -281,6 +281,8 @@ th{color:var(--mut);font-weight:600;border-top:0;padding-top:0}
 td:first-child,th:first-child{text-align:left}
 tr.cur td{font-weight:800}tr.fut td{color:#aab5ae}
 .tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.warnx{display:flex;gap:10px;align-items:flex-start;background:#fff4e0;color:#8a5a00;border-radius:14px;padding:10px 12px;font-size:14px;line-height:1.4;margin:10px 0 4px}
+.warnx b{font-weight:800}.warnx>span{font-weight:800}
 .spin{width:34px;height:34px;border-radius:50%;border:3.5px solid #dcf7e8;border-top-color:var(--mintT);margin:4px auto 10px;animation:spin .9s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 .wt4{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
@@ -2252,6 +2254,24 @@ function vManque(){const ps=findPlan(MQS.id);if(!ps)return '';const k=manqueDe(p
     +(L.length?'<div class="lbl" style="margin-top:18px"><span>Ou</span></div><button class="opt'+(MQS.dec?' on':'')+'" onclick="app.manqueDec()"><b>La faire un autre jour cette semaine</b><span>Même séance, même durée.</span></button>'
       +(MQS.dec?'<div class="row" style="gap:8px;flex-wrap:wrap;margin-top:10px">'+L.map(x=>'<button class="btn s" onclick="app.manqueDecaler(\''+x.d+'\')">'+jourNom(x.d)+(x.veille?' · veille de ta sortie longue':'')+'</button>').join('')+'</div>'+(L.some(x=>x.veille)?'<div class="mini" style="margin-top:6px">La veille de ta sortie longue, tu l\'aborderas les jambes un peu entamées.</div>':''):''):'')
     +(k?'<button class="btn full" style="margin-top:18px;background:transparent;color:var(--mut);font-weight:600" onclick="app.manqueFaite()">Finalement, je l\'ai faite</button>':'')+'</div>';}
+/* ---- v83 : restauration ---- */
+let RESTO=null;
+const joursDepuis=d=>Math.max(0,Math.round((parseISO(todayISO())-parseISO(d))/864e5));
+function exportEnRetard(){const P=S.profile;if(S.sessions.length<5)return false;return !P.lastExport||joursDepuis(P.lastExport)>30;}
+function restoBilan(){const o=RESTO.o,ids=new Set(S.sessions.map(s=>s.id)),fid=new Set((o.sessions||[]).map(s=>s.id));
+  return {nf:(o.sessions||[]).length,na:S.sessions.length,manquent:(o.sessions||[]).filter(s=>!ids.has(s.id)).length,suppr:S.sessions.filter(s=>!fid.has(s.id)).sort(byDate)};}
+function openResto(){const b=restoBilan(),x='<button class="btn x" onclick="app.close()" aria-label="fermer">×</button>';let h;
+  if(RESTO.etape===1)h='<div class="pad"><div class="row sbtw"><h3>Restaurer une sauvegarde</h3>'+x+'</div><div class="mini" style="margin:4px 0 12px">'+esc(RESTO.name)+'</div>'
+    +'<div class="wt4"><div><small>Dans le fichier</small><b>'+b.nf+' <span>séance'+(b.nf>1?'s':'')+'</span></b></div><div><small>Dans ton appli</small><b>'+b.na+' <span>séance'+(b.na>1?'s':'')+'</span></b></div></div>'
+    +'<div class="mini" style="margin:10px 2px 14px">'+(b.manquent?b.manquent+' séance'+(b.manquent>1?'s':'')+' du fichier manque'+(b.manquent>1?'nt':'')+' dans l\'appli.':'Toutes les séances du fichier sont déjà dans l\'appli.')+(b.suppr.length?' '+b.suppr.length+' séance'+(b.suppr.length>1?'s':'')+' de l\'appli ne '+(b.suppr.length>1?'sont':'est')+' pas dans le fichier.':'')+'</div>'
+    +fOpt('plus','Ajouter ce qui manque',(b.manquent?'Ajoute '+b.manquent+' séance'+(b.manquent>1?'s':'')+'. ':'')+'Ne supprime rien, garde ton profil actuel.','app.restoAjouter()',true)
+    +fOpt('close','Remplacer tout par le fichier',b.suppr.length?b.suppr.length+' séance'+(b.suppr.length>1?'s':'')+' seront supprimées, ici et sur ton compte.':'Remplace aussi ton profil par celui du fichier.','app.restoRemplacer()')+'</div>';
+  else h='<div class="pad"><div class="row sbtw"><h3>Remplacer tout ?</h3>'+x+'</div>'
+    +(b.suppr.length?'<div class="warnx"><span>!</span><div><b>'+b.suppr.length+' séance'+(b.suppr.length>1?'s':'')+' seront supprimées</b>, ici et sur ton compte : '+b.suppr.slice(-8).map(s=>fmtS(s.date).replace(/\.$/,'')).join(', ')+(b.suppr.length>8?'…':'')+'.</div></div>':'<div class="mini">Ton profil et tes réglages seront remplacés par ceux du fichier.</div>')
+    +'<div class="mini" style="margin:12px 2px">Avant de remplacer, l\'appli télécharge ta version actuelle (ascend-'+todayISO()+'-avant-restauration.json). Tu pourras revenir en arrière.</div>'
+    +'<button class="btn full" style="background:#b8352d;color:#fff" onclick="app.restoConfirmer()">Télécharger puis remplacer</button>'
+    +'<button class="btn full" style="margin-top:10px" onclick="app.close()">Annuler</button></div>';
+  $('#sheet').innerHTML='<div class="sheet" onclick="if(event.target===this)app.close()"><div class="in">'+h+'</div></div>';}
 function openManque(){$('#sheet').innerHTML='<div class="sheet" onclick="if(event.target===this)app.close()"><div class="in">'+vManque()+'</div></div>';}
 /* une ligne de séance passée sans saisie : deux boutons */
 function manqueLigne(ps){const w=wmatch(ps);return '<div class="row" style="gap:8px;margin-top:10px"><button class="btn s dark" style="flex:1" onclick="event.stopPropagation();app.newSession(\''+ps.id+'\')">Valider ma séance</button><button class="btn s" style="flex:1" onclick="event.stopPropagation();app.manqueOuvrir(\''+ps.id+'\')">Manquée</button></div>';}
@@ -2493,7 +2513,7 @@ function fWatchCard(ps){
     +(si&&!si.stale?'':'<button class="btn s" '+(busy?'disabled':'')+' onclick="app.sendWatch(\''+ps.id+'\')">'+(busy?'Envoi…':si?'Renvoyer':'Envoyer')+'</button>')+'</div>'
     +(si&&!si.stale&&!busy?'<div class="fwl"><a href="#" onclick="app.sendWatch(\''+ps.id+'\');return false">Renvoyer</a><a href="#" onclick="app.removeWatch(\''+ps.id+'\');return false">Retirer de la montre</a></div>':'')
     +(m?'<div class="mini" style="margin:6px 4px 0">'+esc(m)+'</div>':'');}
-function fOpt(icon,t,sub,fn,pri){return '<button class="fopt'+(pri?' pri':'')+'" onclick="'+fn+'"><span class="foi">'+(icon==='close'?'<b style="font-size:21px;line-height:1">×</b>':mi(icon))+'</span><span class="fot"><b>'+t+'</b><span>'+sub+'</span></span><span class="ch">›</span></button>';}
+function fOpt(icon,t,sub,fn,pri){return '<button class="fopt'+(pri?' pri':'')+'" onclick="'+fn+'"><span class="foi">'+(icon==='close'||icon==='plus'?'<b style="font-size:21px;line-height:1">'+(icon==='close'?'×':'+')+'</b>':mi(icon))+'</span><span class="fot"><b>'+t+'</b><span>'+sub+'</span></span><span class="ch">›</span></button>';}
 function vSessDetail(){
   const ps=PE,st=planStatus(ps),stp=isRun(ps)?sessionSteps(ps):null,nu=nutriFor(ps),today=todayISO();
   const inj=injOn()?injCfg():null,cls=HDCLASS[ps.type]||'autre';
@@ -2851,6 +2871,7 @@ function vProfilHome(){
   +row('materiel','run','Ton matériel','Ta montre et tes chaussures')
   +row('donnees','monitoring','Données et synchro','Sauvegarde, export, import')
   +row('avances','injury','Réglages avancés','Redémarrer le plan, tout effacer')
+  +(exportEnRetard()?'<div class="warnx"><span>!</span><div><b>'+(P.lastExport?'Dernier export il y a '+joursDepuis(P.lastExport)+' jours.':'Aucun export de tes données.')+'</b> Exporte-les dans Données et synchro : 1 minute, en cas de souci avec ton compte.</div></div>':'')
   +'</div>'+versionLineHTML()+'</main>';
 }
 const fmtN=n=>n==null?'':String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g,' ');
@@ -2961,12 +2982,18 @@ function vPDonnees(){const P=S.profile,J=(P.modules||{}).journal;
   const sync=auth?'<div class="card pc"><div class="pct"><h2>Sauvegarde en ligne</h2></div><div class="acct-line"><div class="acct-lab">Compte</div><div class="acct-val">'+esc(auth.email||'')+'</div></div>'+syncLineHTML()
     +'<button class="btn dark full" style="margin-top:14px" onclick="app.syncNow()">Synchroniser</button><button class="btn full" style="margin-top:10px" onclick="app.switchUser(this)">Changer d\'utilisateur</button>'
     +'<div class="mini">« Changer d\'utilisateur » sauvegarde ce compte puis repart de zéro sur ce téléphone pour en connecter un autre.</div></div>':'';
-  const ex='<div class="card pc"><div class="pct"><h2>Exporter</h2></div><div class="row" style="gap:8px;margin-top:10px"><button class="btn s" style="flex:1 1 0;white-space:nowrap" onclick="app.exportJSON()">JSON</button><button class="btn s" style="flex:1 1 0;white-space:nowrap" onclick="app.exportCSV(\'sessions\')">CSV séances</button>'+(J?'<button class="btn s" style="flex:1 1 0;white-space:nowrap" onclick="app.exportCSV(\'daily\')">CSV journal</button>':'')+'</div>'
+  const le=P.lastExport,nj=le?joursDepuis(le):null;
+  const ex='<div class="card pc"><div class="pct"><h2>Ta sauvegarde</h2></div><div class="acct-line"><div class="acct-lab">Dernier export</div><div class="acct-val">'+(le?fmtS(le)+' · '+(nj===0?'aujourd\'hui':'il y a '+nj+' jour'+(nj>1?'s':'')):'jamais')+'</div></div>'
+    +(exportEnRetard()?'<div class="warnx" style="margin-top:10px"><span>!</span><div><b>'+(le?'Plus de 30 jours.':'Aucun export.')+'</b> Exporte tes données, à garder hors du téléphone.</div></div>':'')
+    +'<button class="btn dark full" style="margin-top:12px" onclick="app.exportJSON()">Exporter mes données</button>'
+    +'<div class="mini">Un fichier .json à garder hors du téléphone (mail, drive). Ton compte en ligne reste ta sauvegarde principale.</div>'
+    +'<div class="mini" style="margin-top:8px">Aussi en tableau : <button class="lk" onclick="app.exportCSV(\'sessions\')">séances (CSV)</button>'+(J?' · <button class="lk" onclick="app.exportCSV(\'daily\')">journal (CSV)</button>':'')+'</div>'
     +(exportText?'<label class="f">'+esc(exportText.name)+'</label><textarea id="exp" style="font-size:12px;min-height:90px">'+esc(exportText.text)+'</textarea><button class="btn w" onclick="app.copy(\'#exp\')">Copier</button>':'')+'</div>';
   const im='<div class="card pc"><div class="pct"><h2>Importer</h2></div>'
     +'<details'+(preview?' open':'')+'><summary>Un CSV Garmin Connect</summary><div class="mini">Garmin Connect (ordinateur) → Activités → Exporter CSV, puis colle ici. Les séances arrivent sans RPE.</div><textarea id="gcsv" placeholder="Type d\'activité,Date,…">'+esc(gtext)+'</textarea><button class="btn w" onclick="app.previewGarmin()">Analyser</button>'
     +(preview?(preview.length?'<div style="margin-top:8px">'+preview.map(p=>'<div class="sessrow" style="cursor:default"><div><b>'+TYPES[p.type].l+'</b> <span class="note">'+fmtS(p.date)+'</span>'+(p.dup?'<span class="tag">déjà là</span>':'')+'<div class="m">'+p.dur+' min'+(p.dist?' · '+r1(p.dist)+' km':'')+(p.dplus?' · '+r0(p.dplus)+' D+':'')+(p.hrAvg?' · FC '+r0(p.hrAvg):'')+'</div></div></div>').join('')+'<button class="btn p w" onclick="app.importGarmin()">Importer '+preview.filter(p=>!p.dup).length+' séance(s)</button></div>':'<div class="mini" style="color:var(--coralT)">Rien de lisible : la première ligne doit contenir les en-têtes (Date, Durée…).</div>'):'')+'</details>'
-    +'<details><summary>Une sauvegarde JSON</summary><textarea id="jin" placeholder="{…}"></textarea><button class="btn w" onclick="app.importJSON()">Restaurer, remplace tout</button></details></div>';
+    +'</div><div class="card pc"><div class="pct"><h2>Restaurer une sauvegarde</h2></div><div class="mini">Remet dans l\'appli le contenu d\'un fichier exporté. Tu choisis ensuite ce qui est gardé.</div>'
+    +'<label class="btn full" style="margin-top:12px;display:flex;justify-content:center;cursor:pointer">Choisir un fichier…<input type="file" accept=".json,application/json" style="display:none" onchange="app.restoFichier(this)"></label></div>';
   return pScreen('Données et synchro',sync+ex+im);}
 /* ---- Réglages avancés ---- */
 /* v50 : redémarrer le plan à une date choisie (cette semaine, la semaine prochaine ou une autre date) ; le plan part du lundi de cette semaine-là */
@@ -3273,7 +3300,7 @@ function vGate(){
     +authFormHTML('Un compte garde ton plan et tes séances en sécurité, et te permet de les retrouver sur un autre téléphone. Ton prénom personnalise l\'app.')
     +syncLineHTML()+versionLineHTML()+'</div></main>';
 }
-const APP_VERSION='v82';   /* généré depuis sw.js par tools/build.py */
+const APP_VERSION='v83';   /* généré depuis sw.js par tools/build.py */
 function versionLineHTML(){return '<div class="mini" id="ver" style="margin-top:12px;text-align:center;opacity:.7">Ascend '+APP_VERSION+' · moteur de plan v2</div>';}
 /* compare la page chargée au cache du service worker : signale un déploiement pas encore actif */
 function checkVersion(){if(!('caches' in window))return;caches.keys().then(ks=>{const c=ks.filter(k=>/^ascend-v\d+$/.test(k)).map(k=>+k.slice(8)).sort((a,b)=>b-a)[0],el=document.getElementById('ver');
@@ -3415,7 +3442,7 @@ const app=window.app={
   wzBack(){const pid=WZ?WZ.pid:null;app.newSession(pid);},
   async wzSync(){if(WT.busy)return;WT.busy=true;openSource();await app.watchSync(WT.days||7,true);if(WZ&&WZ.step===1&&E)openSource();},
   edit(id){const s=S.sessions.find(x=>x.id===id);if(!s)return;E=JSON.parse(JSON.stringify(s));openSheet();},
-  close(){PM=false;E=null;MQS=null;WZ=null;BL=null;$('#sheet').innerHTML='';},
+  close(){PM=false;E=null;MQS=null;WZ=null;BL=null;RESTO=null;$('#sheet').innerHTML='';},
   setE(k,v){if(v===''||v==null)E[k]=null;else if(['date','note','nutriNote','shoe','type','wodName','rx','scoreType','stSrc','stQual','stDom','stEcc','cfJ'].includes(k))E[k]=v;else E[k]=+v;
     if(k==='type'||k==='track'||k==='scoreType'||k==='cfJ'){openSheet(k==='type');return;}
     if(k==='wodName'){const wh=$('#wodhist');if(wh)wh.outerHTML=wodHistHTML(E);}
@@ -3485,11 +3512,21 @@ const app=window.app={
   importGarmin(){const add=preview.filter(p=>!p.dup).map(p=>{const o=Object.assign({},p);delete o.dup;return o;});
     S.sessions.push(...add);S.sessions.sort(byDate);preview=null;gtext='';save();flash(add.length+' séance(s) importée(s)');render();},
   exportCSV(kind){const t=csvOut(kind),n=(kind==='daily'?'checkins-':'seances-')+todayISO()+'.csv';download(n,t);exportText={name:n,text:t};render();},
-  exportJSON(){const t=JSON.stringify(S),n='ascend-'+todayISO()+'.json';download(n,t);exportText={name:n,text:t};render();},
+  exportJSON(){S.profile.lastExport=todayISO();save();const t=JSON.stringify(S),n='ascend-'+todayISO()+'.json';exportText=download(n,t,'application/json')?null:{name:n,text:t};render();flash(exportText?'Téléchargement bloqué : copie le texte':'Export enregistré : '+n);},   /* le texte à copier n'apparaît que si le téléchargement échoue */
+  /* v83 (P-24) : restaurer en voyant ce qui change ; « ajouter ce qui manque » par défaut ; « remplacer tout » après confirmation et copie de sécurité */
+  restoFichier(inp){const f=inp.files&&inp.files[0];if(!f)return;const r=new FileReader();
+    r.onload=()=>{try{const o=JSON.parse(r.result);if(!o||!o.profile||!Array.isArray(o.sessions||[]))throw 0;RESTO={o,name:f.name,etape:1};openResto();}catch(e){flash('Ce fichier n\'est pas une sauvegarde Ascend');}};
+    r.readAsText(f);inp.value='';},
+  restoAjouter(){const o=RESTO.o,ids=new Set(S.sessions.map(s=>s.id));let n=0;
+    (o.sessions||[]).forEach(s=>{if(s&&s.id&&!ids.has(s.id)){S.sessions.push(s);n++;}});
+    const pids=new Set(S.plan.map(p=>p.id));(o.plan||[]).filter(p=>!oldPlan(p)&&p.id&&!pids.has(p.id)).forEach(p=>S.plan.push(p));
+    Object.keys(o.daily||{}).forEach(d=>{if(!S.daily[d])S.daily[d]=o.daily[d];});
+    S.sessions.sort(byDate);save();RESTO=null;$('#sheet').innerHTML='';render();flash(n?n+' séance'+(n>1?'s':'')+' ajoutée'+(n>1?'s':''):'Rien à ajouter : tout est déjà là');},
+  restoRemplacer(){RESTO.etape=2;openResto();},
+  restoConfirmer(){const o=RESTO.o,t=JSON.stringify(S);download('ascend-'+todayISO()+'-avant-restauration.json',t);
+    S={v:2,profile:normProfile(o.profile),daily:o.daily||{},sessions:o.sessions||[],plan:(o.plan||[]).filter(p=>!oldPlan(p))};save();RESTO=null;$('#sheet').innerHTML='';render();flash('Restauré ; ta version d\'avant est téléchargée');},
   copy(sel){const t=$(sel);if(!t)return;t.select();let ok=false;try{document.execCommand('copy');ok=true;}catch(e){}
     if(navigator.clipboard)navigator.clipboard.writeText(t.value).then(()=>flash('Copié'),()=>flash(ok?'Copié':'Copie impossible, sélectionne le texte'));else flash(ok?'Copié':'Copie impossible');},
-  importJSON(){try{const o=JSON.parse($('#jin').value);if(!o||!o.profile)throw 0;
-    S={v:2,profile:normProfile(o.profile),daily:o.daily||{},sessions:o.sessions||[],plan:(o.plan||[]).filter(p=>!oldPlan(p))};save();flash('Restauré');render();}catch(e){flash('JSON invalide');}},
   planFit(id){PM=false;const ps=findPlan(id);if(!ps)return;const st=sessionSteps(ps);const bytes=planToFit({title:planCode(ps)+' '+planTitle(ps),steps:st.steps});
     const n=planCode(ps)+'.fit';if(!download(n,bytes,'application/octet-stream'))flash('Téléchargement bloqué ici');else flash(n+' : à copier dans Garmin/NewFiles');},
   manqueOuvrir(id){PM=false;MQS={id,dec:false};const ps=findPlan(id);

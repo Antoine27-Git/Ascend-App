@@ -22,6 +22,7 @@ identifiant, jamais réattribué.
 | D-109 | Réservé : « Résistance » détaillée (spec validée, pas codée) | en attente |
 | D-110 | Faux plat confirmé sur 400 m | en vigueur (v81) |
 | D-111 | Semaine passée : sortie longue réellement courue (P-08) | en vigueur (v82) |
+| D-112 | Dernier export, rappel, restauration sûre | en vigueur (v83) |
 
 Les numéros provisoires des rapports d'audit (`docs/audit/`, 11/11/2026 : « D-97 à D-121 », « H-59 à H-66 ») ne correspondent pas aux décisions de ce registre : seul ce fichier fait foi.
 
@@ -3683,3 +3684,13 @@ Maquettes validées le 25/11 : `docs/maquettes/screens_renfo.py` (1, 2, 3).
 **Portée.** L'alternance concernée (D-22a) ne joue qu'au-delà de 3 h de sortie longue : pas d'effet sur le plan avant le printemps 2027.
 **Nature.** Correction de logique : « le passé ne se réécrit pas ».
 **Tests.** `tests/t_fantome.js` (échoue sans la correction : 130 contre 210 min ; cas d'affûtage).
+
+### D-112 — Sauvegarde : date du dernier export et restauration sûre (v83, 25/11/2026 ; propositions P-24 et P-27)
+Maquettes validées le 25/11 : `docs/maquettes/screens_sauvegarde.py`.
+1. **Dernier export** : date retenue dans le profil (`lastExport`, synchronisée), affichée dans Profil › Données et synchro. Le texte à copier n'apparaît que si le téléchargement échoue.
+2. **Rappel** : plus de 30 jours sans export (ou aucun), à partir de 5 séances : une ligne discrète en bas de Profil et dans Données. Rien sur l'accueil.
+3. **Restaurer** : on choisit le fichier (plus de texte à coller). Résumé chiffré (séances du fichier, séances de l'appli, celles qui manquent, celles qui seraient supprimées), puis :
+   - **« Ajouter ce qui manque »** (par défaut) : ajoute les séances, séances prévues et jours du journal absents ; ne supprime rien ; garde le profil actuel ;
+   - **« Remplacer tout »** : confirmation qui liste les dates supprimées ; l'appli télécharge d'abord la version actuelle (`ascend-AAAA-MM-JJ-avant-restauration.json`), puis remplace.
+**Reste ouvert** : P-25 (profil fusionné par rubrique, deux téléphones), P-26 (horodatage serveur).
+**Tests.** `tests/ui/test_v83.py`.

@@ -61,7 +61,7 @@ B2.X = B2.X + X5
 
 
 def fopt(icon, t, sub, pri=False):
-    return '<div class="fopt' + (' pri' if pri else '') + '"><span class="foi">' + (ic(icon) if icon != 'close' else '<span style="font-size:22px;font-weight:800;line-height:1">×</span>') + '</span><span class="fot"><b>' + t + '</b><span>' + sub + '</span></span><span class="ch">›</span></div>'
+    return '<div class="fopt' + (' pri' if pri else '') + '"><span class="foi">' + (ic(icon) if icon not in ('close', 'plus') else '<span style="font-size:22px;font-weight:800;line-height:1">' + ('×' if icon == 'close' else '+') + '</span>') + '</span><span class="fot"><b>' + t + '</b><span>' + sub + '</span></span><span class="ch">›</span></div>'
 
 
 def s4_3():
