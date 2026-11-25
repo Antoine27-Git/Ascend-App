@@ -3679,5 +3679,7 @@ Maquettes validées le 25/11 : `docs/maquettes/screens_renfo.py` (1, 2, 3).
 **Pourquoi.** Le plan alterne semaine de sortie longue et semaine plus légère. Une semaine passée où la sortie longue était manquée mais où une autre course avait été faite comptait la sortie longue prévue comme faite : la semaine suivante était la semaine légère. Cas rejoué (B2 de l'audit) : sortie longue de 3 h 50 manquée, endurance faite → 2 h 10 la semaine d'après, contre 3 h 30 si rien n'avait été couru. Faire son endurance pénalisait.
 **Règle.** Pour une semaine passée (règles v2), « la sortie longue de la semaine d'avant » est la plus longue sortie longue réellement courue (durée retenue après le plafond de D-107), 0 si aucune. Une sortie longue raccourcie sert donc de base à la suivante.
 **Non retenu.** Le choix B (une sortie clé ne compte que si 90 % de sa durée a été courue) : pas d'effet montré sur un cas réel ; à reprendre avant les sorties clés du printemps si besoin. Le cas B de l'audit (« sortie clé consommée ») n'est pas reproduit sur le moteur actuel.
+**Garde-fou.** En affûtage, la sortie longue ne dépasse pas celle de la semaine d'avant ; s'il n'y en a pas eu, c'est le plafond habituel qui s'applique (sans ce garde-fou, la sortie longue d'affûtage disparaissait : trouvé avant fusion).
+**Portée.** L'alternance concernée (D-22a) ne joue qu'au-delà de 3 h de sortie longue : pas d'effet sur le plan avant le printemps 2027.
 **Nature.** Correction de logique : « le passé ne se réécrit pas ».
-**Tests.** `tests/t_fantome.js` (échoue sans la correction : 130 contre 210 min).
+**Tests.** `tests/t_fantome.js` (échoue sans la correction : 130 contre 210 min ; cas d'affûtage).

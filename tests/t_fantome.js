@@ -16,4 +16,10 @@ t('S18 : l\'endurance a bien été faite, pas la sortie longue',ses.some(s=>s.da
 t('S19 : même sortie longue que si rien n\'avait été couru',b19===a19,b19+' contre '+a19+' min');
 t('S19 : pas de semaine légère après une semaine sans sortie longue',b19>=180,b19+' min');
 t('S20 : la suite est la même',b20===a20,b20+' contre '+a20+' min');
+/* affûtage : sortie longue manquée la semaine d'avant → la sortie longue d'affûtage existe toujours (régression trouvée le 25/11 avant fusion) */
+{const P=S.ANTOINE(),ses=S.SES0().slice(),W=25;
+ for(let w=2;w<=W;w++){const o=E.build({profile:P,today:add(mon(w),1),sessions:ses,isRun});
+  o.sessions.filter(s=>s.date>=mon(w)&&s.date<add(mon(w),7)&&s.type!=='cf').forEach(s=>{if(w===W&&s.type==='long'){P.manques[s.date]='autre';return;}ses.push({date:s.date,type:s.type,dur:s.dur,rpe:3});});}
+ const o=E.build({profile:P,today:add(mon(W+1),1),sessions:ses,isRun}),l=o.sessions.find(s=>s.type==='long'&&s.date>=mon(W+1)&&s.date<add(mon(W+1),7));
+ t('affûtage du 50 km : la sortie longue reste prévue après une sortie longue manquée',!!l&&l.dur>=60,l?l.dur+' min':'aucune');}
 process.exit(ok?0:1);

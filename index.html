@@ -1751,8 +1751,8 @@ function build(inp){
     /* D-67 : la sortie longue suit sa propre progression ; le volume de la semaine en est la conséquence */
     const cibleLr2=mx=>{const cap=Math.max(PLANCHER,SEUIL*mx);if(niv==null)niv=Math.max(PLANCHER,Math.min(mx,cap));
       const affL=sem=>CONV.affLongue[sem<=1?1:0];   /* D-103 : semaines avant la course → un tiers la dernière (6 jours avant), 50 % avant */
-      if(aff)return FIN?Math.min(cap,lrPrec!=null?lrPrec:cap,niv*affL(N-w)):Math.min(cap,niv*tr.aff[Math.min(w-c.T,tr.aff.length-1)]);
-      if(sAff){if(FIN){const s0=secs.find(s=>s.statut==='objectif'&&s.w>=w);return Math.min(cap,lrPrec!=null?lrPrec:cap,niv*affL(s0?s0.w-w:1));}return Math.min(cap,niv*secAff[w]);}
+      if(aff)return FIN?Math.min(cap,lrPrec>0?lrPrec:cap,niv*affL(N-w)):Math.min(cap,niv*tr.aff[Math.min(w-c.T,tr.aff.length-1)]);
+      if(sAff){if(FIN){const s0=secs.find(s=>s.statut==='objectif'&&s.w>=w);return Math.min(cap,lrPrec>0?lrPrec:cap,niv*affL(s0?s0.w-w:1));}return Math.min(cap,niv*secAff[w]);}
       if(sRec){const k=[...secRec].filter(x=>x<=w&&secRec.has(x)).length;return Math.min(cap,niv*[0.35,0.55,0.75][Math.min(k,3)-1]);}   /* récupération progressive après l'objectif (convention) */
       if(relache)return Math.min(cap,0.65*niv,CONV.moyenneMax);
       if(cle)return Math.min(cap,tr.cible[1]);
