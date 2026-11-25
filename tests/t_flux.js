@@ -24,7 +24,7 @@ t('11/11 : 76 % au-dessus de 155 (le bilan v57 affichait 15 %)',r.zones.dessusBa
 t('11/11 : FC de croisière 160-164, départ ~140',r.croisiere.fc>=160&&r.croisiere.fc<=164&&r.croisiere.depart<=145,JSON.stringify(r.croisiere));
 t('11/11 : 9 tranches, km 1 à FC ~132',r.tranches.length===9&&r.tranches[0].fc<=135,r.tranches[0].fc);
 t('11/11 : pente sur 200 m, FC en descente 4 bpm sous la montée',r.terrain.montee.fc-r.terrain.descente.fc===4,r.terrain.descente.fc+' / '+r.terrain.montee.fc);
-t('11/11 : 5 catégories, faux plat montant ~15 min (le début de la sortie)',['montee','fpm','plat','fpd','descente'].every(k=>r.terrain[k])&&Math.abs(r.terrain.fpm.min-15)<=2,JSON.stringify(r.terrain.fpm));
+t('11/11 : 5 catégories, faux plat montant ~11 min (v81 : 15 avant ; 4 min de pente non confirmée sur 400 m passent en plat)',['montee','fpm','plat','fpd','descente'].every(k=>r.terrain[k])&&Math.abs(r.terrain.fpm.min-11)<=2,JSON.stringify(r.terrain.fpm));
 t('11/11 : équivalent plat de la montée ~6:08 (Minetti), plus rapide que l\'allure réelle',r.terrain.montee.eq<r.terrain.montee.allure&&Math.abs(r.terrain.montee.eq-368)<=10,r.terrain.montee.allure+' → '+r.terrain.montee.eq);
 t('11/11 : plat ≈ équivalent plat ; pas d\'équivalent en descente',Math.abs(r.terrain.plat.eq-r.terrain.plat.allure)<=3&&r.terrain.descente.eq===null);
 t('11/11 : pas de dérive calculée (moins de 40 min utiles)',r.derive===null);
@@ -62,4 +62,5 @@ t('sans flux, FC max 205 : garde-fou sur la borne 158',b2.msgs.some(m=>m.code===
  const P3=E.progression([fake('2026-10-01',400),fake('2026-10-04',400),fake('2026-11-05',405),fake('2026-11-10',405)],{start:'2026-08-31',today:'2026-11-12',ref:159,repos:52});
  t('écart de 1,25 % : « stable »',P3.allure.verdict==='stable',P3.allure.ecart);
  t('avant le début du plan : ignoré',E.progression([fake('2026-08-20',420)],{start:'2026-08-31',today:'2026-11-12',ref:159,repos:52}).allure===null);}
+t('24/11 (sortie plate, 10 m d\'écart d\'altitude) : aucun faux plat descendant, presque tout en plat',(()=>{try{const st=require('./data/sortie_plate_2026-11-24.json'),f=E.flux(st,null).terrain;return !f.fpd&&f.plat&&f.plat.min>=33;}catch(e){return false;}})());
 process.exit(ok?0:1);

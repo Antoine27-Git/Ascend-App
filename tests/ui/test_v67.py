@@ -34,7 +34,7 @@ with sync_playwright() as p:
     pg.locator('.card',has_text='Ton temps estimé').scroll_into_view_if_needed();pg.screenshot(path=OUT+'/temps.png')
     chk('Ta progression' in t and 'Allure facile' in t and 'Résistance' in t and 'Montée' in t,'bloc Ta progression, 3 lignes')
     chk(len(calls)==1 and calls[0].get('id')=='i2','historique : la sortie sans données de la montre est relue (%d appel)'%len(calls))
-    chk('6:34' in t and '/km à 159 bpm' in t,'allure facile 6:34 /km à 159 bpm (11/11)')
+    chk('6:38' in t and '/km à 159 bpm' in t,'allure facile 6:38 /km à 159 bpm (11/11 ; 6:34 avant la v81 : les pentes non confirmées comptent comme du plat)')
     chk('Il y a 6 sem.' in t and 'Maintenant' in t,'trois cases Départ → il y a 6 sem. → maintenant')
     ref=json.loads(pg.evaluate("localStorage.getItem('trail-state-v1')"))['profile'].get('repRef')
     chk(ref=={'fc':159,'repos':52},'FC de référence figée : %s'%ref)

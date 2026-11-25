@@ -17,9 +17,10 @@ identifiant, jamais réattribué.
 | D-102, D-103 | D+ par km, fin de préparation | en vigueur (v69, v70) |
 | D-104 | Entraînement du ventre | **reportée**, pas codée |
 | D-105, D-106 | Week-end choc, conseil d'ajouter un jour | en vigueur (v71 à v74) |
-| D-107 (+ compléments v77, v78) | Saisie en 3 étapes, effet sur le plan, plafond des sauts, renforcement | en vigueur (v75 à v78) |
+| D-107 (+ compléments v77, v78, v80) | Saisie en 3 étapes, effet sur le plan, plafond des sauts, renforcement | en vigueur (v75 à v78) |
 | D-108 | Connexion sur un téléphone vierge : le serveur d'abord | en vigueur (v76) |
 | D-109 | Réservé : « Résistance » détaillée (spec validée, pas codée) | en attente |
+| D-110 | Faux plat confirmé sur 400 m | en vigueur (v81) |
 
 Les numéros provisoires des rapports d'audit (`docs/audit/`, 11/11/2026 : « D-97 à D-121 », « H-59 à H-66 ») ne correspondent pas aux décisions de ce registre : seul ce fichier fait foi.
 
@@ -3665,3 +3666,10 @@ Maquettes validées le 25/11 : `docs/maquettes/screens_renfo.py` (1, 2, 3).
 2. **Déplacer un renforcement** (moteur, règles v2) : dans sa semaine, sur un jour à venir sans autre renforcement, clé `P.decal['x:'+jour d'origine]`. Le contenu « haut du corps et gainage » est recalculé sur le nouveau jour (veille ou lendemain de la sortie longue, même règle qu'à la création). Les courses ne bougent pas. Lignes affichées : jour libre ; « jour de ton endurance (ou autre séance). Possible de faire les deux le même jour, si tu t'en sens capable » ; « veille de ta sortie longue. Choisis un renforcement qui épargne les jambes (haut du corps, gainage) » ; « le jour de ta sortie longue. Possible, après la sortie, en épargnant les jambes ». Le même texte « si tu t'en sens capable » s'affiche quand on déplace une course sur un jour de renforcement. **Convention**, pas d'étude.
 3. **« Pas faite » sur un renforcement** : deux choix, un appui chacun : « La faire un autre jour » (ouvre le calendrier de la fiche) ou « Je ne la ferai pas cette semaine ». S'il ne reste aucun jour possible, c'est noté sans fenêtre.
 **Tests.** `tests/t_renfo_decal.js` (moteur, 6 contrôles) ; `tests/ui/test_v80.py` (15 contrôles).
+
+### D-110 — Faux plat : la pente doit se confirmer sur 400 m (v81, 25/11/2026)
+**Pourquoi.** Sortie du 24/11 d'Antoine : 10 m d'écart d'altitude sur 5,5 km, mais 6 min classées « faux plat descendant ». Sur 200 m, 1 % = 2 m, l'ordre de l'erreur d'altitude d'une montre (dérive barométrique de l'ordre de 10 m sur quelques heures). Le même parcours donnait 2 min ou 6 min de faux plat selon la source (TCX ou intervals.icu).
+**Règle.** Un point entre 1 et 3 % de pente sur 200 m n'est classé « faux plat » que si la pente sur 400 m centrés va dans le même sens et atteint au moins 1 % (4 m de dénivelé). Sinon il est classé « plat », et son allure équivalente est celle du plat (pente non confirmée = bruit de mesure). Montées et descentes (au-delà de ±3 %) : inchangées. Réglage : `FLUX.fenetreFauxPlatM`.
+**Niveau.** 1 % garde un sens physiologique (coût d'environ +5 % ; un tapis à 1 % égale le coût de la course dehors, Jones & Doust 1996, étude) ; la fenêtre de 400 m est une **convention** (H-63).
+**Effets mesurés.** 24/11 : plus de faux plat descendant, 35 min de plat, 2 min de faux plat montant. 11/11 : faux plat montant 15 → 11 min ; allure facile à effort égal 6:34 → 6:38 /km.
+**Tests.** `tests/t_flux.js` (cas du 24/11 ajouté, données sans position) ; `test_v67.py` mis à jour.
