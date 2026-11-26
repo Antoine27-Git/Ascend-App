@@ -9,8 +9,11 @@ Ce ne sont pas des décisions. Chaque idée sera rouverte, challengée et tranch
 - **Contenu possible :** exercices, charges, séries × reps, score de WOD, Rx/scaled, courbe de progression par exercice. Les anciens champs (wodName, score, lifts, wod) sont conservés dans les séances déjà saisies.
 - **Condition pour démarrer :** que le formulaire minimal soit en place et utilisé.
 
-## Bibliothèque (25/11/2026) — maquette proposée, à valider
-- 5e onglet « Biblio » : fiches par thème (titre clair, source, niveau de preuve, à retenir, ce que ça change pour toi, limites, lien). Départ : les sources déjà utilisées par l'appli. Maquette : `docs/maquettes/screens_biblio.py`.
+## Bibliothèque (25/11/2026) — faite en v84 (D-113)
+- Suites possibles : fiches sur d'autres sources de `docs/SOURCES.md` (back-to-back, nutrition 2026 à relire), recherche par mot, lien « Utilisé par Ascend » vers l'écran concerné.
+
+## Test instable connu (26/11/2026)
+- `tests/ui/test_v74.py` échoue environ 1 fois sur 3, **aussi sur v83** (avant la Bibliothèque) : « mi-juin… carte du bloc spécifique » (carte absente) et parfois « pas de rappel après rechargement » (la carte refusée revient). Le second cas pourrait être un vrai défaut (refus non gardé). À examiner dans une version à part.
 
 ## Priorités issues de l'audit du 15/11/2026 (`docs/audit/AUDIT-2026-11-15.md`)
 **Ordre validé par Antoine le 16/11/2026.** Aucun nouvel indicateur d'analyse avant la fin du point 3.

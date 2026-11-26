@@ -15,8 +15,8 @@ X7 = r"""
 .lvl{display:inline-block;font:800 11px/1 Inter,sans-serif;border-radius:6px;padding:4px 7px;margin-right:6px;vertical-align:1px}
 .lvl.e{background:#dcf7e8;color:#0b8f56}.lvl.x{background:#e0edfd;color:#2c6fb8}.lvl.n{background:#f1eee6;color:#7a6d52}
 .use{display:inline-block;font-size:12.5px;font-weight:700;color:var(--mintT);margin-top:8px}
-.nav5{position:absolute;left:12px;right:12px;bottom:12px;background:#fff;border-radius:22px;box-shadow:0 6px 20px rgba(16,32,26,.12);display:grid;grid-template-columns:repeat(5,1fr);padding:8px 4px}
-.nav5 div{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11px;font-weight:700;color:var(--mut);padding:6px 0;border-radius:14px}
+.nav5{position:absolute;left:12px;right:12px;bottom:12px;background:#fff;border-radius:22px;box-shadow:0 6px 20px rgba(16,32,26,.12);display:grid;grid-template-columns:repeat(5,1fr);gap:2px;padding:8px 6px}
+.nav5 div{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10px;letter-spacing:-.15px;white-space:nowrap;padding-left:3px!important;padding-right:3px!important;font-weight:700;color:var(--mut);padding:6px 0;border-radius:14px}
 .nav5 .mi{width:21px;height:21px}
 .nav5 .on{background:#e3f5ec;color:var(--mintT)}
 .dt h2{font-size:22px;font-weight:800;line-height:1.25;margin:6px 0 4px;letter-spacing:-.01em}
@@ -26,8 +26,15 @@ X7 = r"""
 """
 B2.X = B2.X + X7
 
-NAV = ('<div class="nav5"><div>' + ic('home') + 'Aujourd\'hui</div><div>' + ic('calendar') + 'Semaine</div><div>' + ic('monitoring') + 'Suivi</div>'
-       '<div class="on">' + ic('eye') + 'Biblio</div><div>' + ic('person') + 'Profil</div></div>')
+BOOK = '<svg class="mi" style="fill:none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6.5C10.2 5.2 7.6 4.6 4 4.8v13.4c3.6-.2 6.2.4 8 1.7 1.8-1.3 4.4-1.9 8-1.7V4.8c-3.6-.2-6.2.4-8 1.7z"/><path d="M12 6.5v13.4"/></svg>'
+
+
+def nav(lab):
+    return ('<div class="nav5"><div>' + ic('home') + 'Aujourd\'hui</div><div>' + ic('calendar') + 'Semaine</div><div>' + ic('monitoring') + 'Suivi</div>'
+            '<div class="on">' + BOOK + lab + '</div><div>' + ic('person') + 'Profil</div></div>')
+
+
+NAV = nav('Bibliothèque')
 
 
 def art(t, src, lvl, ret, use=None):
@@ -46,7 +53,7 @@ def s6_1():
          + art('Pourquoi le cœur monte pendant une sortie à allure constante', 'Coyle et González-Alonso · 2001', 'e',
                'La chaleur et la perte d\'eau font monter la fréquence cardiaque même si l\'allure ne change pas.', 'dérive cardiaque')
          + NAV)
-    return pg('<div class="pad">' + s + '</div>', ('1', 'Un 5e onglet « Biblio » : des fiches courtes, par thème'), h=900)
+    return pg('<div class="pad">' + s + '</div>', ('1', 'Un 5e onglet « Bibliothèque » : des fiches courtes, par thème'), h=900)
 
 
 def s6_2():
@@ -64,4 +71,11 @@ def s6_2():
     return pg('<div class="pad">' + s + '</div>', ('2', 'La fiche : ce qu\'il faut retenir, ce que ça change pour toi, les limites'), h=900)
 
 
-EXPORT = ['s6_1', 's6_2']
+def s6_3():
+    h = title('3', 'La barre du bas : textes à 10 px (11 avant), « Bibliothèque » tient dans le fond vert')
+    for lab in ['Bibliothèque']:
+        h += cas('·', lab) + '<div class="fr" style="position:relative;height:84px;margin-bottom:6px">' + nav(lab) + '</div>'
+    return B2.doc(h)
+
+
+EXPORT = ['s6_1', 's6_2', 's6_3']
