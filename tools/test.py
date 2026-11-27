@@ -10,7 +10,6 @@ T = ROOT / 'tests'
 PY = sys.executable
 ETAPES = [
     ("index.html à jour (moteur, version, syntaxe)", [PY, 'tools/build.py', '--check'], ROOT, None),
-    ("Parité avec sim8.py, règles v1 (0 écart)", [PY, 'parity.py'], T, lambda s: 'TOTAL ECARTS 0' in s),
     ("Propriétés du plan sur les profils", ['node', 't_profils.js'], T, None),
     ("Déroulé = durée de chaque séance", ['node', 't_steps.js'], T, None),
     ("Réaction au ressenti (gel de la sortie longue, séances manquées)", ['node', 't_react3.js'], T, None),

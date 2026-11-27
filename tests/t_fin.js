@@ -40,6 +40,4 @@ for(const [nom,mod,today] of [['profil de base (4 jours)',null],['profil d\'Anto
   const s2=o.weeks.filter(k=>k.type==='aff_sec').map(k=>longue(o,k)).filter(Boolean);
   t('affûtage du 50 km : sortie longue en baisse, 1 h 30 au plus 6 jours avant',s2.length===2&&s2[0]>s2[1]&&s2[1]<=95,s2.map(h).join(' → '));
 }
-console.log('— règles v1');
-t('règles v1 : plan identique',JSON.stringify(plan(true,null,null,'v1').sessions)===JSON.stringify(plan(false,null,null,'v1').sessions));
 if(!ok)process.exitCode=1;

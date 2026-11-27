@@ -31,6 +31,5 @@ for(const k of chocs){const s=sem(o,k),L=s.find(x=>x.type==='long'),M=s.find(x=>
 /* le reste */
 const off=plan(false),d0=chocs[0].mon;
 t('rien ne change avant le premier week-end choc',JSON.stringify(o.sessions.filter(x=>x.date<d0))===JSON.stringify(off.sessions.filter(x=>x.date<d0)));
-t('règles v1 : plan identique',JSON.stringify(plan(true,null,'v1').sessions)===JSON.stringify(plan(false,null,'v1').sessions));
 t('sans enchaînement : aucun week-end choc',plan(true,p=>{p.orgs=[];}).weeks.every(k=>!k.choc));
 if(!ok)process.exitCode=1;

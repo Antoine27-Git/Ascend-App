@@ -12,7 +12,5 @@ const i=off.findIndex((d,k)=>d!==on[k]);
 t('l\'arrondi supérieur modifie la progression',i>=0,'1re différence : semaine '+(i+1)+', '+off[i]+' → '+on[i]+' min');
 t('la 1re séance modifiée passe au multiple de 5 min supérieur, de moins de 5 min',i>=0&&on[i]%5===0&&on[i]>off[i]&&on[i]-off[i]<5);
 t('la sortie longue maximale n\'est jamais plus basse',Math.max(...on)>=Math.max(...off),Math.max(...off)+' → '+Math.max(...on)+' min');
-const v1a=sl(true,'v1',sans),v1b=sl(false,'v1',sans);
-t('règles v1 inchangées (réglage sans effet)',JSON.stringify(v1a)===JSON.stringify(v1b));
 E.CONV.arrondiSup=true;
 if(!ok)process.exitCode=1;

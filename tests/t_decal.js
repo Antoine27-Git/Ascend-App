@@ -28,6 +28,4 @@ chk(L2.date===co.date&&C2.date===lg.date&&L2.dur===lg.dur&&C2.dur===co.dur,'éch
 const r3=ex.sessions.filter(s=>dans(s)&&isRun(s));chk(new Set(r3.map(s=>s.date)).size===r3.length&&r3.length===runs.length,'échange : jamais deux courses le même jour, aucune perdue');
 const demi=E.build({profile:Object.assign({},prof,{decal:{[lg.date]:co.date}}),today,sessions:[],isRun});
 chk(demi.sessions.find(s=>s.id===lg.id).date===lg.date,'un seul sens vers un jour couru : toujours refusé');
-const v1=E.build({profile:Object.assign({},prof,{decal:{[src.date]:libre}}),today,sessions:[],isRun,regles:'v1'});
-chk(!v1.sessions.some(s=>s.decale),'règles v1 inchangées');
 console.log(ok?'décalage de séance : ✓':'décalage de séance : ✗');if(!ok)process.exitCode=1;

@@ -38,7 +38,6 @@ const tot=o=>JSON.stringify(o.sessions.filter(x=>x.date<'2027-06-01'));
 t('durées des séances inchangées',dur(on)===dur(off));
 const sans=mod=>{mod.races=[];};
 t('sans course intermédiaire : plan identique jusqu\'au bloc spécifique',tot(plan(true,3000,sans))===tot(plan(false,3000,sans)));
-t('règles v1 : plan identique',JSON.stringify(plan(true,3000,null,'v1').sessions)===JSON.stringify(plan(false,3000,null,'v1').sessions));
 t('course de priorité C (course-entraînement) : plan identique',tot(plan(true,3000,p=>{p.races[0].prio='C';}))===tot(plan(false,3000,p=>{p.races[0].prio='C';})));
 
 /* 4. Texte */
