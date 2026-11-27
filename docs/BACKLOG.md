@@ -12,9 +12,11 @@ Ce ne sont pas des décisions. Chaque idée sera rouverte, challengée et tranch
 ## Bibliothèque (25/11/2026) — faite en v84 (D-113)
 - Suites possibles : fiches sur d'autres sources de `docs/SOURCES.md` (back-to-back, nutrition 2026 à relire), recherche par mot, lien « Utilisé par Ascend » vers l'écran concerné.
 
-## Test instable connu (26/11/2026)
-- 27/11 : même symptôme vu une fois sur `test_v85.py` (un état écrit avant un rechargement n'est pas relu). Piste écartée : la remise à zéro par le script d'initialisation des tests (essai avec un repère en localStorage : v74 échoue toujours).
-- `tests/ui/test_v74.py` échoue environ 1 fois sur 3, **aussi sur v83** (avant la Bibliothèque) : « mi-juin… carte du bloc spécifique » (carte absente) et parfois « pas de rappel après rechargement » (la carte refusée revient). Le second cas pourrait être un vrai défaut (refus non gardé). À examiner dans une version à part.
+## Test instable (26/11/2026) — cause trouvée et corrigée le 27/11
+- **Ce n'était pas un défaut de l'appli** : deux défauts des tests eux-mêmes.
+  1. `test_v74.py` écrivait l'historique dans le stockage pendant que l'appli tournait, puis rechargeait : si l'appli enregistrait son propre état entre les deux, l'historique était écrasé (« carte du bloc spécifique » absente). L'historique est maintenant construit avant d'ouvrir l'appli.
+  2. Le script qui prépare les données de test se fiait à `sessionStorage` pour ne s'exécuter qu'une fois ; avec une page ouverte en `file://`, Chromium le perd parfois au rechargement : les données de départ étaient réinjectées (« pas de rappel après rechargement », et le cas vu sur v85). Le repère passe par `window.name`, gardé au rechargement, limité aux pages `file:`. Corrigé dans les 9 tests concernés (v74 à v85).
+- Vérifié : v74 10 fois de suite vert, v85 3 fois, suite complète verte.
 
 ## Priorités issues de l'audit du 15/11/2026 (`docs/audit/AUDIT-2026-11-15.md`)
 **Ordre validé par Antoine le 16/11/2026.** Aucun nouvel indicateur d'analyse avant la fin du point 3.

@@ -34,7 +34,7 @@ with sync_playwright() as p:
     b=p.chromium.launch()
     c=b.new_context(viewport={'width':360,'height':800},device_scale_factor=2,is_mobile=True,has_touch=True,timezone_id='Europe/Paris',locale='fr-FR')
     c.route('**/functions/v1/**',route);c.route('**/*supabase.co/rest/**',lambda r:r.abort());c.route('**/*supabase.co/auth/**',lambda r:r.abort())
-    c.add_init_script('if(!sessionStorage.getItem("ini")){sessionStorage.setItem("ini","1");localStorage.setItem("trail-state-v1",%s);localStorage.setItem("trail-auth-v1",%s);}'%(json.dumps(json.dumps(profil())),json.dumps(json.dumps(AUTH))))
+    c.add_init_script('if(location.protocol==="file:"&&window.name!=="__test_ini"){window.name="__test_ini";localStorage.setItem("trail-state-v1",%s);localStorage.setItem("trail-auth-v1",%s);}'%(json.dumps(json.dumps(profil())),json.dumps(json.dumps(AUTH))))
     pg=c.new_page();pg.on('pageerror',lambda e:errs.append(str(e)))
     pg.clock.set_fixed_time(JOUR+'T17:00:00+01:00');pg.goto('file://'+ROOT+'/index.html');pg.wait_for_timeout(4000)
     carte=pg.locator('#view .sc',has_text='Renforcement').first

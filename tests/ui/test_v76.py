@@ -45,7 +45,7 @@ def appareil(b,srv,etat=None,sync=None,connecte=False):
     if etat is not None:init['trail-state-v1']=json.dumps(etat)
     if sync is not None:init['trail-sync-v1']=json.dumps(sync)
     if connecte:init['trail-auth-v1']=json.dumps({'access_token':'jeton','refresh_token':'r','expires_at':T0+365*24*H,'email':'t@e.fr','user_id':'u1'})
-    pg.add_init_script("(()=>{if(sessionStorage.getItem('_i'))return;sessionStorage.setItem('_i','1');const d=%s;for(const k in d)localStorage.setItem(k,d[k]);})()"%json.dumps(init))
+    pg.add_init_script("(()=>{if(location.protocol!=='file:'||window.name==='__test_ini')return;window.name='__test_ini';const d=%s;for(const k in d)localStorage.setItem(k,d[k]);})()"%json.dumps(init))
     pg.goto(URL);pg.wait_for_timeout(300);avance(pg)
     return c,pg
 def avance(pg,ms=4000):pg.clock.run_for(ms);pg.wait_for_timeout(250);pg.clock.run_for(ms);pg.wait_for_timeout(250)
