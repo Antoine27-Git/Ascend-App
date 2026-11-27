@@ -159,6 +159,9 @@ svg.mi{width:24px;height:24px;fill:currentColor;stroke:none;flex:none}
 .wk .d.done{background:var(--mintT);color:#fff}
 .wk .d.miss{background:#fff;box-shadow:inset 0 0 0 1.5px #c33a32;color:#c33a32}
 .wk .d.off{background:#f0f2f0;color:var(--mut)}
+.wk .st{display:flex;flex-direction:column;gap:2px;justify-content:center;align-items:center;height:48px}
+.wk .st .d{width:30px;height:23px;border-radius:8px}.wk .st .d svg.mi{width:14px;height:14px}
+.wk .st.one .d{width:30px;height:30px;border-radius:10px}.wk .st.one .d svg.mi{width:18px;height:18px}
 .objl{display:flex;gap:12px;align-items:center;padding:12px 14px;cursor:pointer}
 .objl .ic{width:44px;height:44px;border-radius:13px;background:#123528;color:#e9c46a}
 .wrow{display:flex;align-items:center;gap:10px;padding:12px 14px}
@@ -948,7 +951,7 @@ function watchCard(){
     +(WT.err?'<div class="note" style="margin-bottom:8px">'+esc(WT.err)+'</div>':'')
     +(WT.list&&!WT.err&&!l.length?'<div class="empty" style="margin:0 0 10px">'+(WT.list.length?'Rien de nouveau : '+WT.list.length+' sortie'+(WT.list.length>1?'s':'')+' déjà enregistrée'+(WT.list.length>1?'s':'')+'.':'Aucune activité dans intervals.icu sur cette période.')+'</div>':'')
     +l.map(o=>{const T=TYPES[o.type]||TYPES.autre;
-      return '<div class="sessrow"><div style="min-width:0"><div><b>'+T.l+'</b> <span class="note">'+fmtS(o.date)+'</span></div><div class="m">'+[o.dur+' min',o.dist?r1(o.dist)+' km':null,o.dplus?r0(o.dplus)+' D+':null].filter(Boolean).join(' · ')+'</div></div><div class="r"><button class="btn s dark" onclick="app.addWatch(\''+esc(o.ext)+'\')">Ajouter</button></div></div>';}).join('')
+      return '<div class="sessrow"><div style="min-width:0"><div><b>'+T.l+'</b> <span class="note">'+fmtS(o.date)+'</span></div><div class="m">'+[o.dur+' min',o.dist?r1(o.dist)+' km':null,o.dplus?r0(o.dplus)+' D+':null].filter(Boolean).join(' · ')+'</div></div><div class="r"><button class="btn s dark" onclick="app.addWatch(\''+esc(o.ext)+'\')">Enregistrer la séance</button></div></div>';}).join('')
     +'<button class="btn full'+(l.length?'':' dark')+'" style="margin-top:8px" '+(WT.busy?'disabled':'')+' onclick="app.watchSync()">'+(WT.busy?'Recherche…':'Récupérer mes séances')+'</button>'
     +(WT.list&&WT.days<30&&!WT.busy?'<button class="btn full" style="margin-top:8px;background:transparent;color:var(--mut);font-weight:600" onclick="app.watchSync(30)">Chercher sur 30 jours</button>':'')+'</div>';
 }
@@ -2244,9 +2247,10 @@ function joursLibres(ps){const t=todayISO(),m0=monday(t);if(!ps.gen||ps.type==='
     const veille=runs.some(p=>p.type==='long'&&p.date===addDays(d,1)&&p!==ech);out.push({d,veille,ech});}return out;}
 function reprogHTML(ps){const L=joursLibres(ps);if(!L.length)return '<div class="mini" style="margin-top:8px">Aucun jour libre d\'ici dimanche : on ne rattrape pas, le plan continue.</div>';
   const t=todayISO(),m0=monday(t),planned=allPlan().filter(p=>p.date>=m0&&p.date<addDays(m0,7)&&p.id!==ps.id),LT='LMMJVSD',x=L.find(o=>o.d===REPROG_SEL)||null;
+  const tall=semHaute(planned.filter(p=>p.date!==ps.date));
   const cal='<div class="wk pick">'+[0,1,2,3,4,5,6].map(i=>{const d=addDays(m0,i),J=planned.filter(p=>p.date===d),q=d===ps.date?ps:J.slice().sort((a,b)=>isRun(b)-isRun(a))[0],ok=L.some(o=>o.d===d);
       const cls=(!ok&&d!==ps.date?'no':'')+(x&&x.d===d?' sel':'');
-      return '<button class="'+cls+'" '+(ok?'onclick="event.stopPropagation();app.reprogSel(\''+d+'\')"':'')+' aria-label="'+jourNom(d)+'"><span class="l">'+LT[i]+'</span><span class="n">'+parseISO(d).getDate()+'</span><span class="d'+(q?jourClasse(q):'')+'">'+(q?jourIcone(d===ps.date?[ps]:J,q):'·')+'</span></button>';}).join('')+'</div>';
+      return '<button class="'+cls+'" '+(ok?'onclick="event.stopPropagation();app.reprogSel(\''+d+'\')"':'')+' aria-label="'+jourNom(d)+'"><span class="l">'+LT[i]+'</span><span class="n">'+parseISO(d).getDate()+'</span>'+jourCase(d===ps.date?[ps]:J,q,tall)+'</button>';}).join('')+'</div>';
   let res='';
   if(x){const nom=jourNom(x.d),autre=planned.filter(p=>p.date===x.d&&!isRun(p));
     const cons=!isRun(ps)?(x.jourSL?'le jour de ta sortie longue. Possible, après la sortie, en épargnant les jambes.'
@@ -2327,10 +2331,10 @@ function ajAlertes(d){const A=[],m0=monday(d);
     A.push('Deuxième semaine de suite sans ton renforcement. En descente, tes cuisses freinent tout ton poids à chaque pas : le renforcement les rend plus solides pour encaisser.');
   return A;}
 const ajWarn=t=>'<div class="warnx"><span>!</span><div>'+t+'</div></div>';
-function ajCal(ok){const t=todayISO(),m0=monday(t),LT='LMMJVSD',P=allPlan().filter(p=>p.date>=m0&&p.date<addDays(m0,7));
+function ajCal(ok){const t=todayISO(),m0=monday(t),LT='LMMJVSD',P=allPlan().filter(p=>p.date>=m0&&p.date<addDays(m0,7)),tall=semHaute(P);
   return '<div class="wk pick">'+[0,1,2,3,4,5,6].map(i=>{const d=addDays(m0,i),J=P.filter(p=>p.date===d),q=J.slice().sort((a,b)=>isRun(b)-isRun(a))[0],o=ok(d);
-    return '<button class="'+(o?'':'no')+(AJ.d===d?' sel':'')+'" '+(o?'onclick="app.ajJour(\''+d+'\')"':'')+' aria-label="'+jourNom(d)+'"><span class="l">'+LT[i]+'</span><span class="n">'+parseISO(d).getDate()+'</span><span class="d'+(q?jourClasse(q):'')+'">'+(q?jourIcone(J,q):'·')+'</span></button>';}).join('')+'</div>';}
-function ajOk(d){const t=todayISO();if(d<t)return false;return AJ.k!=='run'||(!ajLong(d)&&!ajRun(d));}
+    return '<button class="'+(o?'':'no')+(AJ.d===d?' sel':'')+'" '+(o?'onclick="app.ajJour(\''+d+'\')"':'')+' aria-label="'+jourNom(d)+'"><span class="l">'+LT[i]+'</span><span class="n">'+parseISO(d).getDate()+'</span>'+jourCase(J,q,tall)+'</button>';}).join('')+'</div>';}
+function ajOk(d){const t=todayISO();if(d<t)return d>=monday(t);return AJ.k!=='run'||(!ajLong(d)&&!ajRun(d)&&!ajRunWeek(monday(t)));}
 function vAjout(){const t=todayISO(),m0=monday(t),x='<button class="btn x" onclick="app.close()" aria-label="fermer">×</button>';
   if(!AJ.k)return '<div class="pad"><div class="row sbtw"><h3>Ajouter une séance</h3>'+x+'</div><div class="mini" style="margin:4px 0 16px">Cette semaine · '+fmtS(m0)+' au '+fmtS(addDays(m0,6))+'</div>'
     +fOpt('run','Course à pied','L\'appli te propose la séance',"app.ajType('run')",true)+fOpt('fitness','Renforcement','Tu choisis le jour',"app.ajType('cf')")
@@ -2339,27 +2343,33 @@ function vAjout(){const t=todayISO(),m0=monday(t),x='<button class="btn x" oncli
   const back='<button class="btn full" style="margin-top:10px;background:transparent;color:var(--mut);font-weight:600" onclick="app.ajType(null)">‹ Autre type de séance</button>';
   let h='<div class="pad"><div class="row sbtw"><h3>'+AJ_T[AJ.k]+'</h3>'+x+'</div>';
   if(AJ.k==='run'){const deja=ajRunWeek(m0);
-    if(deja)return h+'<div class="warnx" style="background:#eef1ee;color:var(--ink)"><span>i</span><div>Tu as déjà ajouté un footing '+(deja.date===t?'aujourd\'hui':jourNom(deja.date).toLowerCase())+'. Une seule course en plus par semaine : la prochaine, à partir de lundi.</div></div>'+back+'</div>';
-    h+='<div class="mini" style="margin:4px 0 2px">Quel jour ?</div>'+ajCal(ajOk)+'<div class="mini" style="margin-top:6px">Grisés : les jours passés, le jour de ta sortie longue et les jours où une course est déjà prévue.</div>';
-    if(!AJ.d)return h+'<div class="mini" style="margin-top:14px">Aucun jour possible d\'ici dimanche.</div>'+back+'</div>';
+    h+='<div class="mini" style="margin:4px 0 2px">Quel jour ?</div>'+ajCal(ajOk)
+      +(deja?'<div class="warnx" style="background:#eef1ee;color:var(--ink)"><span>i</span><div>Tu as déjà ajouté une endurance '+(deja.date===t?'aujourd\'hui':jourNom(deja.date).toLowerCase())+'. Une seule course en plus par semaine : d\'ici dimanche, tu peux seulement noter une course déjà faite.</div></div>'
+        :'<div class="mini" style="margin-top:6px">Grisés : le jour de ta sortie longue et les jours où une course est déjà prévue. Un jour passé : tu notes une course déjà faite.</div>');
+    if(!AJ.d)return h+back+'</div>';
+    if(AJ.d<t)return h+ajPasse()+back+'</div>';
     const ef=ajEf(m0),efP=ef&&ef.ps;
     if(efP&&!ef.done&&!AJ.force&&['today','next'].includes(planStatus(efP).k)&&joursLibres(efP).some(o=>o.d===AJ.d&&!o.ech)){const nm=AJ.d===t?'aujourd\'hui':jourNom(AJ.d).toLowerCase();
       return h+'<div class="ajp"><b class="pt" style="font-size:17px">Ton endurance n\'est pas faite</b><div class="mini" style="margin-top:6px">Prévue '+jourNom(efP.date).toLowerCase()+', '+durTxt(efP.dur)+'. Plutôt que d\'ajouter une course, fais-la '+nm+'.</div></div>'
         +'<button class="btn dark full" style="margin-top:12px" onclick="app.ajDecaler()">Déplacer l\'endurance à '+nm+'</button>'
-        +'<button class="btn full" style="margin-top:8px;background:transparent;color:var(--mut);font-weight:700" onclick="app.ajForce()">Ajouter quand même un footing en plus</button>'+back+'</div>';}
+        +'<button class="btn full" style="margin-top:8px;background:transparent;color:var(--mut);font-weight:700" onclick="app.ajForce()">Ajouter quand même une endurance en plus</button>'+back+'</div>';}
     const f=ajFooting(AJ.d),nm=AJ.d===t?'aujourd\'hui':jourNom(AJ.d).toLowerCase();
     const why=f.ef&&f.ef.ps?'Ton endurance de la semaine'+(f.ef.done?' est faite ('+jourNom(f.ef.ps.date).toLowerCase()+', '+durTxt(f.ef.dur)+')':' : '+durTxt(f.ef.dur))+'. ':'';
     AJ.prop={dur:f.dur,why:why+(f.veille?'La veille de ta sortie longue, la moitié de ton endurance, 30 min au plus.':'Une séance en plus reste plus courte : 75 % de ton endurance au plus, 1 h au maximum.')};
-    return h+'<div class="ajp"><div class="mini">Proposition pour '+nm+'</div><div class="pt">Footing en plus · '+durTxt(f.dur)+'</div><div class="tags"><span>Endurance</span><span>Plat</span><span>'+(f.veille?'Très facile':'Facile, tu peux parler')+'</span></div></div>'
+    return h+'<div class="ajp"><div class="mini">Proposition pour '+nm+'</div><div class="pt">Endurance en plus · '+durTxt(f.dur)+'</div><div class="tags"><span>Endurance</span><span>Plat</span><span>'+(f.veille?'Très facile':'Facile, tu peux parler')+'</span></div></div>'
       +'<div class="ajw"><b>Pourquoi</b>'+esc(AJ.prop.why)+'</div>'+ajAlertes(AJ.d).map(ajWarn).join('')
       +'<button class="btn p full" style="margin-top:12px" onclick="app.ajAjouter()">Ajouter à ma semaine</button>'+back+'</div>';}
   h+='<div class="mini" style="margin:4px 0 2px">Quel jour ?</div>'+ajCal(ajOk);
+  if(AJ.d&&AJ.d<t)return h+ajPasse()+back+'</div>';
   if(AJ.d){const nm='<b>'+(AJ.d===t?'Aujourd\'hui':jourNom(AJ.d))+'</b> : ',v=ajLong(addDays(AJ.d,1)),j=ajLong(AJ.d);
     const c=AJ.k==='cf'?(v?'veille de ta sortie longue. Choisis un renforcement qui épargne les jambes (haut du corps, gainage).':j?'jour de ta sortie longue. Possible, après la sortie, en épargnant les jambes.':'')
       :(v?'veille de ta sortie longue. Plutôt facile, pour garder des jambes fraîches.':j?'jour de ta sortie longue. Plutôt facile, après la sortie.':'');
     if(c)h+='<div class="ajw" style="border-top:1px solid var(--line);padding-top:10px">'+nm+c+'</div>';}
   return h+'<div class="mini" style="margin-top:10px">À toi de gérer ta charge. Une fois faite, tu la valides comme les autres (durée, effort, jambes sollicitées). Elle compte dans ta charge, pas dans ta course à pied.</div>'
     +'<button class="btn p full" style="margin-top:12px" '+(AJ.d?'':'disabled')+' onclick="app.ajAjouter()">Ajouter à ma semaine</button>'+back+'</div>';}
+function ajPasse(){const run=AJ.k==='run';
+  return '<div class="ajp"><b class="pt" style="font-size:17px">Séance déjà faite</b><div class="mini" style="margin-top:6px">'+(run?'Tu notes ce que tu as couru '+jourNom(AJ.d).toLowerCase()+' : pas de proposition, l\'appli relit ta montre si elle peut.':'Tu notes ta séance de '+jourNom(AJ.d).toLowerCase()+' : durée et effort.')+'</div></div>'
+    +'<button class="btn p full" style="margin-top:12px" onclick="app.ajNoter()">Noter ma séance</button>';}
 function openAjout(){$('#sheet').innerHTML='<div class="sheet" onclick="if(event.target===this)app.close()"><div class="in">'+vAjout()+'</div></div>';}
 function openManque(){$('#sheet').innerHTML='<div class="sheet" onclick="if(event.target===this)app.close()"><div class="in">'+vManque()+'</div></div>';}
 /* une ligne de séance passée sans saisie : deux boutons */
@@ -2428,20 +2438,20 @@ function offCard(t,st,d){
 /* v77 : une case = la séance principale (la course d'abord) ; une 2e séance le même jour s'ajoute en pastille */
 function jourClasse(ps){const k=planStatus(ps).k;return k==='done'?' done':k==='missed'?' miss':k==='off'?' off':' '+(HDCLASS[ps.type]||'autre');}
 function jourFond(p){return {ef:'background:#dcf7e8;color:#0b8f56',long:'background:#ffeedd;color:#d1601a',qual:'background:#ffeedd;color:#d1601a',cf:'background:#ece7fe;color:#6a4fd0',desc:'background:#e0edfd;color:#2c6fb8'}[p.type]||'';}
-function jourIcone(L,ps){const o=L.find(p=>p!==ps);let h=psIco(ps);
-  if(o){const k=planStatus(o).k;h+='<span class="bdg '+(k==='done'?'done':(HDCLASS[o.type]||'autre'))+'">'+mi(TICON[o.type]||'run')+'</span>';}
-  return h;}
+function jourCase(J,q,tall,vide){const o=q&&J.find(p=>p!==q),one=p=>'<span class="d'+jourClasse(p)+'">'+psIco(p)+'</span>';
+  if(o)return '<span class="st">'+one(q)+one(o)+'</span>';const c=q?one(q):(vide||'<span class="d">·</span>');return tall?'<span class="st one">'+c+'</span>':c;}
+const semHaute=P=>{const n={};P.forEach(p=>{n[p.date]=(n[p.date]||0)+1;});return Object.values(n).some(x=>x>1);};
 function weekStrip(t){
   const m0=monday(t),LT='LMMJVSD',planned=allPlan().filter(p=>p.date>=m0&&p.date<addDays(m0,7));
   const run=planned.filter(isRun),w=weekStats(m0);
   const goalMin=sum(run.map(p=>p.dur||0)),doneMin=sum(w.runs.map(s=>s.dur||0)),goalDp=sum(run.map(p=>p.dplus||0));
   const doneN=planned.filter(p=>planStatus(p).k==='done').length;
+  const tall=semHaute(planned);
   const days=[0,1,2,3,4,5,6].map(i=>{const d=addDays(m0,i),ps=planned.filter(p=>p.date===d).sort((a,b)=>isRun(b)-isRun(a))[0];
     let dc='d',inner='·';
-    if(ps){inner=jourIcone(planned.filter(p=>p.date===d),ps);dc+=jourClasse(ps);}
-    else if(isOff(d))dc+=' off';
+    if(!ps&&isOff(d))dc+=' off';
     const nJ=planned.filter(p=>p.date===d).length;
-    return '<button class="'+(d===t?'on':'')+'" onclick="'+(nJ>1?'app.openJour(\''+d+'\')':ps?'app.openSess(\''+ps.id+'\')':'app.go(\'seances\')')+'" aria-label="'+fmtD(d)+(ps?' · '+esc(psTitle(ps)):' · repos')+'"><span class="l">'+LT[i]+'</span><span class="n">'+parseISO(d).getDate()+'</span><span class="'+dc+'">'+inner+'</span></button>';}).join('');
+    return '<button class="'+(d===t?'on':'')+'" onclick="'+(nJ>1?'app.openJour(\''+d+'\')':ps?'app.openSess(\''+ps.id+'\')':'app.go(\'seances\')')+'" aria-label="'+fmtD(d)+(ps?' · '+esc(psTitle(ps)):' · repos')+'"><span class="l">'+LT[i]+'</span><span class="n">'+parseISO(d).getDate()+'</span>'+(ps?jourCase(planned.filter(p=>p.date===d),ps,tall):jourCase([],null,tall,'<span class="'+dc+'">'+inner+'</span>'))+'</button>';}).join('');
   return '<div class="card"><div class="row sbtw" style="gap:8px"><h2 style="margin:0">Cette semaine</h2><div class="mini" style="margin:0"><b style="color:var(--ink)">'+doneN+'/'+planned.length+'</b> séances · <b style="color:var(--ink)">'+r0(doneMin)+'/'+r0(goalMin)+'</b> min</div></div>'
     +'<div class="wk">'+days+'</div>'
     +(goalDp?'<div class="mini" style="margin-top:6px">D+ de la semaine : <b style="color:var(--ink)">'+r0(w.dplus)+'</b> / '+r0(goalDp)+' m</div>':'')+'</div>';
@@ -2526,7 +2536,6 @@ function vHome(){
     +(modOn('journal')&&!off?journalHTML(t):'')
     +watchCard()
     +objLine()
-    +'<button class="btn full" style="margin-top:14px" onclick="app.newSession()">Ajouter une autre séance</button>'
     +(!off?'<details class="stq"><summary>Malade, blessé ou indisponible ?</summary><div style="margin-top:6px">'+segStatus(st)+'</div></details>':'')
     +'<button class="btn full" style="background:transparent;color:var(--mut);font-weight:600" onclick="app.openJournal()">Journal des autres jours</button>'
     +'</main>';
@@ -3503,7 +3512,7 @@ function vGate(){
     +authFormHTML('Un compte garde ton plan et tes séances en sécurité, et te permet de les retrouver sur un autre téléphone. Ton prénom personnalise l\'app.')
     +syncLineHTML()+versionLineHTML()+'</div></main>';
 }
-const APP_VERSION='v85';   /* généré depuis sw.js par tools/build.py */
+const APP_VERSION='v86';   /* généré depuis sw.js par tools/build.py */
 function versionLineHTML(){return '<div class="mini" id="ver" style="margin-top:12px;text-align:center;opacity:.7">Ascend '+APP_VERSION+' · moteur de plan v2</div>';}
 /* compare la page chargée au cache du service worker : signale un déploiement pas encore actif */
 function checkVersion(){if(!('caches' in window))return;caches.keys().then(ks=>{const c=ks.filter(k=>/^ascend-v\d+$/.test(k)).map(k=>+k.slice(8)).sort((a,b)=>b-a)[0],el=document.getElementById('ver');
@@ -3648,7 +3657,7 @@ const app=window.app={
   edit(id){const s=S.sessions.find(x=>x.id===id);if(!s)return;E=JSON.parse(JSON.stringify(s));openSheet();},
   close(){PM=false;E=null;MQS=null;WZ=null;BL=null;RESTO=null;$('#sheet').innerHTML='';},
   setE(k,v){if(v===''||v==null)E[k]=null;else if(['date','note','nutriNote','shoe','type','wodName','rx','scoreType','stSrc','stQual','stDom','stEcc','cfJ'].includes(k))E[k]=v;else E[k]=+v;
-    if(k==='type'||k==='track'||k==='scoreType'||k==='cfJ'){openSheet(k==='type');return;}
+    if(k==='type'||k==='track'||k==='scoreType'||k==='cfJ'||k==='_lk'){openSheet(k==='type');return;}
     if(k==='wodName'){const wh=$('#wodhist');if(wh)wh.outerHTML=wodHistHTML(E);}
     mark($('#sheet'),k,E[k]);const h=$('#rpeh');if(h&&k==='rpe')h.innerHTML=E.rpe!=null?E.rpe+' · '+RPEL[E.rpe]:'';const c=$('#calc');if(c)c.innerHTML=calcLine(E);},
   setNutri(v){E.nutri=v;if(v==='rien')E.carbs=0;else if(v==='ns'){E.carbs=null;E.fluids=null;E.gi=null;E.dip=null;E.nutriNote=null;}else if(v==='oui'&&E.carbs===0)E.carbs=null;openSheet();},
@@ -3858,13 +3867,17 @@ const app=window.app={
   setNutriTier(v){PR().nutriTier=v;PR().carbStart={none:15,mid:35,high:55}[v];commitP();},
   setFluidTier(v){PR().fluidTier=v;PR().fluidTarget={low:400,mid:600,high:800}[v];commitP();},
   ajOuvrir(){AJ={k:null,d:null};openAjout();},
-  ajType(k){AJ={k,d:null};if(k){const t=todayISO(),m0=monday(t);for(let i=0;i<7;i++){const d=addDays(m0,i);if(ajOk(d)){AJ.d=d;break;}}}openAjout();},
+  ajType(k){AJ={k,d:null};if(k){const t=todayISO(),m0=monday(t);for(let d=t;d<addDays(m0,7);d=addDays(d,1))if(ajOk(d)){AJ.d=d;break;}
+      if(!AJ.d)for(let d=addDays(t,-1);d>=m0;d=addDays(d,-1))if(ajOk(d)){AJ.d=d;break;}}openAjout();},
+  ajNoter(){if(!AJ||!AJ.d)return;const d=AJ.d,k=AJ.k;AJ=null;app.close();curDate=d;
+    if(k==='run'){app.newSession(null);return;}
+    app.newSession(null,true);E.date=d;E.type=k==='cf'?'cf':'autre';if(k!=='cf'&&k!=='autre')E.sport=k;openSheet(true);},
   ajJour(d){AJ.d=d;AJ.force=false;openAjout();},
   ajForce(){AJ.force=true;openAjout();},
   ajDecaler(){const ef=ajEf(monday(AJ.d));if(!ef||!ef.ps)return;const d=AJ.d;AJ=null;app.close();app.decaler(decalCle(ef.ps),d);flash('Endurance déplacée');},
   ajAjouter(){if(!AJ||!AJ.d)return;const k=AJ.k,run=k==='run';
     const ps={id:uid(),date:AJ.d,type:run?'ef':k==='cf'?'cf':'autre',dur:run?AJ.prop.dur:null,dplus:0,note:'',ajout:true,auto:false};
-    if(run){ps.title='Footing';ps.why=AJ.prop.why;}else if(k!=='cf'){ps.sport=k;ps.title=AJ_T[k];}
+    if(run){ps.title='Endurance';ps.why=AJ.prop.why;}else if(k!=='cf'){ps.sport=k;ps.title=AJ_T[k];}
     S.plan.push(ps);S.plan.sort(byDate);AJ=null;save();app.close();render();setTimeout(()=>flash('Ajoutée à ta semaine'),300);},
   setPE(k,v){if(v===''||v==null)PE[k]=null;else if(['date','note','type'].includes(k))PE[k]=v;else PE[k]=+v;if(k==='type')openPlanSheet();else mark($('#sheet'),k,PE[k]);},
   savePE(){if(!PE.date){flash('Date manquante');return;}if(PE.id){const i=S.plan.findIndex(x=>x.id===PE.id);S.plan[i]=PE;}else{PE.id=uid();S.plan.push(PE);}PE.auto=false;S.plan.sort(byDate);save();app.close();render();},

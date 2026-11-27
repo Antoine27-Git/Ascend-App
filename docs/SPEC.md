@@ -3724,4 +3724,11 @@ Maquettes validées le 27/11 : `docs/maquettes/screens_ajout.py` (a1 à a7). Dem
 5. **Autres sports** : l'utilisateur choisit le jour et gère sa charge. Conseil affiché la veille ou le jour de la sortie longue. Validation comme les autres séances (durée, effort, jambes) : la charge (durée × effort) est gardée, **pas encore additionnée dans le Suivi** (pas de nouvel indicateur avant la fin du lot régularité).
 6. **Données** : entrée de `plan` avec `ajout:true` (et `sport` pour vélo, natation, autre). Le moteur ne la voit qu'une fois faite (séance réalisée). Elle ne compte **pas** dans « Tu suis le plan ? ». Repère « Ajoutée » dans la semaine ; supprimable tant qu'elle n'est pas faite.
 **Tests.** `tests/ui/test_v85.py` (22 contrôles).
+**Compléments v86 (27/11/2026, retours d'Antoine après usage)** :
+- Le libellé reste **« Endurance »** (pas « Footing »), avec le repère « Ajoutée ».
+- **Jours passés de la semaine** possibles pour tous les types : l'appli ouvre directement la saisie de la séance déjà faite (course : relecture de la montre, sans proposition). La limite d'une course ajoutée par semaine ne bloque jamais une séance déjà faite.
+- Accueil : bouton « Ajouter une autre séance » **retiré** (tout passe par Semaine) ; dans la carte « Ma montre », « Ajouter » devient **« Enregistrer la séance »**.
+- Étape 3 : pour une séance ajoutée sans effet sur le plan, le bloc « Effet sur le plan » n'est plus affiché.
+- Étape 2 : le lien « Changer » de « Compte pour » ne faisait rien (l'écran n'était pas redessiné) : corrigé.
+- **Bande de la semaine** (maquette `docs/maquettes/screens_pastille.py`, variante C ajustée) : deux séances le même jour s'affichent l'une au-dessus de l'autre, chacune avec sa couleur et son état (rouge si manquée) ; la bande ne grandit que les semaines qui ont un tel jour.
 
