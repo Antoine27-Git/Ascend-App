@@ -1,0 +1,90 @@
+# v85 : « Ajouter une séance » dans Semaine (D-114) : course proposée par règles, autres sports au choix du jour
+import json, os, re, sys
+from playwright.sync_api import sync_playwright
+sys.path.insert(0,os.path.dirname(os.path.abspath(__file__)));from state import state, AUTH
+ROOT=os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))));OUT=os.path.join(ROOT,'captures','ui','v85');os.makedirs(OUT,exist_ok=True)
+errs=[];ok=True
+def chk(c,m):
+    global ok;print(('✓ ' if c else '✗ ')+m);ok=ok and c
+def ouvrir(b,jour):
+    c=b.new_context(viewport={'width':360,'height':800},device_scale_factor=2,is_mobile=True,has_touch=True,timezone_id='Europe/Paris',locale='fr-FR')
+    c.route('**/functions/v1/**',lambda r:r.fulfill(status=200,content_type='application/json',body='{}'))
+    c.route('**/*supabase.co/rest/**',lambda r:r.abort());c.route('**/*supabase.co/auth/**',lambda r:r.abort())
+    c.add_init_script('if(!sessionStorage.getItem("ini")){sessionStorage.setItem("ini","1");localStorage.setItem("trail-state-v1",%s);localStorage.setItem("trail-auth-v1",%s);}'%(json.dumps(json.dumps(state(manques={}))),json.dumps(json.dumps(AUTH))))
+    pg=c.new_page();pg.on('pageerror',lambda e:errs.append(str(e)))
+    pg.clock.set_fixed_time(jour+'T08:00:00+01:00');pg.goto('file://'+ROOT+'/index.html');pg.wait_for_timeout(2500)
+    pg.locator('nav button',has_text='Semaine').click();pg.wait_for_timeout(300)
+    return c,pg
+ST='JSON.parse(localStorage.getItem("trail-state-v1"))'
+def sheet(pg):return pg.locator('#sheet').inner_text()
+with sync_playwright() as p:
+    b=p.chromium.launch()
+    # vendredi 27/11 : sortie longue dimanche
+    c,pg=ouvrir(b,'2026-11-27')
+    v=pg.locator('#view').inner_text()
+    chk('Ajouter une séance' in v and 'Ajouter une séance prévue' not in v,'Semaine : nouveau bouton, l\'ancien a disparu')
+    pg.screenshot(path=OUT+'/1-semaine.png',full_page=True)
+    pg.locator('button.ajb').click();pg.wait_for_timeout(300)
+    t=sheet(pg)
+    chk(all(x in t for x in ['Course à pied','Renforcement','Vélo','Natation','Autre']),'5 types de séance')
+    chk(pg.locator('#sheet .fopt svg.sv').count()==2,'icônes vélo et natation')
+    pg.locator('#sheet .sheet .in').screenshot(path=OUT+'/2-types.png')
+    pg.locator('#sheet .fopt',has_text='Course à pied').click();pg.wait_for_timeout(300)
+    t=sheet(pg)
+    btn=pg.locator('#sheet .wk.pick button')
+    cl=[btn.nth(i).get_attribute('class') or '' for i in range(7)]
+    chk(all('no' in cl[i] for i in range(4)) and 'sel' in cl[4] and 'no' not in cl[5] and 'no' in cl[6],'jours : passés et dimanche (sortie longue) grisés, aujourd\'hui choisi (%s)'%cl)
+    dur=int(re.search(r'Footing en plus · (\d+) min',t).group(1))
+    chk('Footing en plus · %d min'%dur in t and dur<=60,'proposition chiffrée (%d min)'%dur)
+    chk('dans 2 jours : ni descente ni accélérations' in t,'alerte sortie longue dans 2 jours')
+    pg.locator('#sheet .sheet .in').screenshot(path=OUT+'/3-course.png')
+    pg.locator('#sheet .wk.pick button').nth(5).click();pg.wait_for_timeout(200)
+    dv=int(re.search(r'Footing en plus · (\d+) min',sheet(pg)).group(1))
+    chk('Veille de ta sortie longue' in sheet(pg) and 'Très facile' in sheet(pg) and dv<=30 and dv<=dur,'samedi, veille de sortie longue : alerte, %d min (30 au plus)'%dv)
+    pg.locator('#sheet .wk.pick button').nth(4).click();pg.wait_for_timeout(200)
+    pg.locator('#sheet button',has_text='Ajouter à ma semaine').click();pg.wait_for_timeout(800)
+    P=pg.evaluate(ST+'.plan.filter(p=>p.ajout)')
+    chk(len(P)==1 and P[0]['type']=='ef' and P[0]['date']=='2026-11-27' and P[0]['dur']==dur and P[0]['title']=='Footing','footing enregistré (séance ajoutée, endurance, %d min)'%dur)
+    chk(pg.locator('.wd',has_text='Footing').locator('.pill.aj').count()==1,'repère « Ajoutée » dans la semaine')
+    pg.screenshot(path=OUT+'/4-semaine-ajoutee.png',full_page=True)
+    pg.locator('button.ajb').click();pg.wait_for_timeout(200);pg.locator('#sheet .fopt',has_text='Course à pied').click();pg.wait_for_timeout(200)
+    chk('Une seule course en plus par semaine' in sheet(pg),'une seule course ajoutée par semaine')
+    pg.locator('#sheet button',has_text='Autre type de séance').click();pg.wait_for_timeout(200)
+    pg.locator('#sheet .fopt',has_text='Vélo').click();pg.wait_for_timeout(200)
+    cl=[pg.locator('#sheet .wk.pick button').nth(i).get_attribute('class') or '' for i in range(7)]
+    chk('no' not in cl[6] and 'no' in cl[3],'vélo : tous les jours à venir, dimanche compris')
+    pg.locator('#sheet .wk.pick button').nth(5).click();pg.wait_for_timeout(200)
+    chk('veille de ta sortie longue. Plutôt facile' in sheet(pg),'vélo la veille : conseil')
+    pg.locator('#sheet .sheet .in').screenshot(path=OUT+'/5-velo.png')
+    pg.locator('#sheet button',has_text='Ajouter à ma semaine').click();pg.wait_for_timeout(800)
+    P=pg.evaluate(ST+'.plan.filter(p=>p.ajout&&p.sport)')
+    chk(len(P)==1 and P[0]['sport']=='velo' and P[0]['type']=='autre' and P[0]['date']=='2026-11-28','vélo enregistré samedi, hors course à pied')
+    chk(pg.locator('.wd',has_text='Vélo').locator('svg.sv').count()==1,'vélo affiché avec son icône')
+    # suppression
+    pg.locator('.wd',has_text='Vélo').click();pg.wait_for_timeout(400)
+    d=pg.locator('#sheet button',has_text='Supprimer cette séance');d.click();pg.wait_for_timeout(100);pg.locator('#sheet button.d').click();pg.wait_for_timeout(500)
+    chk(pg.evaluate(ST+'.plan.filter(p=>p.sport).length')==0,'séance ajoutée supprimable avant d\'être faite')
+    # « Tu suis le plan ? » : une séance ajoutée passée et non faite ne compte pas
+    pg.locator('nav button',has_text='Suivi').click();pg.wait_for_timeout(300)
+    av=pg.locator('#view').inner_text()
+    pg.evaluate('(()=>{const st=JSON.parse(localStorage.getItem("trail-state-v1"));st.plan.push({id:"zz",date:"2026-11-25",type:"ef",dur:20,ajout:true,title:"Footing"});const o=Storage.prototype.setItem;localStorage.setItem("trail-state-v1",JSON.stringify(st));Storage.prototype.setItem=function(k,v){if(k==="trail-state-v1")return;return o.call(this,k,v);};})()')
+    pg.reload();pg.wait_for_timeout(2500);pg.locator('nav button',has_text='Suivi').click();pg.wait_for_timeout(400)
+    chk(pg.evaluate(ST+'.plan.some(p=>p.id==="zz")'),'(contrôle : séance ajoutée passée bien présente)')
+    chk(pg.locator('#view').inner_text()==av,'Tu suis le plan ? : une séance ajoutée manquée ne compte pas')
+    c.close()
+    # lundi 23/11 : endurance de mercredi pas encore faite → on propose de la déplacer
+    c,pg=ouvrir(b,'2026-11-23')
+    pg.locator('button.ajb').click();pg.wait_for_timeout(200);pg.locator('#sheet .fopt',has_text='Course à pied').click();pg.wait_for_timeout(300)
+    t=sheet(pg)
+    chk('Ton endurance n\'est pas faite' in t and 'Déplacer l\'endurance à aujourd\'hui' in t,'endurance à venir : proposition de la déplacer')
+    pg.locator('#sheet .sheet .in').screenshot(path=OUT+'/6-deplacer.png')
+    pg.locator('#sheet button',has_text='Ajouter quand même').click();pg.wait_for_timeout(200)
+    chk('Footing en plus' in sheet(pg),'« Ajouter quand même » montre le footing')
+    pg.locator('#sheet .wk.pick button').nth(0).click();pg.wait_for_timeout(200)
+    pg.locator('#sheet button',has_text='Déplacer l\'endurance').click();pg.wait_for_timeout(800)
+    dec=pg.evaluate(ST+'.profile.decal||{}')
+    chk('2026-11-23' in dec.values(),'endurance déplacée à aujourd\'hui (%s)'%dec)
+    chk(pg.evaluate(ST+'.plan.filter(p=>p.ajout).length')==0,'rien d\'ajouté quand on déplace')
+    c.close();b.close()
+chk(not errs,'aucune erreur JavaScript '+str(errs))
+sys.exit(0 if ok else 1)

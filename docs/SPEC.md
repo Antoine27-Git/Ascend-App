@@ -24,6 +24,7 @@ identifiant, jamais réattribué.
 | D-111 | Semaine passée : sortie longue réellement courue (P-08) | en vigueur (v82) |
 | D-112 | Dernier export, rappel, restauration sûre | en vigueur (v83) |
 | D-113 | Bibliothèque : 5e onglet, fiches d'études | en vigueur (v84) |
+| D-114 | Ajouter une séance (course proposée, autres sports) | en vigueur (v85) |
 
 Les numéros provisoires des rapports d'audit (`docs/audit/`, 11/11/2026 : « D-97 à D-121 », « H-59 à H-66 ») ne correspondent pas aux décisions de ce registre : seul ce fichier fait foi.
 
@@ -3707,4 +3708,20 @@ Maquettes validées le 25/11 : `docs/maquettes/screens_biblio.py` (nom « Biblio
 - **Intensité** : Rosenblat 2025 conclut que l'effet dépend du niveau (amateurs plutôt pyramidal), pas de la distance comme le disait notre résumé. D-34 (polarisé en fond) n'est pas remis en cause par l'étude (aucune différence globale), mais l'argument est à relire.
 - **Renforcement** : le résumé de Llanos-Lagos 2024 ne confirme pas l'absence d'effet des charges sous-maximales (R-REN-002) ; il ajoute que la pliométrie aide surtout aux allures lentes.
 **Tests.** `tests/ui/test_v84.py` (17 contrôles).
+
+### D-114 — Ajouter une séance (v85, 27/11/2026)
+Maquettes validées le 27/11 : `docs/maquettes/screens_ajout.py` (a1 à a7). Demande d'Antoine : courir un jour sans course prévue, et noter les autres sports.
+1. **Bouton** « Ajouter une séance » en bas de l'onglet Semaine (semaine en cours seulement). Il **remplace** « Ajouter une séance prévue » (formulaire libre) ; les séances déjà créées avec l'ancien restent modifiables.
+2. **Types** : course à pied, renforcement, vélo, natation, autre.
+3. **Course à pied : l'appli propose, par règles (pas d'IA).** Toutes les valeurs sont des **conventions** (aucune étude ne les donne) :
+   - footing d'endurance sur du plat, **75 % de l'endurance de la semaine** (durée réelle si faite, sinon prévue ; à défaut la dernière prévue), arrondi à 5 min, **1 h au plus**, 15 min au moins ;
+   - **veille de sortie longue : 50 % de l'endurance, 30 min au plus** ;
+   - **jamais plus long que la plus longue sortie des 30 derniers jours**, pour ne pas faire grossir la sortie longue suivante (règle des 30 jours) ;
+   - **une seule course ajoutée par semaine** ;
+   - jours impossibles (grisés) : jours passés, jour de sortie longue ou de course, jours où une course est déjà prévue ;
+   - si l'endurance de la semaine est **à venir** et peut aller sur ce jour : l'appli propose de la **déplacer** (lien discret « Ajouter quand même un footing en plus »).
+4. **Alertes, sans blocage** : sortie longue dans 2 jours (ni descente ni accélérations ; étude : dégâts de la descente 1 à 3 jours après, Bontemps 2020), veille, lendemain de sortie longue, renforcement pas fait deux semaines de suite.
+5. **Autres sports** : l'utilisateur choisit le jour et gère sa charge. Conseil affiché la veille ou le jour de la sortie longue. Validation comme les autres séances (durée, effort, jambes) : la charge (durée × effort) est gardée, **pas encore additionnée dans le Suivi** (pas de nouvel indicateur avant la fin du lot régularité).
+6. **Données** : entrée de `plan` avec `ajout:true` (et `sport` pour vélo, natation, autre). Le moteur ne la voit qu'une fois faite (séance réalisée). Elle ne compte **pas** dans « Tu suis le plan ? ». Repère « Ajoutée » dans la semaine ; supprimable tant qu'elle n'est pas faite.
+**Tests.** `tests/ui/test_v85.py` (22 contrôles).
 
