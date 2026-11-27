@@ -19,12 +19,12 @@ def flux():
         ph=(t//600)%3;g=[0.05,0.0,-0.05][ph];v=[1.9,2.75,3.1][ph];d+=v*5;a+=g*v*5
         T.append(t);D.append(round(d,1));A.append(round(a,1));H.append(int(150+min(10,t/60)+ (4 if t>40*60 else 0)+(3 if ph==0 else -4 if ph==2 else 0)))
     return {'time':T,'hr':H,'dist':D,'alt':A}
-errs=[];ok=True;ia=[]
+errs=[];ok=True;ia=[];lu=[]
 def chk(c,m):
     global ok;print(('✓ ' if c else '✗ ')+m);ok=ok and c
 def route(r):
     u=r.request.url
-    if 'intervals-activities' in u:r.fulfill(status=200,content_type='application/json',body=json.dumps(ACT))
+    if 'intervals-activities' in u:lu.append(u);r.fulfill(status=200,content_type='application/json',body=json.dumps(ACT))
     elif 'intervals-streams' in u:r.fulfill(status=200,content_type='application/json',body=json.dumps(flux()))
     elif 'analyze-session' in u:ia.append(u);r.fulfill(status=200,content_type='application/json',body=json.dumps({'interpretation':'Lecture de test.','conseil':'Conseil de test.'}))
     else:r.fulfill(status=200,content_type='application/json',body='{}')
@@ -35,7 +35,7 @@ with sync_playwright() as p:
     c.add_init_script('if(!sessionStorage.getItem("ini")){sessionStorage.setItem("ini","1");localStorage.setItem("trail-state-v1",%s);localStorage.setItem("trail-auth-v1",%s);}'%(json.dumps(json.dumps(profil())),json.dumps(json.dumps(AUTH))))
     pg=c.new_page();pg.on('pageerror',lambda e:errs.append(str(e)))
     pg.clock.set_fixed_time(JOUR+'T17:00:00+01:00');pg.goto('file://'+ROOT+'/index.html');pg.wait_for_timeout(4000)
-    chk(pg.locator('#view button',has_text='Ajouter').count()>=1,'la montre est lue en silence à l\'ouverture (activité proposée sur l\'accueil)')
+    chk(len(lu)>=1,'la montre est lue en silence à l\'ouverture (v86 : contrôle sur l\'appel, l\'ancien passait grâce au bouton « Ajouter une autre séance »)')
     # étape 1
     v=pg.locator('#view').inner_text()
     chk('Valider ma séance' in v and 'Noter mon effort' not in v,'accueil : bouton « Valider ma séance »')

@@ -87,7 +87,7 @@ with sync_playwright() as p:
     c.close()
     # course et renforcement le même jour : pastille
     c,pg=ctx(decal={'2026-11-11':'2026-11-10'})
-    chk(pg.locator('#view .wk .bdg').count()>=1,'semaine : la 2e séance du jour s\'affiche en pastille')
+    chk(pg.locator('#view .wk .st:not(.one) .d').count()>=2,'semaine : la 2e séance du jour s\'affiche sous la première (v86)')
     pg.locator('#view .wk').first.screenshot(path=OUT+'/4-semaine.png')
     c.close()
     b.close()
