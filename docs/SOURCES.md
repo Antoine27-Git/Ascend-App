@@ -48,6 +48,9 @@ Different Running Speeds: A Systematic Review with Meta-analysis.*
 Sports Medicine, 2024. DOI 10.1007/s40279-023-01978-y
 https://link.springer.com/article/10.1007/s40279-023-01978-y
 
+Sports Medicine 54(4):895-932. **Revérifiée le 26/11/2026** sur le résumé : charges lourdes (≥ 80 % du max), pliométrie et
+méthodes combinées améliorent l'économie ; la pliométrie semble plus efficace aux vitesses lentes (≤ 12 km/h), les charges
+lourdes aux vitesses élevées. Le résumé ne confirme pas l'absence d'effet des charges sous-maximales notée ci-dessous.
 Méta-analyse. Les charges lourdes améliorent l'économie de course sur la plage la plus
 large (environ 8,6 à 17,9 km/h), avec un effet plus marqué aux vitesses élevées. Les
 charges sous-maximales et l'isométrie ne montrent pas d'amélioration.
@@ -199,12 +202,18 @@ plus basse sur les épreuves longues — d'où des besoins horaires moindres pou
 finishers lents. Des apports de 120 g/h ont été tolérés et bénéfiques chez des
 trailers élite entraînés, mais uniquement après entraînement digestif.
 **Niveau : élevé** pour la fourchette générique (position officielle + revue récente).
+**Correction du 26/11/2026 (v84)** : relu sur le résumé PubMed, la position ISSN recommande **en course 150 à 400 kcal/h,
+dont 30 à 50 g/h de glucides** et 5 à 10 g/h de protéines, et 450 à 750 mL/h de boisson. Les 60 à 90 g/h (jusqu'à 90 g/h
+au-delà de 2,5 à 3 h) **ne viennent pas de cette position** mais de recommandations générales d'endurance et de la revue
+de 2026, non relue ce jour. La cible « 60 à 90 g/h » affichée par l'appli est donc au-dessus de la position ISSN : à
+rediscuter dans le lot nutrition (D-104).
 → fonde G-NUT-001 et D-30 dans SPEC.md
 
 ### S-NUT-002 — Entraînement digestif : protocole de progression
-*The Effect of Gut-Training and Feeding-Challenge on Markers of Gastrointestinal Status
+Martinez I.G., Mika A.S., Biesiekierski J.R., Costa R.J.S. *The Effect of Gut-Training and Feeding-Challenge on Markers of Gastrointestinal Status
 in Response to Endurance Exercise: A Systematic Literature Review.* Sports Medicine,
-2023. DOI 10.1007/s40279-023-01841-0
+53(6):1175-1200, 2023. DOI 10.1007/s40279-023-01841-0 — **revérifiée le 26/11/2026** : 8 études retenues sur 304,
+interventions de 4 à 28 jours
 https://link.springer.com/article/10.1007/s40279-023-01841-0
 
 Revue systématique : l'exposition répétée du tube digestif aux glucides pendant
@@ -378,6 +387,10 @@ Différences plus petites qu'attendu entre modèles polarisé et pyramidal, avec
 qui dépend de la distance : léger avantage polarisé sur 5-10 km, léger avantage
 pyramidal sur marathon. Notable : Stephen Seiler, auteur du concept polarisé, est
 coauteur de cette nuance.
+**Correction du 26/11/2026 (v84)** : relu sur le résumé — Sports Medicine 55(3):655-673, DOI 10.1007/s40279-024-02149-3.
+En temps passé par zone de FC, **aucune différence** polarisé/pyramidal (VO2max : DMS -0,06 ; contre-la-montre : -0,05).
+Les auteurs concluent que l'effet dépend du **niveau** : compétiteurs plutôt polarisé, **amateurs plutôt pyramidal**.
+Le résumé ci-dessus (effet selon la distance) n'est pas celui du résumé officiel : à relire sur le texte intégral.
 **Niveau : modéré à élevé** — méthodologie en données individuelles, plus robuste
 qu'une méta-analyse classique. **Aucune distance au-delà du marathon n'est couverte** :
 l'extension à l'ultra-trail dans D-34 est une extrapolation de la tendance, pas une
@@ -450,12 +463,15 @@ faible à modéré** (élites, piste et route ; synthèse, pas un essai).
 
 ### S-COU-014 — Dérive cardiaque à l'effort prolongé
 Coyle E.F., González-Alonso J. *Cardiovascular drift during prolonged exercise: new perspectives.*
-Exercise and Sport Sciences Reviews, 2001. https://pubmed.ncbi.nlm.nih.gov/11337829/
+Exercise and Sport Sciences Reviews, 29(2):88-92, 2001. https://pubmed.ncbi.nlm.nih.gov/11337829/
 
 À puissance constante, la FC monte et le volume d'éjection baisse au fil d'un effort prolongé ; le phénomène est lié à la
 hausse de la température corporelle et à la déshydratation.
 **Niveau : modéré** — revue de référence. **Réserve du 15/11/2026 :** résumé non relu ce jour (référence déjà citée dans
 l'appli depuis D-100, absente de ce fichier) ; revue, volume et pages à revérifier.
+**Revérifiée le 26/11/2026 (v84, Bibliothèque)** : revue, volume et pages confirmés. Précision : selon les auteurs, la baisse du
+volume d'éjection après 10 à 20 min est surtout la **conséquence** de la hausse de la FC, elle-même liée à la hausse de
+température ; la déshydratation l'amplifie.
 → fonde le constat « dérive cardiaque » du bilan (D-100, D-107)
 
 ### S-COU-015 — Chaleur, déshydratation et performance aérobie
@@ -815,6 +831,29 @@ de la séance répétée) est la stratégie préventive la mieux appuyée.
 **Niveau : modéré** (revue narrative ; les auteurs signalent l'hétérogénéité des
 protocoles). Aucune valeur de cadence ou de durée d'exposition exploitable.
 → fonde la règle de progression du D+ de D-65e
+
+## Ajouts du 26/11/2026 (Bibliothèque, v84)
+
+### S-TRA-013 — La descente fait la différence en ultra-trail
+Genitrini M., Fritz J., Zimmermann G., Schwameder H. *Downhill Sections Are Crucial for Performance in Trail Running
+Ultramarathons—A Pacing Strategy Analysis.* Journal of Functional Morphology and Kinesiology, 7(4):103, 2022.
+DOI 10.3390/jfmk7040103. Vérifiée le 26/11/2026 sur les notices DOAJ et PMC (texte intégral PMC bloqué par une vérification).
+
+En fin de course, la baisse relative de vitesse est plus forte en descente qu'en montée, et en descente les finishers lents
+font systématiquement moins bien que les rapides. Les auteurs concluent que tenir la descente en fin de course est
+déterminant.
+**Niveau : modéré** — observationnelle, données de course. **Contrepoint** : sur l'Ultra Trail Cape Town 100 km, la montée
+était la plus liée à la performance (https://eprints.glos.ac.uk/14566/).
+→ éclaire la proposition P-19 (descente), aucune règle de l'appli ne s'y appuie encore
+
+### S-COU-016 — 1 % de pente sur tapis égale le coût de la course dehors
+Jones A.M., Doust J.H. *A 1% treadmill grade most accurately reflects the energetic cost of outdoor running.* Journal of
+Sports Sciences, 14(4):321-327, 1996. DOI 10.1080/02640419608727717. Vérifiée le 26/11/2026.
+
+9 coureurs entraînés, 6 min à six vitesses de 2,92 à 5,0 m/s, tapis à 0, 1, 2 et 3 % contre route plate. Sans résistance
+de l'air, le tapis à 0 % coûte moins ; à 1 % le coût égale celui de la route.
+**Niveau : modéré** — petit échantillon, efforts courts. Montre qu'1 % de pente est un effet réel mais petit.
+→ contexte de D-110 (faux plat compté seulement s'il dure)
 
 ## Trous identifiés
 

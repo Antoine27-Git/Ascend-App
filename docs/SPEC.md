@@ -23,6 +23,7 @@ identifiant, jamais réattribué.
 | D-110 | Faux plat confirmé sur 400 m | en vigueur (v81) |
 | D-111 | Semaine passée : sortie longue réellement courue (P-08) | en vigueur (v82) |
 | D-112 | Dernier export, rappel, restauration sûre | en vigueur (v83) |
+| D-113 | Bibliothèque : 5e onglet, fiches d'études | en vigueur (v84) |
 
 Les numéros provisoires des rapports d'audit (`docs/audit/`, 11/11/2026 : « D-97 à D-121 », « H-59 à H-66 ») ne correspondent pas aux décisions de ce registre : seul ce fichier fait foi.
 
@@ -3694,3 +3695,16 @@ Maquettes validées le 25/11 : `docs/maquettes/screens_sauvegarde.py`.
    - **« Remplacer tout »** : confirmation qui liste les dates supprimées ; l'appli télécharge d'abord la version actuelle (`ascend-AAAA-MM-JJ-avant-restauration.json`), puis remplace.
 **Reste ouvert** : P-25 (profil fusionné par rubrique, deux téléphones), P-26 (horodatage serveur).
 **Tests.** `tests/ui/test_v83.py`.
+
+### D-113 — Bibliothèque : 5e onglet de fiches d'études (v84, 26/11/2026)
+Maquettes validées le 25/11 : `docs/maquettes/screens_biblio.py` (nom « Bibliothèque », icône livre ouvert, textes de la barre réduits).
+1. **Barre du bas** : 5 onglets (Aujourd'hui, Semaine, Suivi, Bibliothèque, Profil). Textes à 10 px (11 avant), sans retour à la ligne ; sous 340 px de large, 9,5 px et barre élargie. Vérifié sans débordement à 360, 340 et 320 px.
+2. **Liste** : 16 fiches, filtrables par thème (Sortie longue, Pente, Descente, Cœur, Nutrition, Renfo, Plan, Mesures). Chaque carte : titre en français courant, niveau (Étude / Avis d'expert / Non vérifié), auteurs, revue, année, une phrase, et « Utilisé par Ascend : … » en simple texte quand une règle de l'appli s'appuie dessus.
+3. **Fiche** : « Ce qu'il faut retenir », « Ce que ça change pour toi », « Limites », bouton « Lire l'article » (nouvel onglet, DOI ou PubMed). Le geste retour revient à la liste ; rouvrir l'onglet rouvre la liste.
+4. **Contenu** : uniquement des sources déjà dans `docs/SOURCES.md`, **revérifiées le 26/11/2026** sur leur résumé ou leur notice ; textes réécrits, aucun extrait copié. Ajouts à SOURCES.md : S-TRA-013 (Genitrini 2022), S-COU-016 (Jones et Doust 1996).
+**Écarts trouvés en revérifiant** (corrigés dans SOURCES.md, affichés honnêtement dans les fiches) :
+- **Nutrition** : la position ISSN pour l'ultra (Tiller 2019) recommande 30 à 50 g/h de glucides en course ; l'appli vise 60 à 90 g/h, chiffre qui vient d'autres recommandations. À trancher dans le lot nutrition (D-104).
+- **Intensité** : Rosenblat 2025 conclut que l'effet dépend du niveau (amateurs plutôt pyramidal), pas de la distance comme le disait notre résumé. D-34 (polarisé en fond) n'est pas remis en cause par l'étude (aucune différence globale), mais l'argument est à relire.
+- **Renforcement** : le résumé de Llanos-Lagos 2024 ne confirme pas l'absence d'effet des charges sous-maximales (R-REN-002) ; il ajoute que la pliométrie aide surtout aux allures lentes.
+**Tests.** `tests/ui/test_v84.py` (17 contrôles).
+

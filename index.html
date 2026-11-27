@@ -90,8 +90,24 @@ h1{font-size:26px;margin:6px 0 2px;letter-spacing:-.03em;font-weight:800}
 .acct-val{font-size:15px;font-weight:600;margin-top:3px;word-break:break-all}
 /* tabs */
 nav{position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));z-index:20;background:rgba(255,255,255,.95);backdrop-filter:blur(14px);border-radius:24px;display:flex;padding:8px;box-shadow:0 12px 32px rgba(16,32,26,.14)}
-nav button{flex:1;border:0;background:none;font:inherit;font-size:11px;font-weight:700;color:var(--mut);display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 0 6px;border-radius:18px}
+nav button{flex:1;min-width:0;border:0;background:none;font:inherit;font-size:10px;letter-spacing:-.15px;white-space:nowrap;font-weight:700;color:var(--mut);display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 2px 6px;border-radius:18px}
 nav button.on{color:var(--mintT);background:#eafaf1}
+@media (max-width:339px){nav{left:6px;right:6px;padding:6px}nav button{font-size:9.5px;letter-spacing:-.3px;padding:8px 1px 6px}}
+.bchips{display:flex;gap:7px;overflow-x:auto;margin:4px -20px 4px;padding:6px 20px;scrollbar-width:none}.bchips::-webkit-scrollbar{display:none}
+.bchips button{flex:none;border:0;font:inherit;background:#eef1ee;color:var(--ink);border-radius:999px;padding:8px 12px;font-size:13.5px;font-weight:700;white-space:nowrap;cursor:pointer}
+.bchips button.on{background:var(--deep);color:#fff}
+.bart{display:block;width:100%;text-align:left;border:0;font:inherit;color:var(--ink);background:var(--card);border-radius:18px;box-shadow:0 1px 2px rgba(16,32,26,.04),0 10px 28px rgba(16,32,26,.05);padding:13px 14px;margin-top:10px;cursor:pointer}
+.bart .t{font-size:16px;font-weight:800;line-height:1.3}
+.bsrc{font-size:12.5px;color:var(--mut);margin-top:4px}
+.bart .ret{font-size:14px;line-height:1.45;margin-top:7px}
+.lvl{display:inline-block;font-size:11px;font-weight:800;line-height:1;border-radius:6px;padding:4px 7px;margin-right:6px;vertical-align:1px}
+.lvl.e{background:#dcf7e8;color:#0b8f56}.lvl.x{background:#e0edfd;color:#2c6fb8}.lvl.n{background:#f1eee6;color:#7a6d52}
+.bart .use{font-size:12.5px;font-weight:700;color:var(--mintT);margin-top:8px}
+.bdt h2{font-size:22px;font-weight:800;line-height:1.25;margin:8px 0 4px;letter-spacing:-.01em}
+.bbox{background:var(--card);border-radius:16px;box-shadow:0 1px 2px rgba(16,32,26,.04),0 10px 28px rgba(16,32,26,.05);padding:12px 14px;margin-top:12px;font-size:15px;line-height:1.5}
+.bbox b.h{display:block;font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--mintT);margin-bottom:6px}
+.blire{display:block;text-align:center;text-decoration:none;margin-top:16px;box-sizing:border-box}
+
 nav svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
 .lab{font-size:12px;color:var(--mut);margin:18px 0 2px;font-weight:700;letter-spacing:.02em;text-transform:uppercase}
 .scale{display:grid;grid-template-columns:repeat(11,1fr);gap:4px;margin-top:8px}
@@ -3011,6 +3027,120 @@ function vPAvances(){const P=S.profile;
     (P.planStart?restartCard():'')
     +'<div class="card pc"><div class="pct"><h2 style="color:var(--coralT)">Effacer toutes les données</h2></div><div class="pcn">'+(!storageOK?'Aucun stockage disponible ici : exporte un JSON avant de fermer.':auth?'Efface aussi la copie en ligne, donc sur tous tes appareils. Exporte un JSON avant si tu veux garder une trace.':'Données sur ce téléphone uniquement.')+'</div><button class="btn d full" style="margin-top:12px" onclick="app.reset(this)">Effacer</button></div>'
     +(auth?'<div class="card pc"><div class="pct"><h2>Dépannage de la synchro</h2></div><div class="pcn">Reprend l\'intégralité des données depuis le serveur, en ignorant le repère de dernière synchro. Utile seulement si cet appareil semble incomplet.</div><button class="btn full" style="margin-top:12px" onclick="app.resync(this)">Tout retélécharger</button></div>':''));}
+/* D-113 : Bibliothèque — fiches courtes tirées des sources déjà utilisées par Ascend (docs/SOURCES.md), revérifiées le 26/11/2026.
+   Niveau : e = étude, x = avis d'expert, n = non vérifié. Textes écrits par nous, jamais copiés des articles. */
+const BIB_TH=['Sortie longue','Pente','Descente','Cœur','Nutrition','Renfo','Plan','Mesures'];
+const BIB_LV={e:'Étude',x:'Avis d\'expert',n:'Non vérifié'};
+const BIB=[
+ {id:'sl30',th:'Sortie longue',lv:'e',t:'Allonger trop vite sa plus longue sortie augmente le risque de blessure',au:'Frandsen et al. · British Journal of Sports Medicine · 2025',
+  c:'Dépasser de plus de 10 % sa plus longue sortie du mois est lié à plus de blessures. La hausse de la semaine compte moins.',
+  ret:'5 205 coureurs suivis pendant 18 mois. Une sortie qui dépasse de plus de 10 % la plus longue des 30 jours précédents est liée à plus de blessures de surmenage. La hausse de volume d\'une semaine à l\'autre, elle, n\'est pas liée au risque.',
+  pour:'Ascend ne te fait jamais dépasser ta plus longue sortie du mois de plus de 10 %. Si tu vas au-delà, le plan suivant ne compte ta sortie qu\'à +10 %.',
+  lim:'Coureurs sur route, mesurés en kilomètres : l\'appliquer à la durée et au trail est une extrapolation. Étude d\'observation : elle montre un lien, pas une preuve de cause. Plusieurs +10 % rapprochés peuvent rester trop.',
+  use:'règle des 30 jours',url:'https://doi.org/10.1136/bjsports-2024-109380'},
+ {id:'pente',th:'Pente',lv:'e',t:'Ce que coûte une pente, en montée comme en descente',au:'Minetti et al. · Journal of Applied Physiology · 2002',
+  c:'Le coût grimpe vite en montée. En descente il baisse jusqu\'à −20 % environ, puis remonte : freiner coûte aussi.',
+  ret:'Coût de la marche et de la course mesuré sur tapis de −45 % à +45 % chez 10 coureurs. En montée, le coût grimpe vite. En descente, il baisse jusqu\'à environ −20 %, puis remonte quand c\'est plus raide, parce que freiner demande un effort.',
+  pour:'C\'est la base de l\'« équivalent plat » de tes bilans : Ascend convertit ton allure en côte ou en descente en allure sur le plat.',
+  lim:'Petit groupe d\'hommes entraînés et habitués à la montagne, sur tapis. C\'est une moyenne : ton propre coût peut s\'en écarter.',
+  use:'équivalent plat',url:'https://doi.org/10.1152/japplphysiol.01177.2001'},
+ {id:'grimpeur',th:'Pente',lv:'e',t:'Bon coureur sur le plat ne veut pas dire bon grimpeur',au:'Balducci et al. · 2016 et 2017',
+  c:'Chez des coureurs de montagne, le coût au plat ne prédisait pas le coût en côte.',
+  ret:'Chez des coureurs de montagne de bon niveau, le coût de la course au plat ne prédisait pas celui en côte. Dans un groupe plus varié d\'ultra-traileurs, le calculer à partir du plat se trompait d\'environ 8 %. Les auteurs concluent qu\'il faut le mesurer en côte.',
+  pour:'C\'est pourquoi l\'équivalent plat d\'Ascend reste une estimation de groupe. Apprendre ton propre coût en côte demandera beaucoup de tes sorties : ce chantier est gelé jusqu\'après le 50 km.',
+  lim:'Petits groupes, mesures sur tapis.',url:'https://pubmed.ncbi.nlm.nih.gov/27274660/'},
+ {id:'tapis',th:'Pente',lv:'e',t:'Sur tapis, 1 % de pente pour retrouver l\'effort du dehors',au:'Jones et Doust · Journal of Sports Sciences · 1996',
+  c:'Sans vent de face, le tapis coûte un peu moins. À 1 % de pente, l\'effort égale celui de la route.',
+  ret:'9 coureurs entraînés, 6 minutes à six allures (de 5:42 à 3:20 min/km). Sur tapis, il n\'y a pas de résistance de l\'air : courir y coûte un peu moins. Incliné à 1 %, le tapis redonne le même coût que la route plate.',
+  pour:'Sur tapis, règle-le à 1 %. Ça montre aussi qu\'1 % de pente est un effet réel mais petit : Ascend ne compte un faux plat que s\'il dure au moins 400 m.',
+  lim:'Petit groupe, efforts de quelques minutes : ne dit rien des longues sorties.',url:'https://doi.org/10.1080/02640419608727717'},
+ {id:'desc',th:'Descente',lv:'e',t:'La descente abîme les muscles, surtout quand on n\'y est pas habitué',au:'Bontemps et al. · Sports Medicine · 2020',
+  c:'Les moins habitués ont le plus de dégâts. Une première exposition protège les suivantes.',
+  ret:'Revue des études sur la course en descente. Quelle que soit la pente, ceux qui y sont le moins habitués subissent le plus de dégâts musculaires. Une première exposition protège les suivantes : c\'est la prévention la mieux appuyée.',
+  pour:'Ascend fait monter ton dénivelé progressivement, pour habituer tes jambes à la descente avant les grosses sorties.',
+  lim:'Revue narrative : aucune dose chiffrée (combien de descente, à quelle fréquence).',
+  use:'progression du dénivelé',url:'https://doi.org/10.1007/s40279-020-01355-z'},
+ {id:'descultra',th:'Descente',lv:'e',t:'En ultra-trail, l\'écart se creuse en descente',au:'Genitrini et al. · J. Funct. Morphol. Kinesiol. · 2022',
+  c:'En fin de course, la vitesse baisse plus en descente qu\'en montée, surtout chez les finishers lents.',
+  ret:'Analyse des allures en ultra-trail. En fin de course, la vitesse baisse plus en descente qu\'en montée. En descente, les finishers lents font systématiquement moins bien que les rapides.',
+  pour:'Sur ton 80 km et ses 5 000 m de D+, tenir la descente jambes fatiguées compte autant que monter. C\'est le sujet du futur chantier « descente ».',
+  lim:'Étude d\'observation de courses : elle montre où l\'écart se crée, pas comment l\'entraîner. Une autre étude, sur un 100 km au Cap, trouve plutôt la montée déterminante.',
+  url:'https://doi.org/10.3390/jfmk7040103'},
+ {id:'derive',th:'Cœur',lv:'e',t:'Pourquoi le cœur monte pendant une sortie à allure constante',au:'Coyle et González-Alonso · Exercise and Sport Sciences Reviews · 2001',
+  c:'La chaleur du corps fait monter le cœur même si l\'allure ne change pas. Perdre de l\'eau l\'amplifie.',
+  ret:'Après 10 à 20 minutes d\'effort, la fréquence cardiaque monte peu à peu, surtout parce que le corps chauffe. Le cœur envoie alors un peu moins de sang à chaque battement. La perte d\'eau amplifie le phénomène.',
+  pour:'Ton bilan signale une dérive cardiaque quand ton cœur monte alors que l\'allure ne change pas. Il ne devine pas la cause.',
+  lim:'Revue de mécanismes, en laboratoire : elle ne dit pas à partir de quand une dérive est « trop forte ».',
+  use:'dérive cardiaque',url:'https://pubmed.ncbi.nlm.nih.gov/11337829/'},
+ {id:'chaleur',th:'Cœur',lv:'e',t:'Chaleur et déshydratation : ce qui fait baisser la performance',au:'Cheuvront et al. · Journal of Applied Physiology · 2010',
+  c:'À la chaleur, le cœur est très sollicité. Au-delà de 2 % du poids perdu en eau, la performance baisse nettement.',
+  ret:'À la chaleur, une peau et un corps chauds sollicitent beaucoup le cœur : c\'est la principale cause de la baisse de performance. Quand on a perdu plus d\'environ 2 % de son poids en eau, la performance baisse nettement, et d\'autant plus qu\'il fait chaud.',
+  pour:'Un jour chaud, un cœur plus haut ou une allure plus lente ne veut pas dire que tu régresses.',
+  lim:'Mini-revue sur les mécanismes : pas de consigne chiffrée sur quoi boire.',url:'https://pubmed.ncbi.nlm.nih.gov/20689090/'},
+ {id:'durab',th:'Cœur',lv:'e',t:'Tenir la distance : le cœur qui décroche de l\'allure',au:'Smyth et al. · Sports Medicine · 2022',
+  c:'Sur 82 303 marathoniens, ceux qui décrochent tard finissent mieux que ceux qui décrochent tôt.',
+  ret:'82 303 marathoniens. Au fil de la course, le cœur reste haut alors que l\'allure baisse : environ +16 % d\'écart entre le km 10 et la fin. Ceux qui décrochent tard (vers 33 km) finissent mieux que ceux qui décrochent tôt (vers 19 km).',
+  pour:'C\'est ce qu\'on appelle la durabilité, une qualité clé sur longue distance. Ascend ne la mesure pas encore : c\'est le futur chantier « Résistance ».',
+  lim:'Marathon sur route, sans dénivelé : le cas du trail n\'est pas couvert.',url:'https://doi.org/10.1007/s40279-022-01680-5'},
+ {id:'nutultra',th:'Nutrition',lv:'e',t:'Manger et boire sur un ultra : les repères officiels',au:'Tiller et al. · J. Int. Soc. Sports Nutr. · 2019',
+  c:'En course : 30 à 50 g de glucides et 450 à 750 mL de boisson par heure.',
+  ret:'Position de la Société internationale de nutrition du sport pour l\'ultra. En course, viser 150 à 400 kcal par heure, dont 30 à 50 g de glucides, et 450 à 750 mL de boisson par heure (environ 150 à 250 mL toutes les 20 min). Il peut falloir plus de sodium que dans la plupart des boissons du commerce.',
+  pour:'Ascend vise 60 à 90 g/h de glucides en course : c\'est au-dessus de cette position. Ce chiffre vient de recommandations plus générales pour les efforts de plus de 2 h 30, avec un ventre entraîné.',
+  lim:'Repères de groupe, à ajuster à ta tolérance, à la chaleur et à ton allure.',url:'https://doi.org/10.1186/s12970-019-0312-9'},
+ {id:'ventre',th:'Nutrition',lv:'e',t:'Le ventre s\'entraîne aussi',au:'Martinez et al. · Sports Medicine · 2023',
+  c:'Manger régulièrement pendant l\'effort réduit l\'inconfort digestif et améliore l\'absorption.',
+  ret:'Revue de 8 études : manger régulièrement pendant l\'effort, sur 4 à 28 jours, réduit l\'inconfort digestif et améliore l\'absorption des glucides.',
+  pour:'C\'est pourquoi Ascend te demande de manger dès que tes sorties dépassent 1 h 30, et fait monter ta cible de 6 g/h par semaine de sortie longue bien digérée.',
+  lim:'Seulement 8 études, petites. Le rythme de progression (+6 g/h par semaine) est un choix d\'Ascend, pas un résultat d\'étude.',
+  use:'ton ventre',url:'https://doi.org/10.1007/s40279-023-01841-0'},
+ {id:'renfo',th:'Renfo',lv:'e',t:'Le renfo lourd et les sauts rendent la course plus économique',au:'Llanos-Lagos et al. · Sports Medicine · 2024',
+  c:'Charges lourdes et sauts améliorent l\'économie de course. Les sauts aident surtout aux allures lentes.',
+  ret:'Méta-analyse sur des coureurs de demi-fond et de fond. Les charges lourdes (au moins 80 % de ton maximum) et la pliométrie (les sauts) améliorent l\'économie de course. Les sauts semblent plus efficaces aux allures lentes (12 km/h et moins), le lourd aux allures rapides.',
+  pour:'En trail, tu cours souvent sous 12 km/h : les sauts ont leur place à côté du lourd. Ascend prévoit de la pliométrie dans les dernières grosses semaines.',
+  lim:'Économie mesurée sur le plat, programmes de 6 à 24 semaines : rien de propre au trail ni à la descente.',url:'https://doi.org/10.1007/s40279-023-01978-y'},
+ {id:'intens',th:'Plan',lv:'e',t:'Beaucoup de facile, un peu de dur : polarisé ou pyramidal ?',au:'Rosenblat et al. · Sports Medicine · 2025',
+  c:'Aucune différence nette entre les deux. Les amateurs progresseraient un peu plus en pyramidal.',
+  ret:'Méta-analyse sur les données de chaque participant, cosignée par Seiler, l\'inventeur du « polarisé ». Globalement, aucune différence entre les deux façons de répartir l\'intensité. Les compétiteurs progresseraient un peu plus en polarisé, les amateurs en pyramidal.',
+  pour:'Ascend fait du polarisé en fond, puis passe au pyramidal dans le bloc spécifique. Pour un amateur, l\'étude dit que le pyramidal fait au moins aussi bien.',
+  lim:'Aucune étude sur l\'ultra-trail : l\'appliquer à ton 80 km est une extrapolation.',
+  use:'répartition des intensités',url:'https://doi.org/10.1007/s40279-024-02149-3'},
+ {id:'affut',th:'Plan',lv:'e',t:'L\'affûtage : deux semaines, volume réduit de moitié',au:'Bosquet et al. · Med. Sci. Sports Exerc. · 2007',
+  c:'Le meilleur affûtage : 2 semaines, volume baissé de 41 à 60 %, intensité gardée.',
+  ret:'Méta-analyse : l\'affûtage le plus efficace dure environ 2 semaines, avec un volume réduit de 41 à 60 %, sans toucher à l\'intensité ni au nombre de séances.',
+  pour:'C\'est la logique des semaines « Affûtage » avant tes courses : le volume baisse, l\'intensité reste.',
+  lim:'Athlètes de plusieurs sports, pas d\'ultra-trail. Ne dit pas combien d\'affûtages on peut faire dans une saison.',
+  use:'affûtage',url:'https://doi.org/10.1249/mss.0b013e31806010e0'},
+ {id:'arret',th:'Plan',lv:'e',t:'Ce qu\'on perd quand on s\'arrête plus d\'un mois',au:'Mujika et Padilla · Sports Medicine · 2000',
+  c:'La forme baisse nettement mais reste au-dessus d\'un non-sportif. Les progrès récents partent les premiers.',
+  ret:'Au-delà de 4 semaines d\'arrêt, la capacité aérobie baisse nettement mais reste au-dessus de celle d\'un non-sportif. Les progrès les plus récents, eux, disparaissent. Garder un peu d\'entraînement, en conservant l\'intensité, limite les pertes.',
+  pour:'Une coupure ne remet pas à zéro. Si tu dois lever le pied, garde quelques séances courtes avec un peu d\'intensité plutôt que tout arrêter.',
+  lim:'Revue ancienne, surtout chez des athlètes jeunes et très entraînés.',url:'https://pubmed.ncbi.nlm.nih.gov/10999420/'},
+ {id:'fcpoignet',th:'Mesures',lv:'e',t:'La fréquence cardiaque au poignet décroche en trail',au:'Navalta et al. · PLoS ONE · 2020',
+  c:'Sur sentier, les capteurs optiques n\'étaient pas assez fiables face à une ceinture cardio.',
+  ret:'21 coureurs sur un sentier en montée puis en descente. Comparés à une ceinture cardio, les capteurs optiques (poignet, doigt, oreille, avant-bras) n\'étaient pas assez fiables. Les auteurs conseillent une ceinture en extérieur.',
+  pour:'Avec une montre au poignet, prends la FC de tes bilans avec recul en terrain varié. Une ceinture les rendrait plus sûrs.',
+  lim:'Petit groupe, parcours de 3,2 km, montres de 2020 : sur plusieurs heures et avec des capteurs récents, l\'écart peut être différent.',
+  url:'https://doi.org/10.1371/journal.pone.0238569'}];
+const BOOK_SVG='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6.5C10.2 5.2 7.6 4.6 4 4.8v13.4c3.6-.2 6.2.4 8 1.7 1.8-1.3 4.4-1.9 8-1.7V4.8c-3.6-.2-6.2.4-8 1.7z"/><path d="M12 6.5v13.4"/></svg>';
+let BIBT='Tout';
+function bibLvl(lv){return '<span class="lvl '+lv+'">'+BIB_LV[lv]+'</span>';}
+function vBiblio(){
+  const f=PSUB&&BIB.find(x=>x.id===PSUB);
+  if(f)return '<header><button class="pfback" onclick="app.psub(null)">‹ Bibliothèque</button></header><main class="bdt">'
+    +'<div class="bsrc">'+bibLvl(f.lv)+'<span class="mini">'+esc(f.th)+'</span></div>'
+    +'<h2>'+esc(f.t)+'</h2><div class="mini">'+esc(f.au)+'</div>'
+    +'<div class="bbox"><b class="h">Ce qu\'il faut retenir</b>'+esc(f.ret)+'</div>'
+    +'<div class="bbox"><b class="h">Ce que ça change pour toi</b>'+esc(f.pour)+'</div>'
+    +'<div class="bbox"><b class="h">Limites</b>'+esc(f.lim)+'</div>'
+    +'<a class="btn p full blire" href="'+f.url+'" target="_blank" rel="noopener">Lire l\'article ›</a>'
+    +'<div class="mini" style="margin-top:8px;text-align:center">Ouvre le site de la revue. Parfois payant : le résumé reste gratuit.</div></main>';
+  const L=BIB.filter(x=>BIBT==='Tout'||x.th===BIBT);
+  return '<header><h1>Bibliothèque</h1><div class="sub">Ce que disent les études, en clair. '+BIB.length+' fiches.</div></header><main>'
+    +'<div class="bchips">'+['Tout'].concat(BIB_TH).map(t=>'<button class="'+(t===BIBT?'on':'')+'" onclick="app.bibTheme(\''+t.replace(/'/g,"\\'")+'\')">'+t+'</button>').join('')+'</div>'
+    +L.map(x=>'<button class="bart" onclick="app.psub(\''+x.id+'\')"><div class="t">'+esc(x.t)+'</div><div class="bsrc">'+bibLvl(x.lv)+esc(x.au)+'</div>'
+      +'<div class="ret">'+esc(x.c)+'</div>'+(x.use?'<div class="use">Utilisé par Ascend : '+esc(x.use)+'</div>':'')+'</button>').join('')
+    +'</main>';
+}
 function vProfil(){
   const f={objectif:vPObjectif,semaine:vPSemaine,toi:vPToi,modules:vPModules,materiel:vPMateriel,donnees:vPDonnees,avances:vPAvances}[PSUB];
   return f?f():vProfilHome();}
@@ -3300,7 +3430,7 @@ function vGate(){
     +authFormHTML('Un compte garde ton plan et tes séances en sécurité, et te permet de les retrouver sur un autre téléphone. Ton prénom personnalise l\'app.')
     +syncLineHTML()+versionLineHTML()+'</div></main>';
 }
-const APP_VERSION='v83';   /* généré depuis sw.js par tools/build.py */
+const APP_VERSION='v84';   /* généré depuis sw.js par tools/build.py */
 function versionLineHTML(){return '<div class="mini" id="ver" style="margin-top:12px;text-align:center;opacity:.7">Ascend '+APP_VERSION+' · moteur de plan v2</div>';}
 /* compare la page chargée au cache du service worker : signale un déploiement pas encore actif */
 function checkVersion(){if(!('caches' in window))return;caches.keys().then(ks=>{const c=ks.filter(k=>/^ascend-v\d+$/.test(k)).map(k=>+k.slice(8)).sort((a,b)=>b-a)[0],el=document.getElementById('ver');
@@ -3364,9 +3494,9 @@ function render(){
   if(recovery){$('#tabs').innerHTML='';$('#view').innerHTML=vRecovery();return;}
   if(!auth){$('#tabs').innerHTML='';$('#view').innerHTML=vGate();return;}
   const P=S.profile;
-  const TABS=[['home','Aujourd\'hui','home'],['seances','Semaine','calendar'],['suivi','Suivi','monitoring'],['profil','Profil','person']];
-  $('#tabs').innerHTML=TABS.map(x=>'<button class="'+(view===x[0]||(x[0]==='home'&&view==='jour')?'on':'')+'" onclick="app.go(\''+x[0]+'\')" aria-label="'+x[1]+'">'+mi(x[2])+x[1]+'</button>').join('');
-  $('#view').innerHTML=({home:vHome,seances:vSeances,suivi:vSuivi,jour:vJour,profil:vProfil})[view]();
+  const TABS=[['home','Aujourd\'hui','home'],['seances','Semaine','calendar'],['suivi','Suivi','monitoring'],['biblio','Bibliothèque','book'],['profil','Profil','person']];
+  $('#tabs').innerHTML=TABS.map(x=>'<button class="'+(view===x[0]||(x[0]==='home'&&view==='jour')?'on':'')+'" onclick="app.go(\''+x[0]+'\')" aria-label="'+x[1]+'">'+(x[2]==='book'?BOOK_SVG:mi(x[2]))+x[1]+'</button>').join('');
+  $('#view').innerHTML=({home:vHome,seances:vSeances,suivi:vSuivi,jour:vJour,biblio:vBiblio,profil:vProfil})[view]();
   histSync();
 }
 /* D-89 : le geste « retour » rejoue le chemin inverse (onglets, sous-écrans du Profil, fenêtres) ; il ne quitte l'appli qu'au tout premier écran */
@@ -3385,7 +3515,8 @@ addEventListener('popstate',e=>{
   HCUR={view:st.view,psub:st.psub,sheet:false};render();HAPPLY=false;window.scrollTo(0,0);});
 /* ---------- actions ---------- */
 const app=window.app={
-  go(v){view=v;if(v==='profil'){PSUB=null;POPEN={};}render();window.scrollTo(0,0);},
+  go(v){view=v;if(v==='profil'||v==='biblio'){PSUB=null;POPEN={};}render();window.scrollTo(0,0);},
+  bibTheme(t){BIBT=t;render();},
   psub(k){PSUB=k;POPEN={};exportText=null;render();window.scrollTo(0,0);},
   ptog(k,def){POPEN[k]=!accOpen(k,def);render();},
   pset(path,v,kind){if(kind==='n')v=(v===''||v==null)?null:+v;else if(kind==='s')v=String(v==null?'':v).trim();pput(path,v);save();render();},
