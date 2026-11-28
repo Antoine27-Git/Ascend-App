@@ -1406,8 +1406,8 @@ function planStatus(ps){
   if(ps.date<today||(ps.date===today&&ps.gen&&manqueDe(ps)))return {k:'missed'};   /* D-72 : manquée déclarée le jour même */if(ps.date===today)return {k:'today'};return {k:'next'};
 }
 /* ENGINE:BEGIN — copie générée depuis tests/engine.js par tools/build.py. Ne pas modifier ici : modifier tests/engine.js puis relancer tools/build.py. */
-/* ---------- moteur de plan (v1 : refonte D-67/D-68 ; règles v0 conservées derrière regles:'v1') ----------
-   Port de sim8.py (règles v1 : D-63, D-65a/b/d) + GABARIT-TRAIL.md.
+/* ---------- moteur de plan (refonte D-67/D-68 ; anciennes règles v1 retirées le 27/11/2026, v88) ----------
+   Né du simulateur sim8.py (retiré en v88 avec les règles v1) + GABARIT-TRAIL.md.
    Fonctions pures : entrée = profil + séances réalisées + statuts du jour + date du jour,
    sortie = calendrier, semaines, séances prescrites, garde-fou. Aucun accès à l'écran ni au stockage.
    Couche A (gabarit) : types de séances, sous-phases, progressions. Couche B (G-PLA-002) : volume.
@@ -1466,7 +1466,6 @@ function arrondi(m,plafond,fin){
   return Math.max(r,0);
 }
 function tranche_de(min){return min>=480?'8-20h':min>=240?'4-8h':'<4h';}
-function echeance(min){const plaf=min>=480?300:min>=240?210:180;return Math.min(min,plaf*SEUIL)/SEUIL;}
 /* durée de course estimée : km-effort et loi de Riegel (exposant 1,07) sur la course de référence (extrapolation) */
 function dureeCourse(dist,dplus,ref){
   const ke=(dist||0)+(dplus||0)/100;if(!ke)return null;
@@ -1632,7 +1631,7 @@ function build(inp){
   const dMain=dureeCourse(P.goalDist,P.goalDplus,refC);
   let trName=dMain?tranche_de(dMain):'8-20h';
   if(trName==='<4h'){trName='4-8h';G(1,'Objectif estimé à moins de 4 h : le gabarit court n\'est pas encore écrit, j\'applique celui des 4–8 h.');}
-  if(inp.regles!=='v1'&&dMain&&dMain>=1200)G(1,'Objectif estimé à 20 h ou plus : le gabarit de cette durée n\'est pas encore écrit, j\'applique celui des 8–20 h (sorties clés de 5 à 6 h). Seul le samedi des week-ends choc est adapté (4 h au plus).');
+  if(dMain&&dMain>=1200)G(1,'Objectif estimé à 20 h ou plus : le gabarit de cette durée n\'est pas encore écrit, j\'applique celui des 8–20 h (sorties clés de 5 à 6 h). Seul le samedi des week-ends choc est adapté (4 h au plus).');
   if(!dMain)G(1,'Distance de l\'objectif manquante : tranche 8–20 h par défaut.');
   if(!refC)G(1,'Aucune course ou sortie de référence déclarée : la durée de ton objectif est estimée à 7 km-effort par heure.');
   const tr=TRANCHES[trName],c=Calendrier(N,tr);
@@ -1640,14 +1639,14 @@ function build(inp){
   if(N<tr.min)G(1,'Préparation de '+N+' semaines pour la tranche '+trName+' : en dessous du minimum de '+tr.min+' semaines (D-21). Le plan est compressé.');
   let n=run.length,longDow=run.includes(+Dy.long)?+Dy.long:run[run.length-1],offSL=off(longDow);
   let autresDows=run.filter(d=>d!==longDow).sort((a,b)=>off(a)-off(b));
-  let DyW=Dy;const tcap=dow=>{if(inp.regles!=='v1')return null;const t=(DyW.time||{})[dow];return t?+t:null;};   /* D-71 : ignoré en v2 (l'endurance est plafonnée par CONV.efMax, la sortie longue par sa progression) */
+  let DyW=Dy;   /* D-71 : les durées max par jour (days.time) ne sont plus appliquées : l'endurance est plafonnée par CONV.efMax, la sortie longue par sa progression */
   const strength=!!(P.modules&&P.modules.strength);let cfDays=strength?(Dy.cf||[]).slice():[],renfo2=strength&&cfDays.length>=2;
   /* D-68 : organisation par phase (attachée aux phases, pas aux dates) et versions passées (le passé ne se réécrit jamais) */
-  const V2=inp.regles!=='v1',FIN=V2&&CONV.finPrepa;SUP=V2&&CONV.arrondiSup;const ORD=['F1','F2','F3','F4','bloc','pic','affutage'];
+  const FIN=CONV.finPrepa;SUP=CONV.arrondiSup;const ORD=['F1','F2','F3','F4','bloc','pic','affutage'];
   const okOrg=o=>o&&ORD.includes(o.from)&&o.days&&(o.days.run||[]).length;
-  const cfgNow={days:Dy,orgs:V2&&Array.isArray(P.orgs)?P.orgs.filter(okOrg):[]};
+  const cfgNow={days:Dy,orgs:Array.isArray(P.orgs)?P.orgs.filter(okOrg):[]};
   /* versions passées : {until, days, orgs} ; une semaine antérieure à until garde l'organisation de sa version */
-  const versions=V2&&Array.isArray(P.orgHist)?P.orgHist.filter(v=>v&&v.until&&v.days&&(v.days.run||[]).length).map(v=>({until:v.until,days:v.days,orgs:(v.orgs||[]).filter(okOrg)})).sort((a,b)=>a.until<b.until?-1:1):[];
+  const versions=Array.isArray(P.orgHist)?P.orgHist.filter(v=>v&&v.until&&v.days&&(v.days.run||[]).length).map(v=>({until:v.until,days:v.days,orgs:(v.orgs||[]).filter(okOrg)})).sort((a,b)=>a.until<b.until?-1:1):[];
   if(run.length<3){const o3=cfgNow.orgs.find(o=>o.days.run.length>=3);
     G(1,o3?'Moins de 3 jours de course par semaine jusqu\'à ta phase « '+({F1:'Reprise',F2:'Base',F3:'Endurance musculaire',F4:'Intensité en côte',bloc:'Bloc spécifique',pic:'Pic',affutage:'Affûtage'}[o3.from])+' », où tu passes à '+o3.days.run.length+' jours.':'Moins de 3 jours de course par semaine : peu de place pour construire le volume d\'un ultra.');}
   const orgDe=(monW,ph,sp)=>{const cfg=versions.find(x=>monW<x.until)||cfgNow;
@@ -1673,12 +1672,12 @@ function build(inp){
   const before=sessions.filter(s=>isRun(s)&&s.date<start&&s.date>=add(start,-35));
   before.forEach(s=>hist.push({j:jourOf(s.date),d:s.dur||0,t:'reel'}));
   const MEMO=FENETRE+Math.ceil(1/CONV.memPente);   /* D-94 : profondeur de la mémoire (130 jours) */
-  if(inp.regles!=='v1')sessions.filter(s=>isRun(s)&&s.date<add(start,-35)&&s.date>=add(start,-MEMO)).forEach(s=>hist.push({j:jourOf(s.date),d:s.dur||0,t:'reel'}));
+  sessions.filter(s=>isRun(s)&&s.date<add(start,-35)&&s.date>=add(start,-MEMO)).forEach(s=>hist.push({j:jourOf(s.date),d:s.dur||0,t:'reel'}));
   let vol0=null;
   if(before.length){const wk=sessions.filter(s=>isRun(s)&&s.date<start&&s.date>=add(start,-28));vol0=wk.reduce((a,s)=>a+(s.dur||0),0)/60/4;}
   else if(St.freq4w){vol0=St.freq4w*(St.dur4w||0)/60;
     const lr=PART.fond*vol0*60,aut=(vol0*60-lr)/Math.max(1,n-1);   /* D-94 (v2) : la plus longue déclarée du mois vaut au moins la durée moyenne déclarée */
-    for(let w=-3;w<=0;w++){autresDows.forEach(d=>hist.push({j:(w-1)*7+off(d),d:aut,t:'declare'}));hist.push({j:(w-1)*7+offSL,d:inp.regles!=='v1'?Math.max(lr,+St.dur4w||0):lr,t:'declare'});}}
+    for(let w=-3;w<=0;w++){autresDows.forEach(d=>hist.push({j:(w-1)*7+off(d),d:aut,t:'declare'}));hist.push({j:(w-1)*7+offSL,d:Math.max(lr,+St.dur4w||0),t:'declare'});}}
   else if(!St.freq4w&&St.pauseSince&&St.pauseSince!=='gt6'&&St.beforeFreq){
     const f=St.pauseSince==='lt2'?0.65:0.50;vol0=St.beforeFreq*(St.beforeDur||0)/60*f;
     G(1,'Reprise après une interruption : volume de départ réduit à '+Math.round(f*100)+' % de ton volume d\'avant (H-40, extrapolation).');}
@@ -1695,8 +1694,7 @@ function build(inp){
   /* D-75 : en v2, point de départ figé — sorties longues et courses des 8 semaines AVANT le démarrage du plan.
      Après le démarrage, le D+ réalisé suit ce que le plan prescrit (endurances sur terrain roulant, repère de D+ en sortie longue) :
      le relire ferait tourner le plan en boucle sur ses propres consignes (A-02). La montée vers la densité de course reste linéaire. */
-  const recent=V2?sessions.filter(s=>isRun(s)&&s.dplus&&s.dur&&(s.type==='long'||s.type==='race')&&s.date>=add(start,-56)&&s.date<start)
-    :sessions.filter(s=>isRun(s)&&s.dplus&&s.dur&&s.date>=add(today,-56));
+  const recent=sessions.filter(s=>isRun(s)&&s.dplus&&s.dur&&(s.type==='long'||s.type==='race')&&s.date>=add(start,-56)&&s.date<start);
   let dens0=recent.length?recent.reduce((a,s)=>a+s.dplus,0)/(recent.reduce((a,s)=>a+s.dur,0)/60):(!St.noLong&&St.lastLong&&St.lastLong.dplus&&St.lastLong.dur?St.lastLong.dplus/(St.lastLong.dur/60):150);
   const densC=P.goalDplus&&dMain?P.goalDplus/(dMain/60):dens0;
   /* GABARIT § 5 : le D+ monte pendant le fond. Départ à la moitié au plus de la densité de course (H-41, extrapolation) */
@@ -1705,7 +1703,7 @@ function build(inp){
   /* D-102 (H-66) : la densité se cale sur la course intermédiaire la plus proche. Points d'ancrage (semaine, m/h), jamais décroissants :
      départ → début de la fenêtre (densité de la course) → veille de la course → fin du fond (densité de l'objectif principal). Sans course intermédiaire : rampe linéaire d'avant. */
   const ancres=[[0,dens0]];
-  if(V2&&CONV.densCourse)secs.filter(s=>s.statut==='objectif'&&s.dplus>0&&s.dur>0&&s.w<=c.fond).sort((a,b)=>a.w-b.w).forEach(s=>{
+  if(CONV.densCourse)secs.filter(s=>s.statut==='objectif'&&s.dplus>0&&s.dur>0&&s.w<=c.fond).sort((a,b)=>a.w-b.w).forEach(s=>{
     const dS=Math.min(s.dplus/(s.dur/60),densC),a=Math.max(1,s.w-CONV.fenetreSpe),L=ancres[ancres.length-1],v=Math.max(L[1],dS);
     if(a>L[0])ancres.push([a,v]);else L[1]=v;
     if(s.w-1>ancres[ancres.length-1][0])ancres.push([s.w-1,v]);
@@ -1719,16 +1717,15 @@ function build(inp){
   const terr=P.terrain||{};
   if(terr.climb&&['lt1','1-5'].includes(terr.climb)&&terr.mountain==='jamais')
     G(1,'Tes montées les plus longues sont courtes et tu n\'as pas d\'accès régulier à la montagne : le bloc spécifique s\'appuiera sur des répétitions de côte, et quelques sorties en moyenne montagne pendant le bloc feront une vraie différence.');
-  if(tcap(longDow)&&tcap(longDow)<tr.cible[0])G(1,'Temps disponible le '+['dimanche','lundi','mardi','mercredi','jeudi','vendredi','samedi'][longDow]+' : '+tcap(longDow)+' min, pour une sortie clé de '+tr.cible[0]+' min au moins.');
 
   let niv=null,enW=false,lrGel=0,chocsP=0,chocPrec=false,chocA=false;const chocsS={};   /* D-67 : niveau de sortie longue atteint */
-  let derniereRel=0,charges=0,clesFaites=0,derniereCle=-99,lrPrec=null,arretC=0,ref=null,ref2=null,volsCharge=[],dernierExec=null,reprise=null,maxAvant=0,maxSec=0;
+  let derniereRel=0,charges=0,clesFaites=0,derniereCle=-99,lrPrec=null,arretC=0,ref=null,ref2=null,volsCharge=[],reprise=null,maxAvant=0,maxSec=0;
   const cnt={};const cntDone={};
   /* D-94 : l'écart n° 5 (repère de reprise dégressif, H-48) est remplacé par la mémoire de ref30 : la sortie déclarée est une séance à sa date */
-  const R30=V2?(h,j)=>ref30(h,j):(h,j)=>max30(h,j,reprise);
+  const R30=(h,j)=>ref30(h,j);
   for(let w=1;w<=N;w++){
     const ph=c.phase(w),sp=c.sous(w),monW=add(start,(w-1)*7),past=w<todayW,cur=w===todayW;
-    if(V2){const o=orgDe(monW,ph,sp);appliqueOrg(o);enW=o.en;}
+    {const o=orgDe(monW,ph,sp);appliqueOrg(o);enW=o.en;}
     const reels=runsW[w]||[];
     /* interruption réelle : semaine passée sans aucune course */
     if(past&&!reels.length&&!forcees.has(w)&&ph!=='affutage'){
@@ -1744,10 +1741,10 @@ function build(inp){
     let V,relache;
     if(aff){if(ref==null)ref=volsCharge.length?med(volsCharge.slice(-3)):m.volume;V=ref*tr.aff[Math.min(w-c.T,tr.aff.length-1)];relache=false;}
     else if(sAff){if(ref2==null)ref2=volsCharge.length?med(volsCharge.slice(-3)):m.volume;V=ref2*secAff[w];relache=true;}
-    else if(sRec){ref2=null;V=(V2?[0.35,0.55,0.75][Math.min([...secRec].filter(x=>x<=w).length,3)-1]:0.6)*m.volume;relache=true;}
+    else if(sRec){ref2=null;V=[0.35,0.55,0.75][Math.min([...secRec].filter(x=>x<=w).length,3)-1]*m.volume;relache=true;}
     else{relache=m.relDem||relachesPrevues(c,w,derniereRel,charges,forcees).has(w);
       m.conso=ph==='bloc'||ph==='pic';
-      if(m.conso&&m.gel==null&&m.casse==null){m.gel=(!V2&&dernierExec)?Math.min(m.volume,dernierExec):m.volume;m.volume=m.gel;}
+      if(m.conso&&m.gel==null&&m.casse==null){m.gel=m.volume;m.volume=m.gel;}
       V=m.volume*(relache?0.6:1);if(relache)V=Math.max(V,Math.min(m.volume,2*PLANCHER/60));}
     const gele=aff||sAff||sRec,courseSem=w===N&&aff;
     let cle=false;if(!gele&&!relache&&(ph==='bloc'||ph==='pic'))cle=tr.n_cles>clesFaites&&w-derniereCle>=2&&w<=c.T-1&&(!FIN||creneauCle(c,tr,w));
@@ -1757,24 +1754,12 @@ function build(inp){
       const futRel=relachesPrevues(c,w,derniereRel,charges,forcees),charge=[];for(let x=w;x<c.T;x++)if(!futRel.has(x)&&!forcees.has(x))charge.push(x);
       const clesPrev=[];let dern=derniereCle;for(const x of charge)if((c.phase(x)==='bloc'||c.phase(x)==='pic')&&clesPrev.length<tr.n_cles-clesFaites&&x-dern>=2&&(!FIN||creneauCle(c,tr,x))){clesPrev.push(x);dern=x;}
       const ech=[];if(clesPrev.length)ech.push([clesPrev[clesPrev.length-1],tr.cible[0]/SEUIL]);
-      secs.forEach(s=>{if(V2&&s.statut!=='objectif')return;if(s.w>=w){const lim=s.statut==='objectif'?Math.min(s.w,...Object.keys(secAff).map(Number).filter(x=>x<=s.w&&x>s.w-4)):s.w;ech.push([lim,V2?Math.min(CONV.secPart*s.dur,CONV.secMax)/SEUIL:echeance(s.dur)]);}});
+      secs.forEach(s=>{if(s.statut!=='objectif')return;if(s.w>=w){const lim=s.statut==='objectif'?Math.min(s.w,...Object.keys(secAff).map(Number).filter(x=>x<=s.w&&x>s.w-4)):s.w;ech.push([lim,Math.min(CONV.secPart*s.dur,CONV.secMax)/SEUIL]);}});
       for(const [sem,besoin] of ech){if(mx>=besoin-EPS)continue;
         const slots=charge.filter(x=>x<sem&&(c.phase(x)==='fond'||clesPrev.includes(x))),futurs=slots.filter(x=>x>w),utiles=futurs.slice(0,Math.max(0,futurs.length-MARGE));
         let trou=null;if(forcees.size&&w<=Math.max(...forcees)){const d0=Math.min(...forcees),d1=Math.max(...forcees);trou=[d0,d1,Math.max(0.65,1-0.07*(d1-d0))];}
         if(!atteint(mx,besoin,utiles,c,trou))return besoin;}
       return false;};
-    const aEntretenir=mx=>{const jour=(w-1)*7+offSL;let last=null;for(const h of hist)if(h.d>=mx-EPS&&h.j>=jour-FENETRE&&h.j<jour)last=last==null?h.j:Math.max(last,h.j);
-      const age=jour-(last==null?jour:last);if(age<14)return null;
-      const b=[];if(tr.n_cles>clesFaites)b.push(tr.cible[0]/SEUIL);secs.forEach(s=>{if(s.w>w)b.push(echeance(s.dur));});
-      const ok=b.filter(x=>x<=SEUIL*mx+EPS);return ok.length?arrondi(Math.min(Math.max(...ok),mx)):null;};
-    const cibleLr=mx=>{const cap=Math.max(PLANCHER,SEUIL*mx);
-      if(aff||sAff)return Math.min(cap,part('affutage')*V*60);
-      if(relache)return Math.min(cap,part(ph)*V*60);
-      if(cle)return Math.min(cap,tr.cible[1],tr.part_cle*V*60);
-      if(ph==='fond'&&doitMonter(mx)){if(lrPrec!=null&&lrPrec>GRANDE&&SEUIL*mx>GRANDE)return Math.min(cap,part(ph)*V*60);return Math.min(cap,tr.part_cle*V*60);}
-      const niv=ph==='fond'?aEntretenir(mx):null;
-      if(niv&&niv>part(ph)*V*60&&!(lrPrec!=null&&lrPrec>GRANDE&&niv>GRANDE))return Math.min(niv,tr.part_cle*V*60);
-      return Math.min(cap,part(ph)*V*60);};
     /* D-67 : la sortie longue suit sa propre progression ; le volume de la semaine en est la conséquence */
     const cibleLr2=mx=>{const cap=Math.max(PLANCHER,SEUIL*mx);if(niv==null)niv=Math.max(PLANCHER,Math.min(mx,cap));
       const affL=sem=>CONV.affLongue[sem<=1?1:0];   /* D-103 : semaines avant la course → un tiers la dernière (6 jours avant), 50 % avant */
@@ -1792,12 +1777,12 @@ function build(inp){
       return Math.min(cap,niv);};
     /* séances de la semaine (durées : port de construit) */
     let jours=autresDows.slice();
-    const lrW=(V2&&!secIci&&!courseSem)?(()=>{const mx=R30(hist,(w-1)*7+offSL),cap=Math.max(PLANCHER,SEUIL*mx);let l=arrondi(cibleLr2(mx),cap,true);const tc=tcap(longDow);if(tc&&l>tc)l=arrondi(tc,tc);return l;})():null;
-    if(V2&&lrW&&lrGel>0&&!relache&&!gele&&!cle)lrGel--;
+    const lrW=(!secIci&&!courseSem)?(()=>{const mx=R30(hist,(w-1)*7+offSL),cap=Math.max(PLANCHER,SEUIL*mx);return arrondi(cibleLr2(mx),cap,true);})():null;
+    if(lrW&&lrGel>0&&!relache&&!gele&&!cle)lrGel--;
     /* week-end enchaîné : la veille de la sortie longue devient une sortie moyenne (≤ 2/3, H-42), hors budget des endurances */
     /* D-70 : week-end choc — objectif principal : semaines de sortie clé (3 au plus) ; objectif secondaire exigeant : 1, 4 à 6 semaines avant */
-    let choc=null;const CX=V2&&CONV.chocExperts;
-    if(V2&&enW&&lrW&&!aff&&!sAff&&!sRec&&!relache&&!(CX&&lrGel>0)){   /* D-105 : pas de week-end choc si la sortie longue est gelée par le ressenti */
+    let choc=null;const CX=CONV.chocExperts;
+    if(enW&&lrW&&!aff&&!sAff&&!sRec&&!relache&&!(CX&&lrGel>0)){   /* D-105 : pas de week-end choc si la sortie longue est gelée par le ressenti */
       if(CX&&FIN&&CONV.chocsPrincipal>=2){   /* deux créneaux : T−7 (sortie longue au niveau) puis T−3 (2e sortie clé) ; si le premier ne passe pas, un seul en T−5 (1re sortie clé) */
         if(w===c.T-7&&(ph==='bloc'||ph==='pic')&&lrW>=0.9*(niv||0))choc={dur:dMain||600,p:true,a:true};
         else if(w===c.T-3&&chocA&&cle)choc={dur:dMain||600,p:true};
@@ -1807,32 +1792,25 @@ function build(inp){
         if(s)choc={dur:s.dur,s:s.w};}}
     const veille=choc?jours.find(d=>off(d)===offSL-1):null;if(veille==null)choc=null;else{if(choc.p){chocsP++;if(choc.a)chocA=true;}else chocsS[choc.s]=(chocsS[choc.s]||0)+1;}if(veille!=null)jours=jours.filter(d=>d!==veille);   /* hors choc, la veille reste une endurance normale */
     const partK=Math.max(PART[aff||sAff?'affutage':ph],1/Math.max(1,n)),budgetEf=V*60*(1-partK);
-    let lr0=V2?(lrW||0):cibleLr(R30(hist,(w-1)*7+offSL));
-    let slMax=(!V2&&!gele&&V*60<=1.2*(jours.length+1)*PLANCHER+EPS)?Math.max(PLANCHER,V*60-jours.length*PLANCHER):null,slForce=null;
-    if(slMax!=null){lr0=Math.min(lr0,slMax);
-      if(V*60<(jours.length+1)*PLANCHER-EPS){const ne=Math.max(1,Math.floor(V*60/PLANCHER+1e-9));jours=jours.slice(0,ne-1);
-        slForce=Math.min(Math.max(PLANCHER,SEUIL*R30(hist,(w-1)*7+offSL)),V*60-(ne-1)*PLANCHER);lr0=slForce;}}
+    let lr0=lrW||0;
     const courseSL=courseSem||(secIci&&sAff)||(secIci&&secIci.statut==='entrainement');
-    let nb=jours.length;const reste=V2?(courseSem||(secIci&&sAff)?V*60:budgetEf):V*60-(courseSem||(secIci&&sAff)?0:lr0);
+    let nb=jours.length;const reste=courseSem||(secIci&&sAff)?V*60:budgetEf;
     while(nb>1&&reste/nb<PLANCHER-EPS)nb--;
     /* on garde les jours les plus éloignés de la sortie longue */
     jours=jours.slice().sort((a,b)=>gap(b,longDow)-gap(a,longDow)).slice(0,nb).sort((a,b)=>off(a)-off(b));
-    const aut=V2?reste/Math.max(1,nb):(courseSem||(secIci&&sAff))?V*60/Math.max(1,nb):Math.max(0,V*60-lr0)/Math.max(1,nb);
+    const aut=reste/Math.max(1,nb);
     const h=hist.slice(),rx=[];
     jours.forEach(d=>{const jour=(w-1)*7+off(d);const cap=Math.max(PLANCHER,R30(h,jour));
-      let dur=arrondi(Math.min(aut,cap,V2?(CONV.efMax[trName]||90):1e9,CX&&(choc||chocPrec)?CONV.chocEfMax:1e9),cap);   /* D-29 : endurance plafonnée selon l'objectif */const tc=tcap(d);if(tc&&dur>tc)dur=arrondi(tc,tc);
+      let dur=arrondi(Math.min(aut,cap,CONV.efMax[trName]||90,CX&&(choc||chocPrec)?CONV.chocEfMax:1e9),cap);   /* D-29 : endurance plafonnée selon l'objectif */
       if(dur>0){rx.push({dow:d,jour,dur,kind:'ef'});h.push({j:jour,d:dur,t:'rx'});}});
     const jourSL=(w-1)*7+offSL;
     if(secIci&&(w===secIci.w)){rx.push({dow:D(secIci.date).getDay(),jour:jourOf(secIci.date),dur:Math.round(secIci.dur),kind:'race',name:secIci.name,statut:secIci.statut});}
     else if(courseSem){rx.push({dow:D(P.goalDate).getDay(),jour:jourOf(P.goalDate),dur:Math.round(dMain||600),kind:'goal'});}
-    if(V2&&lrW){if(veille!=null){const jv=(w-1)*7+off(veille),cv=Math.max(PLANCHER,R30(h,jv));let dv=arrondi(Math.min(CONV.samRatio*lrW,CONV.samMax(choc.dur),cv),cv);const tc=tcap(veille);if(tc&&dv>tc)dv=arrondi(tc,tc);
-        const inv=CX&&dv>0&&!(tc&&lrW>tc);   /* D-105 : la plus longue d'abord, sur des jambes fraîches ; la moyenne le lendemain (sauf si le temps disponible la veille ne le permet pas) */
+    if(lrW){if(veille!=null){const jv=(w-1)*7+off(veille),cv=Math.max(PLANCHER,R30(h,jv));let dv=arrondi(Math.min(CONV.samRatio*lrW,CONV.samMax(choc.dur),cv),cv);
+        const inv=CX&&dv>0;   /* D-105 : la plus longue d'abord, sur des jambes fraîches ; la moyenne le lendemain */
         if(inv){rx.push({dow:veille,jour:jv,dur:lrW,kind:cle?'cle':'long',choc:true});h.push({j:jv,d:lrW,t:'rx'});rx.push({dow:longDow,jour:jourSL,dur:dv,kind:'ef',moyen:true,apres:true});}
         else{if(dv>0){rx.push({dow:veille,jour:jv,dur:dv,kind:'ef',moyen:true});h.push({j:jv,d:dv,t:'rx'});}rx.push({dow:longDow,jour:jourSL,dur:lrW,kind:cle?'cle':'long'});}}
       else rx.push({dow:longDow,jour:jourSL,dur:lrW,kind:cle?'cle':'long'});}
-    else if(!V2&&!(secIci)&&!courseSem){const mx=R30(hist,jourSL);let lr=cibleLr(mx);if(slMax!=null)lr=slForce!=null?slForce:Math.min(lr,slMax);
-      const cap=Math.max(PLANCHER,SEUIL*mx);lr=arrondi(lr,cap,true);const tc=tcap(longDow);if(tc&&lr>tc)lr=arrondi(tc,tc);
-      if(lr>0)rx.push({dow:longDow,jour:jourSL,dur:lr,kind:cle?'cle':'long'});}
     /* jour de course : rien d'autre ce jour-là */
     const raceDates=new Set();if(secIci)raceDates.add(secIci.date);if(courseSem)raceDates.add(P.goalDate);
     for(let i=rx.length-1;i>=0;i--){const x=rx[i];if(x.kind!=='race'&&x.kind!=='goal'&&raceDates.has(add(monW,off(x.dow))))rx.splice(i,1);}
@@ -1863,7 +1841,7 @@ function build(inp){
     /* D-73 : séance décalée par l'utilisateur dans la même semaine, vers un jour sans autre course */
     /* D-97 : les décalages de la semaine sont appliqués ensemble ; deux séances qui prennent chacune le jour de l'autre s'échangent.
        Un décalage est refusé si, une fois tous appliqués, deux courses tombent le même jour (on retire les décalages en conflit jusqu'à stabilité). */
-    if(V2&&P.decal){
+    if(P.decal){
       const mv=new Map();rx.forEach(x=>{if(x.kind==='race'||x.kind==='goal')return;const o0=add(monW,off(x.dow)),t=P.decal[o0];
         if(!t||t===o0||t<monW||t>add(monW,6))return;mv.set(x,{o0,t,td:D(t).getDay()});});
       for(let k=0;k<8;k++){const fin=x=>mv.has(x)?mv.get(x).td:x.dow,bad=[...mv.keys()].filter(x=>rx.some(y=>y!==x&&fin(y)===fin(x)));
@@ -1880,39 +1858,39 @@ function build(inp){
     const volPrevu=rx.filter(x=>x.kind!=='race'&&x.kind!=='goal').reduce((a,x)=>a+x.dur,0)/60;
     let r=null,saut=0,exec=volPrevu,execH=rx.map(x=>({j:x.jour,d:x.dur,t:x.kind}));
     if(past){
-      const easy=reels.filter(s=>(s.type==='ef'||(!V2&&s.type==='long'))&&s.rpe!=null);   /* v2 : endurances seules (le RPE d'une sortie longue dépend de sa durée et de son D+) */
+      const easy=reels.filter(s=>s.type==='ef'&&s.rpe!=null);   /* endurances seules (le RPE d'une sortie longue dépend de sa durée et de son D+) */
       r=easy.length?1+(easy.reduce((a,s)=>a+s.rpe,0)/easy.length-RPE_REF)*RPE_K:null;
       rx.forEach(x=>{if(x.kind==='race'||x.kind==='goal')return;const dt=add(monW,off(x.dow));if(isOff(dt)||dt<from)return;
-        if(!reels.some(s=>s.date===dt)&&(!V2||(P.manques||{})[dt]==='fatigue'))saut++;});   /* D-72 : en v2, seule une séance manquée « pour fatigue » est un signal */
+        if(!reels.some(s=>s.date===dt)&&(P.manques||{})[dt]==='fatigue')saut++;});   /* D-72 : seule une séance manquée « pour fatigue » est un signal */
       saut=Math.min(saut,3);exec=reels.reduce((a,s)=>a+(s.dur||0),0)/60;
       execH=reels.map(s=>({j:jourOf(s.date),d:s.dur||0,t:'reel',date:s.date,ty:s.type}));
       /* D-107 (H-71, convention) : une séance réelle ne relève la référence des 30 jours que de +10 % au plus.
          Ce que le plan avait prévu cette semaine-là (sortie clé, week-end choc, course) compte en entier : le plan ne plafonne pas ses propres séances. */
-      if(V2&&CONV.plafondSaut){const maxRx=Math.max(0,...rx.map(x=>x.dur||0)),hh=hist.slice();
+      if(CONV.plafondSaut){const maxRx=Math.max(0,...rx.map(x=>x.dur||0)),hh=hist.slice();
         execH.slice().sort((a,b)=>a.j-b.j).forEach(e=>{const r0=ref30(hh,e.j);
           if(r0>0){const lim=Math.max(PLANCHER,maxRx,SEUIL*r0);
             if(e.d>lim+EPS){out.info.plafonds.push({date:e.date,dur:e.d,retenu:Math.round(lim),ref:Math.round(r0)});e.d=lim;}}
           hh.push(e);});}
       rx.forEach(x=>{if(x.kind==='qual'){const dt=add(monW,off(x.dow));if(reels.some(s=>s.date===dt))cntDone[x.qk]=(cntDone[x.qk]||0)+1;}});
     }else{rx.forEach(x=>{if(x.kind==='qual')cntDone[x.qk]=(cntDone[x.qk]||0)+1;});r=cur?null:(m.base!=null?m.base:1);if(cur)r=undefined;}
-    hist=hist.concat(execH).filter(e=>e.j>=(w-1)*7+6-(V2?MEMO:FENETRE)-1);
+    hist=hist.concat(execH).filter(e=>e.j>=(w-1)*7+6-MEMO-1);
     if(r!==undefined){   /* la semaine en cours n'ajuste rien : ses séances sont à venir */
-      if(!gele){if(V2){const efP=rx.filter(x=>(x.kind==='ef'||x.kind==='qual')&&!x.moyen).reduce((a,x)=>a+x.dur,0),eq=efP/60/(1-partK);
+      if(!gele){{const efP=rx.filter(x=>(x.kind==='ef'||x.kind==='qual')&&!x.moyen).reduce((a,x)=>a+x.dur,0),eq=efP/60/(1-partK);
           ajuste(m,r,saut,relache,eq);if(m.etat==='sympt')lrGel=2;else if(m.etat==='maintien'&&!relache)lrGel=Math.max(lrGel,1);if(!relache&&efP<budgetEf-3&&!(CX&&(choc||chocPrec)))m.volume=Math.min(m.volume,Math.max(eq,0.5)*(1+m.cap));}
-        else{ajuste(m,r,saut,relache,volPrevu);if(!relache&&volPrevu<V-0.05)m.volume=Math.min(m.volume,Math.max(volPrevu,0.5)*(1+m.cap));}}
+        }
       else{m.sdr=0;m.relDem=false;}
     }
-    if(relache||gele){derniereRel=w;charges=0;}else{charges++;volsCharge.push(V);dernierExec=volPrevu;}
+    if(relache||gele){derniereRel=w;charges=0;}else{charges++;volsCharge.push(V);}
     const lrObj=rx.filter(x=>x.kind==='long'||x.kind==='cle');if(lrObj.length)lrPrec=lrObj[0].dur;
-    if(V2&&!relache&&!gele){const reelL=past?Math.max(0,...execH.filter(e=>e.ty==='long').map(e=>e.d||0)):0;   /* D-107 : durée retenue (plafonnée) */
+    if(!relache&&!gele){const reelL=past?Math.max(0,...execH.filter(e=>e.ty==='long').map(e=>e.d||0)):0;   /* D-107 : durée retenue (plafonnée) */
       const l=past?reelL:(lrObj.length?lrObj[0].dur:0);if(l>0)niv=Math.max(niv||0,l);if(past&&reelL>0)lrPrec=reelL;}
     /* P-08 (v82, 25/11/2026) : semaine passée, la « sortie longue de la semaine d'avant » est la plus longue réellement courue, 0 si aucune.
        Avant : une semaine avec une autre course mais sans sortie longue comptait la sortie longue prévue comme faite (semaine légère proposée ensuite). */
-    if(V2&&past)lrPrec=Math.max(0,...execH.filter(e=>e.ty==='long').map(e=>e.d||0));
+    if(past)lrPrec=Math.max(0,...execH.filter(e=>e.ty==='long').map(e=>e.d||0));
     if(cle&&lrObj.length){clesFaites++;derniereCle=w;}
     const typ=aff?'affutage':sAff?'aff_sec':sRec?'recup_sec':relache?'relache':'charge';
     chocPrec=!!choc;
-    out.weeks.push({w,mon:monW,phase:ph,sous:sp,type:typ,choc:V2?!!choc:undefined,V,volPrevu,cle,sympt:m.sympt&&!gele,dens:dz,jours:V2?(DyW.run||[]).slice():undefined,enchaine:V2?enW:undefined,niv:V2?niv:undefined});
+    out.weeks.push({w,mon:monW,phase:ph,sous:sp,type:typ,choc:!!choc,V,volPrevu,cle,sympt:m.sympt&&!gele,dens:dz,jours:(DyW.run||[]).slice(),enchaine:enW,niv});
     /* séances datées */
     const why=x=>{const b=[];
       if(x.kind==='cle')b.push('Sortie clé du bloc spécifique : elle se rapproche de ta course.');
@@ -1944,7 +1922,7 @@ function build(inp){
        « near » (veille ou lendemain de la sortie longue) est recalculé sur le nouveau jour. */
     const rfJ=rf.map(x=>add(monW,off(x.dow)));
     rf.forEach((x,k)=>{const o0=rfJ[k];let date=o0,orig=null;
-      if(V2&&P.decal){const t=P.decal['x:'+o0];if(t&&t!==o0&&t>=monW&&t<=add(monW,6)&&!rfJ.some((d,j)=>j!==k&&d===t)){date=t;orig=o0;
+      if(P.decal){const t=P.decal['x:'+o0];if(t&&t!==o0&&t>=monW&&t<=add(monW,6)&&!rfJ.some((d,j)=>j!==k&&d===t)){date=t;orig=o0;
         x={...x,dow:D(t).getDay(),near:gap(D(t).getDay(),longDow)<=1};}}   /* même règle qu'à la création : à un jour de la sortie longue */
       if(date<from)return;const key=aff?'affutage':(sp||ph);
       const libre=P.stMode==='libre';
@@ -1954,10 +1932,9 @@ function build(inp){
   }
   /* garde-fou de la sortie clé (projection) */
   const maxCle=Math.max(0,...out.sessions.filter(s=>s.title==='Sortie clé').map(s=>s.dur));
-  if(!V2&&maxCle<tr.cible[0])G(1,'En projection, ta sortie clé plafonne à '+maxCle+' min pour '+tr.cible[0]+' visées (D-22). Le plan tient si ta tolérance progresse ; on le reverra avec tes données.');
   /* D-69 : écarts de projection — une cible de sortie longue que le plan n'atteint pas avant son échéance */
   out.ecarts=[];
-  if(V2){const longs=out.sessions.filter(s=>s.type==='long').concat(sessions.filter(s=>s.type==='long'&&s.dur));
+  {const longs=out.sessions.filter(s=>s.type==='long').concat(sessions.filter(s=>s.type==='long'&&s.dur));
     secs.filter(s=>s.statut==='objectif').forEach(s=>{const cible=Math.round(Math.min(CONV.secPart*s.dur,CONV.secMax)),lim=add(s.date,-14);
       const at=Math.max(0,...longs.filter(x=>x.date<lim&&x.date>=from).map(x=>x.dur));
       if(at<0.9*cible)out.ecarts.push({obj:'secondaire',nom:s.name,date:s.date,cible,atteint:at,limite:lim});});
@@ -3512,7 +3489,7 @@ function vGate(){
     +authFormHTML('Un compte garde ton plan et tes séances en sécurité, et te permet de les retrouver sur un autre téléphone. Ton prénom personnalise l\'app.')
     +syncLineHTML()+versionLineHTML()+'</div></main>';
 }
-const APP_VERSION='v87';   /* généré depuis sw.js par tools/build.py */
+const APP_VERSION='v88';   /* généré depuis sw.js par tools/build.py */
 function versionLineHTML(){return '<div class="mini" id="ver" style="margin-top:12px;text-align:center;opacity:.7">Ascend '+APP_VERSION+' · moteur de plan v2</div>';}
 /* compare la page chargée au cache du service worker : signale un déploiement pas encore actif */
 function checkVersion(){if(!('caches' in window))return;caches.keys().then(ks=>{const c=ks.filter(k=>/^ascend-v\d+$/.test(k)).map(k=>+k.slice(8)).sort((a,b)=>b-a)[0],el=document.getElementById('ver');

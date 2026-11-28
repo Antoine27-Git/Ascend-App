@@ -1,6 +1,6 @@
-/* D-67/D-68 : propriétés du moteur v2 sur 8 profils (règle des 30 jours : +10 %, ou multiple de 5 min supérieur dès 50 min, D-96) (lancer : node t_profils.js [v1] [détail <profil>]) */
+/* D-67/D-68 : propriétés du moteur v2 sur 8 profils (règle des 30 jours : +10 %, ou multiple de 5 min supérieur dès 50 min, D-96) (lancer : node t_profils.js [-] [détail <profil>]) */
 const E=require('./engine.js'),base=require('./t_prof.json');
-const regles=process.argv[2]==='v1'?'v1':undefined,detail=process.argv[3]==='detail'?process.argv[4]:null;
+const regles=undefined,detail=process.argv[3]==='detail'?process.argv[4]:null;
 const isRun=s=>['ef','long','qual','desc'].includes(s.type);
 const PROFILS={
  '4 jours':p=>{},

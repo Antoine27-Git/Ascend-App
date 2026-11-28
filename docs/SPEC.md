@@ -25,6 +25,7 @@ identifiant, jamais réattribué.
 | D-112 | Dernier export, rappel, restauration sûre | en vigueur (v83) |
 | D-113 | Bibliothèque : 5e onglet, fiches d'études | en vigueur (v84) |
 | D-114 | Ajouter une séance (course proposée, autres sports) | en vigueur (v85) |
+| D-115 | Retrait des règles v1 du moteur | fait (v88) |
 
 Les numéros provisoires des rapports d'audit (`docs/audit/`, 11/11/2026 : « D-97 à D-121 », « H-59 à H-66 ») ne correspondent pas aux décisions de ce registre : seul ce fichier fait foi.
 
@@ -3731,4 +3732,13 @@ Maquettes validées le 27/11 : `docs/maquettes/screens_ajout.py` (a1 à a7). Dem
 - Étape 3 : pour une séance ajoutée sans effet sur le plan, le bloc « Effet sur le plan » n'est plus affiché.
 - Étape 2 : le lien « Changer » de « Compte pour » ne faisait rien (l'écran n'était pas redessiné) : corrigé.
 - **Bande de la semaine** (maquette `docs/maquettes/screens_pastille.py`, variante C ajustée) : deux séances le même jour s'affichent l'une au-dessus de l'autre, chacune avec sa couleur et son état (rouge si manquée) ; la bande ne grandit que les semaines qui ont un tel jour.
+
+### D-115 — Retrait des règles v1 du moteur (v88, 27/11/2026)
+Décision d'Antoine (16/11) : retirer les anciennes règles, dans une version à part. Le moteur ne connaît plus `regles:'v1'` : 33 branches retirées
+(sortie longue v1 `cibleLr`, plafond de volume `slMax`, durées max par jour `days.time`, mémoire de 30 jours, gel au dernier volume exécuté,
+échéances v1 des courses intermédiaires, message D-22 v1). Supprimés : `sim8.py`, `sim3.py`, `serie11.py`, `tests/parity.py`,
+`tests/audit/parite_etendue.py`, et les contrôles « règles v1 inchangées » de 5 tests. Les sections historiques de ce fichier qui citent
+`sim8.py` restent comme archive.
+**Preuve que rien ne change pour l'utilisateur** : chaque appel au moteur pendant les tests (9 792 plans, dont les 120 scénarios tirés au
+hasard et le profil d'Antoine) a été enregistré avant et après le retrait : **0 différence**.
 

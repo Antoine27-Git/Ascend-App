@@ -15,8 +15,7 @@ Lis ce fichier en entier avant de toucher au code. Il vaut pour tout assistant d
 | `tests/engine.js` | **source unique du moteur de plan** (fonctions pures : profil + séances réalisées + date → plan) |
 | `tools/build.py` | injecte `tests/engine.js` dans `index.html` (repères `ENGINE:BEGIN` / `ENGINE:END`) et recopie la version de `sw.js` |
 | `tools/test.py` | lance toute la batterie de tests |
-| `tests/` | `parity.py` (le moteur en règles v1 doit égaler `sim8.py`, 0 écart), `t_profils.js` (propriétés sur 9 profils), `t_steps.js` (déroulé = durée), `t_react3.js` (réaction au ressenti et aux séances manquées), `t_decal.js` (décalage dans la semaine), `t_invariants.js` (invariants sur 120 scénarios tirés au hasard ; scripts d'audit dans `tests/audit/`, rapports dans `docs/audit/`), `t_reprise.js` (repère de reprise sans effet de seuil, D-94), `t_arrondi.js` (arrondi supérieur, D-96), `t_plafond.js` (un saut ne relève la référence que de +10 %, D-107), `t_prof.json` (profil de test) |
-| `sim8.py`, `sim3.py`, `serie11.py` | simulateur de référence des règles v1 et séries historiques |
+| `tests/` | `t_profils.js` (propriétés sur 9 profils), `t_steps.js` (déroulé = durée), `t_react3.js` (réaction au ressenti et aux séances manquées), `t_decal.js` (décalage dans la semaine), `t_invariants.js` (invariants sur 120 scénarios tirés au hasard ; scripts d'audit dans `tests/audit/`, rapports dans `docs/audit/`), `t_reprise.js` (repère de reprise sans effet de seuil, D-94), `t_arrondi.js` (arrondi supérieur, D-96), `t_plafond.js` (un saut ne relève la référence que de +10 %, D-107), `t_prof.json` (profil de test) |
 | `docs/` | décisions et doctrine (voir plus bas) |
 | Hébergement | GitHub Pages ; connexion et synchronisation par **Supabase** (obligatoires) |
 | Fonction `intervals-activities` (`supabase/functions/intervals-activities/index.ts`) | lit les activités d'intervals.icu (lecture seule, D-77) ; secret `INTERVALS_API_KEY` dans Supabase ; collée à la main dans l'éditeur du tableau de bord (pas de CLI) |
@@ -36,7 +35,7 @@ Stockage navigateur : `trail-state-v1` (données), `trail-auth-v1` (session), `t
 La ligne « Ascend vNN » en bas de Profil sert à vérifier qu'un déploiement est actif. Le reste de l'interface (hors bloc moteur) se modifie directement dans `index.html`.
 
 ## Moteur : ce qu'il faut savoir
-- `build({profile, today, sessions, isRun, ...})` → `{weeks, sessions, garde, info, ecarts}`. Règles **v2** par défaut ; `regles:'v1'` rejoue l'ancien comportement (prouvé par `parity.py`). **Ne modifie pas le comportement v1** sans mettre à jour la parité et le dire.
+- `build({profile, today, sessions, isRun, ...})` → `{weeks, sessions, garde, info, ecarts}`. Une seule série de règles (les règles v1 et leur preuve de parité avec `sim8.py` ont été retirées en v88).
 - `CONV` (début du moteur) regroupe toutes les conventions réglables : sortie longue « moyenne » ≤ 3 h, samedi de week-end de choc, cibles d'objectif secondaire, nombre de week-ends de choc, seuil « course exigeante », plafond d'endurance par tranche d'objectif. Ajoute un paramètre là plutôt qu'un chiffre dans le code.
 - Profil : `days` (jours de course, sortie longue, renforcement), `orgs` (organisation par phase), `orgHist` (versions passées : le passé ne se réécrit jamais), `phaseAck` (bilans acquittés), `manques` (raison d'une séance manquée : seule « fatigue » est un signal, D-72), `decal` (séance déplacée dans la semaine, D-73 ; échange de deux séances, D-97). Le champ `days.time` (temps disponible) est **ignoré en v2** (D-71) ; il n'existe plus dans l'interface.
 - Le RPE pilote la fatigue, sur les **endurances seules** ; la FC est une observation secondaire (D-12).

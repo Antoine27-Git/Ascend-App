@@ -24,7 +24,7 @@ Ce ne sont pas des décisions. Chaque idée sera rouverte, challengée et tranch
 Décisions du 16/11/2026 :
 - **Photo de WOD : abandonnée.** Retirée au ménage du 25/11 (`docs/PHOTO-WOD.md`, ancien formulaire de WOD ; la fonction `analyze-wod` n'était plus dans le dépôt).
 - **Journal de renforcement : gelé**, gardé comme évolution à faire plus tard.
-- **Règles v1 : à retirer du moteur dans une version à part** (avec `sim8.py`, `sim3.py`, `serie11.py` et la parité), rien d'autre dans cette version.
+- ~~Règles v1 : à retirer du moteur dans une version à part~~ — **fait en v88** (27/11/2026) : moteur sans `regles:'v1'`, `sim8.py`, `sim3.py`, `serie11.py`, `parity.py` et `parite_etendue.py` supprimés. Preuve : les 9 792 plans calculés par les tests sont identiques avant et après.
 - **Connaissances du Projet claude.ai** : copies de septembre supprimées le 16/11 (le dépôt fait foi). `MOTEUR-V0.md` gardé : il n'existe pas dans le dépôt.
 - Antoine a exporté un fichier JSON de ses données le 16/11.
 1. **Fiabilité** : faits : P-23 (v76), P-07 (v76), P-08 (v82, choix A). P-24 et P-27 (v83). Restent : P-25 et P-26 (synchro à deux téléphones, heure du téléphone).
