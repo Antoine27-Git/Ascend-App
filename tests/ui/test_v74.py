@@ -15,18 +15,22 @@ errs=[];ok=True
 def chk(c,m):
     global ok;print(('✓ ' if c else '✗ ')+m);ok=ok and c
 def page(ctx,st,quand):
-    ctx.add_init_script('if(!sessionStorage.getItem("ini")){sessionStorage.setItem("ini","1");localStorage.setItem("trail-state-v1",%s);localStorage.setItem("trail-auth-v1",%s);}'%(json.dumps(json.dumps(st)),json.dumps(json.dumps(AUTH))))
-    pg=ctx.new_page();pg.on('pageerror',lambda e:errs.append(str(e)))
-    pg.clock.set_fixed_time(quand+'T08:00:00+01:00');pg.goto('file://'+ROOT+'/index.html');pg.wait_for_timeout(3000)
-    pg.add_script_tag(content='(function(){var module={exports:{}};'+open(os.path.join(ROOT,'tests','engine.js'),encoding='utf-8').read()+';window.ENG_T=module.exports;})();')
+    # ménage 27/11 : l'historique est construit AVANT d'ouvrir l'appli (page vide), puis injecté au premier chargement.
+    # Avant, on l'écrivait dans localStorage pendant que l'appli tournait, puis on rechargeait : si l'appli enregistrait
+    # son propre état entre les deux (minuterie de 300 ms), l'historique était écrasé -> test instable (≈ 1 fois sur 3).
+    p0=ctx.new_page();p0.goto('about:blank')
+    p0.add_script_tag(content='(function(){var module={exports:{}};'+open(os.path.join(ROOT,'tests','engine.js'),encoding='utf-8').read()+';window.ENG_T=module.exports;})();')
     # historique réaliste : chaque semaine passée, les courses prévues sont faites (ressenti facile)
-    pg.evaluate('''q=>{const st=JSON.parse(localStorage.getItem("trail-state-v1"));let d=st.profile.planStart;const runs=new Set(["ef","long","qual","desc"]);let n=0;
+    st=p0.evaluate('''([st,q])=>{let d=st.profile.planStart;const runs=new Set(["ef","long","qual","desc"]);let n=0;
       while(d<q){const E=ENG_T.build({profile:st.profile,today:d,sessions:st.sessions,isRun:s=>runs.has(s.type),isOff:()=>false});
         const f=new Date(new Date(d).getTime()+7*864e5).toISOString().slice(0,10);
         E.sessions.filter(x=>runs.has(x.type)&&x.date>=d&&x.date<f&&x.date<q).forEach(x=>st.sessions.push({id:"h"+(n++),date:x.date,type:x.type,dur:x.dur,dplus:x.dplus||0,rpe:3,planId:x.id}));d=f;}
-      localStorage.setItem("trail-state-v1",JSON.stringify(st));}''',quand)
-    pg.reload();pg.wait_for_timeout(3500)
-    try:pg.wait_for_selector('#view .sc, #view .cj',timeout=15000);pg.wait_for_timeout(800)   # ménage 25/11 : l'historique de 7 mois peut dépasser 3,5 s (test instable)
+      return st;}''',[st,quand])
+    p0.close()
+    ctx.add_init_script('if(location.protocol==="file:"&&window.name!=="__test_ini"){window.name="__test_ini";localStorage.setItem("trail-state-v1",%s);localStorage.setItem("trail-auth-v1",%s);}'%(json.dumps(json.dumps(st)),json.dumps(json.dumps(AUTH))))
+    pg=ctx.new_page();pg.on('pageerror',lambda e:errs.append(str(e)))
+    pg.clock.set_fixed_time(quand+'T08:00:00+01:00');pg.goto('file://'+ROOT+'/index.html');pg.wait_for_timeout(3500)
+    try:pg.wait_for_selector('#view .sc, #view .cj',timeout=15000);pg.wait_for_timeout(800)
     except Exception:pass
     return pg
 with sync_playwright() as p:
