@@ -3512,7 +3512,7 @@ function vGate(){
     +authFormHTML('Un compte garde ton plan et tes séances en sécurité, et te permet de les retrouver sur un autre téléphone. Ton prénom personnalise l\'app.')
     +syncLineHTML()+versionLineHTML()+'</div></main>';
 }
-const APP_VERSION='v86';   /* généré depuis sw.js par tools/build.py */
+const APP_VERSION='v87';   /* généré depuis sw.js par tools/build.py */
 function versionLineHTML(){return '<div class="mini" id="ver" style="margin-top:12px;text-align:center;opacity:.7">Ascend '+APP_VERSION+' · moteur de plan v2</div>';}
 /* compare la page chargée au cache du service worker : signale un déploiement pas encore actif */
 function checkVersion(){if(!('caches' in window))return;caches.keys().then(ks=>{const c=ks.filter(k=>/^ascend-v\d+$/.test(k)).map(k=>+k.slice(8)).sort((a,b)=>b-a)[0],el=document.getElementById('ver');
@@ -3598,7 +3598,7 @@ addEventListener('popstate',e=>{
 /* ---------- actions ---------- */
 const app=window.app={
   go(v){view=v;if(v==='profil'||v==='biblio'){PSUB=null;POPEN={};}render();window.scrollTo(0,0);},
-  bibTheme(t){BIBT=t;render();},
+  bibTheme(t){const c=$('.bchips'),x=c?c.scrollLeft:0;BIBT=t;render();const n=$('.bchips');if(n)n.scrollLeft=x;},   /* v87 : la rangée de thèmes garde sa position */
   psub(k){PSUB=k;POPEN={};exportText=null;render();window.scrollTo(0,0);},
   ptog(k,def){POPEN[k]=!accOpen(k,def);render();},
   pset(path,v,kind){if(kind==='n')v=(v===''||v==null)?null:+v;else if(kind==='s')v=String(v==null?'':v).trim();pput(path,v);save();render();},
